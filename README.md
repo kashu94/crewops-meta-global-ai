@@ -29,6 +29,33 @@ November 4, 2026). This README grows with the code.
 | Marking the damaged area on an aircraft defect photo | SAM 3.1 |
 | Fast triage and plain-language rewrites | Muse Spark Open (open weights, partner inference) |
 
+## The rules
+
+Nine rules, modelled on Indian flight duty time limitations and simplified for a demo. Each
+returns the numbers behind its verdict ("1h45m over the 12h limit for 4 sectors"), not a bare
+pass or fail.
+
+| Rule | Check |
+|---|---|
+| FDTL-01 | Flight duty period at most 13 h, 30 min less for each sector beyond the second |
+| FDTL-02 | A duty touching 00:00-06:00 IST: at most 10 h and two night landings |
+| FDTL-03 | At most 60 duty hours in any 7 calendar days |
+| FDTL-04 | At most 100 block hours in any 28 calendar days |
+| FDTL-05 | Rest of at least 12 h, and at least as long as the duty before it |
+| FDTL-06 | Two clear days in a row in every 7 |
+| FDTL-07 | Active, rated on the type, flying for their own airline |
+| FDTL-08 | Every certificate valid on every duty date |
+| FDTL-09 | Called out from home base, or positioned there on a same-day flight |
+
+Limits are parameters in `data/seed/rules.json`, so changing one needs no code change.
+Windows are checked up to every later rostered day the new duty affects, so a cover that
+looks legal today cannot break a limit on a trip already planned for Thursday.
+
+## Demo data
+
+Two weeks of three fictional Hyderabad airlines, generated deterministically. See
+[data/seed/README.md](data/seed/README.md).
+
 ## Running the tests
 
 Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).

@@ -1,0 +1,1587 @@
+[
+ {
+  "crew_id": "C-1111",
+  "name": "Pooja Chowdary",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 16,
+  "minutes_to_airport": 25,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1123",
+  "name": "Anil Mishra",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 24,
+  "minutes_to_airport": 35,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1140",
+  "name": "Jaya Joshi",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 11,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1149",
+  "name": "Swathi Sharma",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 17,
+  "minutes_to_airport": 85,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1157",
+  "name": "Anjali Goud",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 10,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1167",
+  "name": "Pooja Fernandes",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 16,
+  "minutes_to_airport": 85,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1174",
+  "name": "Mohan Reddy",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 27,
+  "minutes_to_airport": 65,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1177",
+  "name": "Jaya Banerjee",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "BOM",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 21,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1184",
+  "name": "Sneha Murthy",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 8,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1191",
+  "name": "Bhavana Khan",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 11,
+  "minutes_to_airport": 25,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1204",
+  "name": "Madhav Iyer",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 11,
+  "minutes_to_airport": 75,
+  "status": "active",
+  "command_qualified": true,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1211",
+  "name": "Rohan Nair",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 2,
+  "minutes_to_airport": 75,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1224",
+  "name": "Uday Khan",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 7,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1237",
+  "name": "Nikhil Sastry",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 5,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1242",
+  "name": "Siddharth Qureshi",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 5,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1247",
+  "name": "Anil Bhat",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "BOM",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 8,
+  "minutes_to_airport": 75,
+  "status": "active",
+  "command_qualified": true,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1254",
+  "name": "Kavya Hegde",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 19,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1266",
+  "name": "Rahul Deshpande",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 16,
+  "minutes_to_airport": 35,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1275",
+  "name": "Priya Banerjee",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 19,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1278",
+  "name": "Ananya Iyer",
+  "rank": "Captain",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 25,
+  "minutes_to_airport": 70,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1281",
+  "name": "Keshav Prasad",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 5,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1285",
+  "name": "Kabir Bhat",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 9,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": true,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1291",
+  "name": "Deepa Khan",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 12,
+  "minutes_to_airport": 20,
+  "status": "leave",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1302",
+  "name": "Varun Iyer",
+  "rank": "First Officer",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 9,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1319",
+  "name": "Sana Varma",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 10,
+  "minutes_to_airport": 30,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1324",
+  "name": "Kabir Gupta",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 18,
+  "minutes_to_airport": 35,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1341",
+  "name": "Jaya Murthy",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 23,
+  "minutes_to_airport": 50,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1357",
+  "name": "Keerthi Kulkarni",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 8,
+  "minutes_to_airport": 30,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1365",
+  "name": "Ananya Prasad",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 19,
+  "minutes_to_airport": 65,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1373",
+  "name": "Rajesh Prasad",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 16,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1382",
+  "name": "Harsha Qureshi",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 13,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1391",
+  "name": "Srinivas Banerjee",
+  "rank": "Purser",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 23,
+  "minutes_to_airport": 65,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1396",
+  "name": "Imran Kulkarni",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 1,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1404",
+  "name": "Ravi Bhat",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 3,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1407",
+  "name": "Ramya Deshpande",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 9,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1419",
+  "name": "Vikram Bhat",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 13,
+  "minutes_to_airport": 50,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1427",
+  "name": "Akash Rao",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 8,
+  "minutes_to_airport": 35,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1437",
+  "name": "Madhav Das",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 13,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1446",
+  "name": "Rahul Sharma",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 18,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1460",
+  "name": "Mohan Menon",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 7,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1471",
+  "name": "Rajesh Gupta",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 9,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1486",
+  "name": "Lavanya Shetty",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 5,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1502",
+  "name": "Lakshmi Goud",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 16,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1514",
+  "name": "Chaitanya Chowdary",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 16,
+  "minutes_to_airport": 50,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1527",
+  "name": "Siddharth Iyer",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 17,
+  "minutes_to_airport": 45,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1530",
+  "name": "Sneha Reddy",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 15,
+  "minutes_to_airport": 70,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1534",
+  "name": "Sahana Naidu",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 6,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1537",
+  "name": "Ananya Deshpande",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "HYD",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 14,
+  "minutes_to_airport": 50,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1542",
+  "name": "Ravi Joshi",
+  "rank": "Cabin Crew",
+  "airline": "SY",
+  "base": "BOM",
+  "ratings": [
+   "A320",
+   "ATR72"
+  ],
+  "years_of_service": 18,
+  "minutes_to_airport": 50,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1554",
+  "name": "Kabir Varma",
+  "rank": "Captain",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 19,
+  "minutes_to_airport": 75,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1566",
+  "name": "Vidya Shetty",
+  "rank": "Captain",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 11,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1576",
+  "name": "Aditi Gupta",
+  "rank": "Captain",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 21,
+  "minutes_to_airport": 25,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1585",
+  "name": "Aditi Fernandes",
+  "rank": "Captain",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 14,
+  "minutes_to_airport": 85,
+  "status": "leave",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1590",
+  "name": "Varun Chowdary",
+  "rank": "Captain",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 20,
+  "minutes_to_airport": 35,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1607",
+  "name": "Sameer Reddy",
+  "rank": "Captain",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 23,
+  "minutes_to_airport": 25,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1621",
+  "name": "Pooja Menon",
+  "rank": "Captain",
+  "airline": "KF",
+  "base": "BOM",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 14,
+  "minutes_to_airport": 30,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1624",
+  "name": "Kabir Banerjee",
+  "rank": "First Officer",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 2,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1627",
+  "name": "Shreya Rao",
+  "rank": "First Officer",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 7,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1644",
+  "name": "Siddharth Varma",
+  "rank": "First Officer",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 9,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1649",
+  "name": "Pallavi Banerjee",
+  "rank": "First Officer",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 3,
+  "minutes_to_airport": 70,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1658",
+  "name": "Devika Shetty",
+  "rank": "First Officer",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 1,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1673",
+  "name": "Varun Nair",
+  "rank": "First Officer",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 10,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": true,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1683",
+  "name": "Imran Menon",
+  "rank": "First Officer",
+  "airline": "KF",
+  "base": "BOM",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 1,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1687",
+  "name": "Nikhil Qureshi",
+  "rank": "Purser",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 12,
+  "minutes_to_airport": 85,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1701",
+  "name": "Keshav Khan",
+  "rank": "Purser",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 18,
+  "minutes_to_airport": 70,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1712",
+  "name": "Keshav Gupta",
+  "rank": "Purser",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 23,
+  "minutes_to_airport": 45,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1721",
+  "name": "Harsha Ali",
+  "rank": "Purser",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 22,
+  "minutes_to_airport": 85,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1737",
+  "name": "Gautam Pillai",
+  "rank": "Purser",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 7,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1754",
+  "name": "Mohan Murthy",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 2,
+  "minutes_to_airport": 85,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1768",
+  "name": "Imran Pillai",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 10,
+  "minutes_to_airport": 75,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1777",
+  "name": "Devika Bhat",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 16,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1794",
+  "name": "Farhan Menon",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 4,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1810",
+  "name": "Pooja Joshi",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 14,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1817",
+  "name": "Yamini Qureshi",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 11,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1821",
+  "name": "Imran Bhat",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 18,
+  "minutes_to_airport": 75,
+  "status": "training",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1832",
+  "name": "Priya Fernandes",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 3,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1837",
+  "name": "Tanvi Menon",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 2,
+  "minutes_to_airport": 55,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1843",
+  "name": "Sameer Kapoor",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 4,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1854",
+  "name": "Kabir Fernandes",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 5,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1871",
+  "name": "Swathi Naidu",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 15,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1881",
+  "name": "Nandini Murthy",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "HYD",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 4,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1893",
+  "name": "Ishita Kapoor",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "BOM",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 11,
+  "minutes_to_airport": 85,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1904",
+  "name": "Omkar Murthy",
+  "rank": "Cabin Crew",
+  "airline": "KF",
+  "base": "BOM",
+  "ratings": [
+   "A320"
+  ],
+  "years_of_service": 5,
+  "minutes_to_airport": 75,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1912",
+  "name": "Madhav Banerjee",
+  "rank": "Captain",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 11,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1927",
+  "name": "Yamini Mishra",
+  "rank": "Captain",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 19,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1930",
+  "name": "Nikhil Fernandes",
+  "rank": "Captain",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 15,
+  "minutes_to_airport": 60,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1939",
+  "name": "Lavanya Murthy",
+  "rank": "Captain",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 27,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1956",
+  "name": "Aditi Varma",
+  "rank": "Captain",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 23,
+  "minutes_to_airport": 30,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": true
+ },
+ {
+  "crew_id": "C-1966",
+  "name": "Kavya Gupta",
+  "rank": "First Officer",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 8,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1977",
+  "name": "Rahul Naidu",
+  "rank": "First Officer",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 8,
+  "minutes_to_airport": 50,
+  "status": "active",
+  "command_qualified": true,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-1990",
+  "name": "Aarav Joshi",
+  "rank": "First Officer",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 9,
+  "minutes_to_airport": 45,
+  "status": "active",
+  "command_qualified": true,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2003",
+  "name": "Pallavi Prasad",
+  "rank": "First Officer",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 5,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2006",
+  "name": "Sana Das",
+  "rank": "First Officer",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 7,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2021",
+  "name": "Uday Kulkarni",
+  "rank": "Purser",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 10,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2025",
+  "name": "Meera Deshpande",
+  "rank": "Purser",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 6,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2029",
+  "name": "Saritha Rao",
+  "rank": "Purser",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 21,
+  "minutes_to_airport": 35,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2034",
+  "name": "Swathi Qureshi",
+  "rank": "Purser",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 20,
+  "minutes_to_airport": 50,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2047",
+  "name": "Keshav Bhat",
+  "rank": "Purser",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 19,
+  "minutes_to_airport": 90,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2054",
+  "name": "Anil Varma",
+  "rank": "Cabin Crew",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 17,
+  "minutes_to_airport": 20,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2061",
+  "name": "Saritha Qureshi",
+  "rank": "Cabin Crew",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 15,
+  "minutes_to_airport": 85,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2067",
+  "name": "Sneha Prasad",
+  "rank": "Cabin Crew",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 15,
+  "minutes_to_airport": 75,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2078",
+  "name": "Harini Iyer",
+  "rank": "Cabin Crew",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 3,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2084",
+  "name": "Madhav Deshpande",
+  "rank": "Cabin Crew",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 1,
+  "minutes_to_airport": 80,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ },
+ {
+  "crew_id": "C-2101",
+  "name": "Ravi Kulkarni",
+  "rank": "Cabin Crew",
+  "airline": "GL",
+  "base": "HYD",
+  "ratings": [
+   "ATR72"
+  ],
+  "years_of_service": 17,
+  "minutes_to_airport": 40,
+  "status": "active",
+  "command_qualified": false,
+  "right_seat_qualified": false
+ }
+]
