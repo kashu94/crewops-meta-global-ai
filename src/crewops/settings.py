@@ -38,7 +38,11 @@ class Settings:
     open_model_api_key: str
     open_model_base_url: str
     open_model: str
-    database_url: str
+    stage: str
+    aws_profile: str
+    aws_region: str
+    table_name: str
+    dynamodb_endpoint: str
     seed_dir: Path
 
     @property
@@ -56,6 +60,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
     def get(key: str, default: str = "") -> str:
         return merged.get(key) or default
 
+    stage = get("CREWOPS_STAGE", "dev")
     return Settings(
         model_api_key=get("MODEL_API_KEY"),
         meta_base_url=get("META_BASE_URL", "https://api.meta.ai/v1").rstrip("/"),
@@ -68,7 +73,11 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
             "/"
         ),
         open_model=get("CREWOPS_OPEN_MODEL", "meta-models/muse-spark-open-1026"),
-        database_url=get("DATABASE_URL", "sqlite:///crewops.db"),
+        stage=stage,
+        aws_profile=get("AWS_PROFILE"),
+        aws_region=get("AWS_REGION", "ap-south-1"),
+        table_name=get("CREWOPS_TABLE", f"crewops-meta-{stage}-operation"),
+        dynamodb_endpoint=get("CREWOPS_DYNAMODB_ENDPOINT"),
         seed_dir=Path(get("CREWOPS_SEED_DIR", str(ROOT / "data" / "seed"))),
     )
 

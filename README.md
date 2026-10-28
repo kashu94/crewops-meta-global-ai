@@ -68,6 +68,25 @@ uv run ruff check .
 
 Copy `.env.example` to `.env` and fill in `MODEL_API_KEY` to use the hosted models.
 
+## Database
+
+The operation lives in one DynamoDB table (`crewops-meta-<stage>-operation`, region
+`ap-south-1`). The tests run against a simulated DynamoDB, so they need no AWS account. Load the
+demo operation into the deployed table with:
+
+```bash
+uv run python -m crewops.store.init           # only if the table is empty
+uv run python -m crewops.store.init --reset   # wipe and reload
+```
+
+`AWS_PROFILE` in `.env` picks the AWS credentials; keys never go in `.env`. To work without
+AWS, run DynamoDB Local, set `CREWOPS_DYNAMODB_ENDPOINT=http://localhost:8000` and add
+`--create-table` to the first load.
+
+Every change to a trip's crew is checked against the version of the trip the caller last
+read, in the same DynamoDB transaction that records the change, so two controllers can never
+overwrite each other's change, and each change is kept with who made it and why.
+
 ## Disclaimer
 
 The duty rules here are a simplified model written for a demo. CrewOps is not certified for
