@@ -6,6 +6,8 @@ rules run, it applies what changes when the duty actually happens:
 * Positioning. Someone based elsewhere flies in first, so day one moves until they can report.
   Later days keep their times, so a late first release eats into the night-stop, and the
   rest between the trip's own days is checked again.
+* Reporting late. Someone called from home who cannot reach the airport by report time moves
+  day one the same way.
 * A what-if delay. A late departure stretches one duty day; that is how a delay pushes
   someone past a limit.
 
@@ -17,7 +19,7 @@ unavailable in an open disruption is out on those dates.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, timedelta
 
 from crewops.engine.clock import DutyDay, hours_between
 from crewops.engine.operation import Operation, Positioning
@@ -44,6 +46,8 @@ class Assessment:
     on_standby: bool
     """On standby that day with a window covering the report time."""
     delay_hours: float = 0.0
+    slip: timedelta = timedelta(0)
+    """How far day one moved: positioning, or reporting late, whichever is later."""
 
     @property
     def legal(self) -> bool:
@@ -55,7 +59,7 @@ class Assessment:
 
     @property
     def slip_hours(self) -> float:
-        return self.positioning.slip_hours if self.positioning else 0.0
+        return round(self.slip.total_seconds() / 3600, 2)
 
 
 def _rest_within_trip(days: list[DutyDay], op: Operation) -> list[Finding]:
@@ -85,8 +89,13 @@ def assess(
     trip_id: str,
     delay_hours: float = 0.0,
     delay_day: date | None = None,
+    late_by: timedelta = timedelta(0),
 ) -> Assessment:
-    """All nine rules for one crew member on every day of one trip."""
+    """All nine rules for one crew member on every day of one trip.
+
+    ``late_by`` is how long after the scheduled report they can be there; the first departure
+    waits for them.
+    """
     if delay_hours < 0:
         raise ValueError("a delay cannot be negative")
     crew = op.state(crew_id)
@@ -102,8 +111,9 @@ def assess(
     positioning = None
     if crew.base != days[0].origin and not own:
         positioning = op.positioning(crew, trip_id)
-        if positioning and positioning.slip:
-            days[0] = days[0].shifted(positioning.slip)
+    slip = max(positioning.slip if positioning else timedelta(0), late_by)
+    if slip:
+        days[0] = days[0].shifted(slip)
 
     if delay_hours:
         index = 0
@@ -152,4 +162,5 @@ def assess(
         positioning=positioning,
         on_standby=on_standby,
         delay_hours=delay_hours,
+        slip=slip,
     )
