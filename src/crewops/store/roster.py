@@ -121,12 +121,38 @@ def _item(pk: str, sk: str, **attrs: dict[str, str]) -> dict[str, dict[str, str]
     return {"pk": _s(pk), "sk": _s(sk), **attrs}
 
 
-class Store:
-    def __init__(self, dynamodb: Any, table: str) -> None:
-        self.dynamodb = dynamodb
-        self.table = table
+class OperationCache:
+    """Builds the operation from a store's records, again only when the roster version moves."""
+
+    def __init__(self) -> None:
         self._lock = threading.Lock()
         self._cached: tuple[int, Operation] | None = None
+
+    def roster_version(self) -> int:
+        raise NotImplementedError
+
+    def dataset(self) -> Dataset:
+        raise NotImplementedError
+
+    def operation(self, now: datetime | None = None) -> Operation:
+        """The operation at ``now``, rebuilt only when the roster has changed since last time."""
+        version = self.roster_version()
+        with self._lock:
+            if self._cached is None or self._cached[0] != version:
+                self._cached = (version, build_operation(self.dataset()))
+            op = self._cached[1]
+        if now is not None and now > op.now:
+            op = replace(op, now=now)
+        return op
+
+
+class Store(OperationCache):
+    """The operation in DynamoDB."""
+
+    def __init__(self, dynamodb: Any, table: str) -> None:
+        super().__init__()
+        self.dynamodb = dynamodb
+        self.table = table
 
     @classmethod
     def connect(cls, config: Settings) -> Store:
@@ -227,17 +253,6 @@ class Store:
             rates=Rates.model_validate(rates),
             as_of=datetime.fromisoformat(meta["as_of"]),
         )
-
-    def operation(self, now: datetime | None = None) -> Operation:
-        """The operation at ``now``, rebuilt only when the roster has changed since last time."""
-        version = self.roster_version()
-        with self._lock:
-            if self._cached is None or self._cached[0] != version:
-                self._cached = (version, build_operation(self.dataset()))
-            op = self._cached[1]
-        if now is not None and now > op.now:
-            op = replace(op, now=now)
-        return op
 
     def trip(self, trip_id: str) -> tuple[Trip, int]:
         """The trip and the version to pass back when changing it."""

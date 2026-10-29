@@ -12,13 +12,15 @@ from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+STORES = ("memory", "dynamodb")
 
 
 def _read_dotenv(path: Path) -> dict[str, str]:
     if not path.is_file():
         return {}
     values: dict[str, str] = {}
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    # utf-8-sig: Windows editors may start the file with a byte-order mark
+    for raw in path.read_text(encoding="utf-8-sig").splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -39,6 +41,7 @@ class Settings:
     open_model_base_url: str
     open_model: str
     stage: str
+    store: str
     aws_profile: str
     aws_region: str
     table_name: str
@@ -61,6 +64,9 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         return merged.get(key) or default
 
     stage = get("CREWOPS_STAGE", "dev")
+    store = get("CREWOPS_STORE", "memory")
+    if store not in STORES:
+        raise ValueError(f"CREWOPS_STORE must be one of {', '.join(STORES)}, not {store!r}")
     return Settings(
         model_api_key=get("MODEL_API_KEY"),
         meta_base_url=get("META_BASE_URL", "https://api.meta.ai/v1").rstrip("/"),
@@ -74,6 +80,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         ),
         open_model=get("CREWOPS_OPEN_MODEL", "meta-models/muse-spark-open-1026"),
         stage=stage,
+        store=store,
         aws_profile=get("AWS_PROFILE"),
         aws_region=get("AWS_REGION", "ap-south-1"),
         table_name=get("CREWOPS_TABLE", f"crewops-meta-{stage}-operation"),
