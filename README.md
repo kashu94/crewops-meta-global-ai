@@ -68,10 +68,72 @@ uv run ruff check .
 
 Copy `.env.example` to `.env` and fill in `MODEL_API_KEY` to use the hosted models.
 
+## Calling the models
+
+`crewops.models.ModelClient` speaks the OpenAI-compatible chat protocol to both Muse Spark
+(Meta Model API) and Muse Spark Open (partner inference). Every call names its purpose and
+reasoning effort, sends only parameters the APIs accept, retries rate limits with backoff,
+and records prompt, completion, reasoning and cached tokens in a ledger, so the cost of each
+step of an answer is known. Check your keys with:
+
+```bash
+uv run python -m crewops.models.check
+```
+
+## Tools and roles
+
+The models never touch the data directly. They call ten typed tools (`crewops.agent`), each a
+thin wrapper over the rules engine or the database:
+
+| Tool | Returns |
+|---|---|
+| `search_crew` | Crew ids for a name |
+| `find_trips` | Trips by date, airline, crew member or flight |
+| `trip_details` | Legs with IST times and bookings, crew, and the trip's version |
+| `crew_profile` | Certificates, hours against the limits, rest and upcoming duties |
+| `check_legality` | All nine rules for one person on one trip, with the numbers |
+| `find_cover` | Legal replacements cheapest first, and why others were ruled out |
+| `absence_impact` | Every seat an absence empties, and the cheapest joint cover |
+| `delay_impact` | Who a late departure pushes over a limit, and its cost |
+| `roster_changes` | Who changed which trip, when and why |
+| `assign_crew` | Makes the change, only for legal cover and the current version |
+
+Each caller has a role. A `viewer` reads the operation, a `controller` may also change it, and
+a `crew` member sees only their own record and trips. Arguments are validated before a tool
+runs, and every problem comes back as a readable error for the model to recover from.
+
+## MCP server
+
+The same tools, with the same roles, for any MCP client:
+
+```bash
+uv run python -m crewops.mcp_server                                    # read-only
+uv run python -m crewops.mcp_server --role controller --user m.iyer
+```
+
+For a desktop client, add it to the client's MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "crewops": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/crewops-meta-global-ai",
+               "python", "-m", "crewops.mcp_server"]
+    }
+  }
+}
+```
+
 ## Database
 
-The operation lives in one DynamoDB table (`crewops-meta-<stage>-operation`, region
-`ap-south-1`). The tests run against a simulated DynamoDB, so they need no AWS account. Load the
+`CREWOPS_STORE` picks where the operation lives:
+
+* `memory` (the default): the demo operation, loaded at start. Changes last until restart.
+  Nothing to set up.
+* `dynamodb`: one DynamoDB table (`crewops-meta-<stage>-operation`, region `ap-south-1`).
+
+The tests run against both, with DynamoDB simulated, so they need no AWS account. Load the
 demo operation into the deployed table with:
 
 ```bash
@@ -79,13 +141,13 @@ uv run python -m crewops.store.init           # only if the table is empty
 uv run python -m crewops.store.init --reset   # wipe and reload
 ```
 
-`AWS_PROFILE` in `.env` picks the AWS credentials; keys never go in `.env`. To work without
-AWS, run DynamoDB Local, set `CREWOPS_DYNAMODB_ENDPOINT=http://localhost:8000` and add
-`--create-table` to the first load.
+`AWS_PROFILE` in `.env` picks the AWS credentials; keys never go in `.env`. To work against
+DynamoDB without AWS, run DynamoDB Local, set `CREWOPS_DYNAMODB_ENDPOINT=http://localhost:8000`
+and add `--create-table` to the first load.
 
 Every change to a trip's crew is checked against the version of the trip the caller last
-read, in the same DynamoDB transaction that records the change, so two controllers can never
-overwrite each other's change, and each change is kept with who made it and why.
+read, in the same transaction that records the change, so two controllers can never overwrite
+each other's change, and each change is kept with who made it and why.
 
 ## Disclaimer
 
