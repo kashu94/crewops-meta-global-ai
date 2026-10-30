@@ -69,5 +69,12 @@ async def test_a_crew_member_sees_only_their_own_tools_and_record(mem):
     async with Client(build_server(mem, me)) as client:
         names = {t.name for t in (await client.list_tools()).tools}
         other = await client.call_tool("crew_profile", {"crew_id": "C-1157"})
-    assert names == {"find_trips", "trip_details", "crew_profile", "check_legality"}
+    assert names == {
+        "find_trips",
+        "trip_details",
+        "crew_profile",
+        "check_legality",
+        "callout_status",
+        "answer_callout",
+    }
     assert other.is_error

@@ -37,8 +37,16 @@ def call(box, store, name, caller=CONTROLLER, **args):
 def test_each_role_sees_only_its_tools(box):
     names = {role: {t.name for t in box.available(Caller("u", role, "C-1111"))} for role in Role}
     assert names[Role.CONTROLLER] == {t.name for t in TOOLS}
-    assert names[Role.VIEWER] == names[Role.CONTROLLER] - {"assign_crew"}
-    assert names[Role.CREW] == {"find_trips", "trip_details", "crew_profile", "check_legality"}
+    writes = {"assign_crew", "start_callout", "answer_callout", "decide_callout"}
+    assert names[Role.VIEWER] == names[Role.CONTROLLER] - writes
+    assert names[Role.CREW] == {
+        "find_trips",
+        "trip_details",
+        "crew_profile",
+        "check_legality",
+        "callout_status",
+        "answer_callout",
+    }
 
 
 def test_specs_are_chat_tools_with_object_parameters(box):
@@ -176,3 +184,73 @@ def test_a_delay_names_who_it_pushes_over_a_limit(box, mem):
     result = call(box, mem, "delay_impact", trip_id=TRIP, hours=3)
     assert [b["crew_id"] for b in result["crew_over_a_limit"]] == [LAPSED]
     assert result["delay_cost_inr"] > 0
+
+
+def desk_ctx(mem, caller):
+    from crewops.ops import CalloutDesk, MemoryOutbox
+
+    desk = CalloutDesk(mem, MemoryOutbox())
+    return lambda who=caller: Context(mem, who, desk=desk)
+
+
+def test_open_issues_lead_with_the_lapsed_medical_and_its_cover(box, mem):
+    result = call(box, mem, "open_issues", VIEWER)
+    first = result["issues"][0]
+    assert (first["kind"], first["crew_id"], first["trip_id"]) == ("illegal", LAPSED, TRIP)
+    assert first["suggested_cost_inr"] == 20840 and first["rules"] == ["FDTL-08"]
+    assert result["total"] >= len(result["issues"])
+
+
+def test_fatigue_is_shown_next_to_cover_choices_that_carry_it(box, mem):
+    # Covering C-1123 on T-1001 with standby C-1157 would make her 4th early start in a row.
+    result = call(box, mem, "find_cover", trip_id="T-1001", rank="Captain", vacated_by="C-1123")
+    best = result["choices"][0]
+    assert best["crew_id"] == "C-1157"
+    assert best["fatigue"] == [
+        {"severity": "caution", "detail": "4th early start in a row (report before 07:00 IST)"}
+    ]
+    assert "fatigue" not in result["choices"][-1]  # cancelling has no crew to tire
+    legality = call(box, mem, "check_legality", crew_id="C-1157", trip_id="T-1001")
+    assert legality["legal"] is True and legality["fatigue"] == best["fatigue"]
+
+
+def test_a_callout_runs_through_the_tools_and_never_cancels_by_itself(box, mem):
+    ctx = desk_ctx(mem, CONTROLLER)
+    opened = box.call("start_callout", {"trip_id": TRIP, "replace_crew_id": LAPSED}, ctx())
+    callout_id, first = opened["callout_id"], opened["waiting_for"]
+
+    me = Caller("crew", Role.CREW, first)
+    mine = box.call("callout_status", {}, ctx(me))["offers_to_me"]
+    assert [c["callout_id"] for c in mine] == [callout_id]
+
+    status = box.call("answer_callout", {"callout_id": callout_id, "accept": False}, ctx(me))
+    while status["status"] == "offered":
+        status = box.call(
+            "answer_callout",
+            {"callout_id": callout_id, "accept": False, "crew_id": status["waiting_for"]},
+            ctx(),
+        )
+    assert status["status"] == "needs_decision"
+    assert "Nothing has been cancelled" in status["note"]
+    assert mem.changes() == []
+
+    decide = {"callout_id": callout_id, "action": "propose_cancel"}
+    assert box.call("decide_callout", decide, ctx())["status"] == "awaiting_approval"
+    same = box.call("decide_callout", {**decide, "action": "approve"}, ctx())
+    assert "different controller" in same["error"]
+    other = Caller("s.reddy", Role.CONTROLLER)
+    done = box.call("decide_callout", {**decide, "action": "approve"}, ctx(other))
+    assert done["status"] == "closed" and done["proposal"]["approved_by"] == "s.reddy"
+
+
+def test_an_accepted_callout_fills_the_seat(box, mem):
+    ctx = desk_ctx(mem, CONTROLLER)
+    opened = box.call("start_callout", {"trip_id": TRIP, "replace_crew_id": LAPSED}, ctx())
+    me = Caller("crew", Role.CREW, opened["waiting_for"])
+    done = box.call("answer_callout", {"callout_id": opened["callout_id"], "accept": True}, ctx(me))
+    assert done["status"] == "filled" and done["filled_by"] == opened["waiting_for"]
+    assert opened["waiting_for"] in {s.crew_id for s in mem.trip(TRIP)[0].crew}
+
+
+def test_callouts_need_a_desk(box, mem):
+    assert "not available" in call(box, mem, "callout_status")["error"]

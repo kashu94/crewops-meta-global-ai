@@ -3,7 +3,8 @@
     uv run python -m crewops.agent.chat --role controller --user m.iyer
     uv run python -m crewops.agent.chat --ask "Pooja Chowdary is sick from 5 to 8 November"
 
-In the conversation, ``/new`` starts over, ``/usage`` shows tokens used so far, ``/quit`` ends.
+In the conversation: ``/issues`` lists problems the watch finds, ``/outbox`` shows messages
+sent to crew and the desk, ``/new`` starts over, ``/usage`` shows tokens used, ``/quit`` ends.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from crewops.agent.advisor import Advisor, Answer
 from crewops.agent.build import build_advisor
 from crewops.agent.memory import Conversations
 from crewops.agent.tools import Caller, Role
+from crewops.engine.watch import scan
 from crewops.settings import settings
 from crewops.store import open_store
 
@@ -58,6 +60,19 @@ def run(advisor: Advisor, caller: Caller, lines: TextIO, out: TextIO) -> None:
         if question == "/new":
             conversation_id = None
             out.write("(new conversation)\n")
+            continue
+        if question == "/issues":
+            for issue in scan(advisor.store.operation()):
+                where = f" on {issue.trip_id}" if issue.trip_id else ""
+                out.write(f"  [{issue.kind}] {issue.name} ({issue.crew_id}){where}, ")
+                out.write(f"{issue.day:%d %b}: {issue.detail}\n")
+                if issue.suggestion:
+                    out.write(f"      cover: {issue.suggestion}, INR {issue.suggestion_cost:,}\n")
+            continue
+        if question == "/outbox":
+            outbox = getattr(advisor.desk, "outbox", None)
+            for notice in getattr(outbox, "sent", lambda: [])():
+                out.write(f"  to {notice.to}: {notice.subject}\n      {notice.body}\n")
             continue
         if question == "/usage":
             for model, totals in advisor.planner.ledger.totals().items():

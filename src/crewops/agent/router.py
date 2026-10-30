@@ -32,13 +32,30 @@ class Intent(StrEnum):
 
 LOOKUPS = ("search_crew", "find_trips", "trip_details")
 
+CALLOUTS = ("start_callout", "callout_status")
+
 TOOLS_FOR: dict[Intent, tuple[str, ...]] = {
-    Intent.ABSENCE: (*LOOKUPS, "absence_impact", "find_cover", "check_legality"),
+    Intent.ABSENCE: (*LOOKUPS, "absence_impact", "find_cover", "check_legality", *CALLOUTS),
     Intent.DELAY: (*LOOKUPS, "delay_impact", "find_cover", "check_legality"),
-    Intent.COVER: (*LOOKUPS, "find_cover", "absence_impact", "check_legality", "crew_profile"),
-    Intent.LEGALITY: (*LOOKUPS, "check_legality", "crew_profile"),
-    Intent.CHANGE: (*LOOKUPS, "find_cover", "assign_crew", "roster_changes"),
-    Intent.LOOKUP: (*LOOKUPS, "crew_profile", "roster_changes"),
+    Intent.COVER: (
+        *LOOKUPS,
+        "find_cover",
+        "absence_impact",
+        "check_legality",
+        "crew_profile",
+        *CALLOUTS,
+    ),
+    Intent.LEGALITY: (*LOOKUPS, "check_legality", "crew_profile", "open_issues"),
+    Intent.CHANGE: (
+        *LOOKUPS,
+        "find_cover",
+        "assign_crew",
+        "roster_changes",
+        *CALLOUTS,
+        "answer_callout",
+        "decide_callout",
+    ),
+    Intent.LOOKUP: (*LOOKUPS, "crew_profile", "roster_changes", "open_issues", "callout_status"),
     Intent.OTHER: (),
 }
 
@@ -64,6 +81,8 @@ EXAMPLES = """\
 "How many hours has Anil Mishra flown this month?" -> legality
 "Put Anjali Goud on T-1018 instead of Pooja" -> change
 "Who changed T-1018 this morning?" -> change
+"Nobody took the callout for T-1009, propose cancelling it" -> change
+"Anything I should worry about this week?" -> lookup
 "Which trips does KF fly on 3 November?" -> lookup
 "Show me tail VT-SYA's trips tomorrow" -> lookup
 "Write me a poem about clouds" -> other

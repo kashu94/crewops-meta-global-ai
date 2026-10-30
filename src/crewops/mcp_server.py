@@ -21,6 +21,7 @@ from mcp.server.lowlevel import Server
 
 from crewops.agent import Caller, Context, Role, ToolBox
 from crewops.agent.tools import Roster
+from crewops.ops import CalloutDesk, MemoryOutbox
 from crewops.settings import settings
 from crewops.store import open_store
 
@@ -32,10 +33,14 @@ INSTRUCTIONS = (
 
 
 def build_server(
-    store: Roster, caller: Caller, toolbox: ToolBox | None = None, now: datetime | None = None
+    store: Roster,
+    caller: Caller,
+    toolbox: ToolBox | None = None,
+    now: datetime | None = None,
+    desk: CalloutDesk | None = None,
 ) -> Server:
     box = toolbox or ToolBox()
-    ctx = Context(store, caller, now)
+    ctx = Context(store, caller, now, desk)
 
     async def list_tools(_ctx, _params) -> types.ListToolsResult:
         return types.ListToolsResult(
@@ -77,7 +82,8 @@ def main() -> None:
     args = parser.parse_args()
 
     caller = Caller(args.user, Role(args.role), args.crew_id)
-    server = build_server(open_store(settings()), caller)
+    store = open_store(settings())
+    server = build_server(store, caller, desk=CalloutDesk(store, MemoryOutbox()))
 
     async def serve() -> None:
         async with stdio_server() as (read, write):

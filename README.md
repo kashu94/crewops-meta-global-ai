@@ -1,5 +1,7 @@
 # CrewOps
 
+[![CI](https://github.com/kashu94/crewops-meta-global-ai/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/kashu94/crewops-meta-global-ai/actions/workflows/ci.yml)
+
 Crew control for regional airlines, built on Meta's Muse models.
 
 At 04:10 a first officer sends a photo of a doctor's note to the crew desk. Their trip leaves
@@ -68,6 +70,39 @@ uv run ruff check .
 
 Copy `.env.example` to `.env` and fill in `MODEL_API_KEY` to use the hosted models.
 
+## Watching ahead
+
+The watch (`crewops.engine.watch`) re-judges every rostered crew member on every trip of the
+next seven days and reports what nobody has raised yet, most serious first: someone who would
+break a rule (with the cheapest legal cover already worked out), high fatigue, and
+certificates running out. On the demo data it finds the lapsed medical on T-1018 by itself.
+Each issue keeps the same id on every run, so a schedule can alert once and stay quiet.
+
+## Fatigue
+
+The rules say what is allowed; `crewops.engine.fatigue` flags what is allowed but tiring, so
+a controller can prefer someone fresher. Flags never block a choice.
+
+| Flag | When | Severity |
+|---|---|---|
+| Early-start block | 4 early starts (before 07:00 IST) in a row, the longest block the rules allow | caution |
+| Tight rest | Rest within an hour of the minimum | caution |
+| Night to early | An early report within 36 h of a duty through 02:00-05:00 IST | high |
+| Repeated nights | A 3rd duty through 02:00-05:00 IST in 7 days (caution), 4th or more (high) | caution, high |
+
+Cover choices and legality checks show the flags their trip would leave.
+
+## Callouts
+
+A callout fills one seat by asking crew in turn, cheapest legal first. A decline, or no answer
+within 20 minutes, moves it to the next; cover is worked out again before every offer and on
+every acceptance, so nobody gets a seat they stopped being legal for. An acceptance changes
+the roster through the same version check as any other change.
+
+When nobody is left to ask, **the callout does not cancel the flight or fly it short**. It
+stops, tells the crew desk what options remain and what each costs, and waits. Cancelling or
+flying short then needs two controllers: one proposes, a different one approves.
+
 ## Calling the models
 
 `crewops.models.ModelClient` speaks the OpenAI-compatible chat protocol to both Muse Spark
@@ -82,7 +117,7 @@ uv run python -m crewops.models.check
 
 ## Tools and roles
 
-The models never touch the data directly. They call ten typed tools (`crewops.agent`), each a
+The models never touch the data directly. They call fifteen typed tools (`crewops.agent`), each a
 thin wrapper over the rules engine or the database:
 
 | Tool | Returns |
@@ -97,9 +132,14 @@ thin wrapper over the rules engine or the database:
 | `delay_impact` | Who a late departure pushes over a limit, and its cost |
 | `roster_changes` | Who changed which trip, when and why |
 | `assign_crew` | Makes the change, only for legal cover and the current version |
+| `open_issues` | What the watch finds in the coming days |
+| `start_callout` | Starts asking crew for a seat, cheapest legal first |
+| `callout_status` | Who was asked, who answered what; for crew, offers waiting for them |
+| `answer_callout` | Accept or decline (crew, or a controller recording a phone answer) |
+| `decide_callout` | Propose or approve cancelling or flying short: two controllers |
 
 Each caller has a role. A `viewer` reads the operation, a `controller` may also change it, and
-a `crew` member sees only their own record and trips. Arguments are validated before a tool
+a `crew` member sees only their own record and trips, and answers their own callouts. Arguments are validated before a tool
 runs, and every problem comes back as a readable error for the model to recover from.
 
 ## MCP server
@@ -151,6 +191,9 @@ such as "can Anjali do T-1010 as well?" needs no repetition. Try it:
 uv run python -m crewops.agent.chat --user m.iyer
 uv run python -m crewops.agent.chat --ask "Pooja Chowdary is unwell from 5 to 8 November"
 ```
+
+In the chat, `/issues` shows what the watch finds and `/outbox` the messages sent to crew
+and the desk.
 
 Set `CREWOPS_USAGE_LOG` to a file path to keep every model call's tokens, reasoning included.
 

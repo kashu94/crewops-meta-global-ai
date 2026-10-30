@@ -85,6 +85,8 @@ def test_the_route_limits_the_tools_and_sets_the_effort(mem, seed):
         "absence_impact",
         "find_cover",
         "check_legality",
+        "start_callout",
+        "callout_status",
     }
     assert request["effort"] == "medium"
 

@@ -24,6 +24,7 @@ from crewops.agent.tools import Caller, Context, Role, Roster, ToolBox
 from crewops.domain import Rule
 from crewops.engine.clock import IST
 from crewops.models import ModelClient, ModelError, Usage
+from crewops.ops.callout import CalloutDesk
 
 MAX_STEPS = 6
 OUT_OF_SCOPE = (
@@ -97,13 +98,19 @@ How to answer:
 - Every crew id, trip id, flight, time, hour figure, count and rupee amount you state must
   appear in a tool result from this conversation. Never calculate, estimate or round
   differently; quote the tools' figures exactly.
-- Turn names into crew ids with search_crew. If several people match, ask which one.
+- Turn names into crew ids with search_crew. If several people match, narrow it down with
+  what you know (who is on the trip named, who was discussed earlier) and ask only if it is
+  still unclear.
 - Never call someone legal or illegal without check_legality or find_cover saying so.
 - check_legality and find_cover judge one seat against the roster as it stands. They do not
   know about other cover you propose. For an absence across several trips use
   absence_impact, which plans every seat together, and never propose the same person for
   more than one trip from separate results.
-- Never say the roster was changed unless assign_crew returned a new version.
+- Never say the roster was changed unless assign_crew returned a new version, or a callout
+  shows filled. Never say anyone accepted a callout unless callout_status says so.
+- To arrange cover with the crew, start a callout. If nobody accepts, it waits for the desk:
+  never cancel or fly short yourself; two controllers must agree through decide_callout.
+- Mention fatigue the tools report next to a choice (legal, but worth weighing).
 - Write for a busy controller reading on a phone: at most about 120 words.
   1. The recommendation in one sentence.
   2. Why, in one or two sentences: only the deciding rule ids and numbers. Do not list rules
@@ -130,6 +137,7 @@ class Advisor:
         toolbox: ToolBox | None = None,
         guard: Guard | None = None,
         verifier: Verifier | None = None,
+        desk: CalloutDesk | None = None,
         max_steps: int = MAX_STEPS,
     ) -> None:
         self.store = store
@@ -139,6 +147,7 @@ class Advisor:
         self.toolbox = toolbox or ToolBox()
         self.guard = guard
         self.verifier = verifier
+        self.desk = desk
         self.max_steps = max_steps
 
     def ask(
@@ -169,7 +178,7 @@ class Advisor:
             answer.verified = True
             return answer
 
-        ctx = Context(self.store, caller, now)
+        ctx = Context(self.store, caller, now, self.desk)
         op = ctx.operation()
         allowed = {t.name for t in self.toolbox.available(caller)}
         names = [n for n in route.tools if n in allowed] or sorted(allowed)

@@ -9,7 +9,8 @@ Roles:
 
 * ``viewer`` reads the operation: an ops board, a duty manager.
 * ``controller`` also changes the roster, and only to crew the engine offers as legal cover.
-* ``crew`` reads their own record and the trips they fly, nothing about anyone else.
+* ``crew`` reads their own record and the trips they fly, nothing about anyone else, and
+  answers callouts offered to them.
 """
 
 from __future__ import annotations
@@ -27,7 +28,10 @@ from crewops.domain import Rank, Seat, Trip
 from crewops.engine import Finding, NotFound, Operation, assess
 from crewops.engine.clock import IST, window
 from crewops.engine.cover import Choice, TripStarted, find_cover
+from crewops.engine.fatigue import fatigue_flags
 from crewops.engine.impact import absence_gaps, delay_impact, joint_cover, with_unavailable
+from crewops.engine.watch import scan
+from crewops.ops.callout import Callout, CalloutDesk, CalloutError
 from crewops.store.roster import RosterChange, StaleTrip
 
 CREW_ID = r"^C-\d{4}$"
@@ -73,6 +77,7 @@ class Context:
     caller: Caller
     now: datetime | None = None
     """The operation's clock; ``None`` uses the time the demo data was taken."""
+    desk: CalloutDesk | None = None
 
     def operation(self) -> Operation:
         return self.store.operation(self.now)
@@ -85,6 +90,11 @@ class Context:
     def on_trip(self, trip: Trip) -> None:
         if self.caller.role is Role.CREW and self.caller.crew_id not in _on_board(trip):
             raise Forbidden("crew members can only look up trips they fly")
+
+    def callouts(self) -> CalloutDesk:
+        if self.desk is None:
+            raise ToolError("callouts are not available here")
+        return self.desk
 
 
 class ToolError(Exception):
@@ -131,6 +141,53 @@ def _choice(c: Choice) -> dict[str, Any]:
         out["rank"] = str(c.rank)
     if c.slip_hours:
         out["departure_late_hours"] = c.slip_hours
+    return out
+
+
+def _fatigue(op: Operation, crew_id: str, trip_id: str) -> list[dict[str, str]]:
+    """Fatigue patterns taking this trip would leave: legal, but worth weighing."""
+    return [
+        {"severity": str(f.severity), "detail": f.detail}
+        for f in fatigue_flags(op, crew_id, trip_id)
+    ]
+
+
+def _callout(c: Callout) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "callout_id": c.callout_id,
+        "trip_id": c.trip_id,
+        "seat": str(c.rank),
+        "replacing": c.vacated_by,
+        "status": str(c.status),
+        "asked": [
+            {
+                "crew_id": o.crew_id,
+                "name": o.name,
+                "cost_inr": o.cost,
+                "answer": o.answer or "waiting",
+            }
+            for o in c.offers
+        ],
+    }
+    if c.current is not None:
+        out["waiting_for"] = c.current.crew_id
+        out["answer_by"] = _when(c.current.expires_at)
+    if c.filled_by:
+        out["filled_by"] = c.filled_by
+    if c.reason:
+        out["reason"] = c.reason
+    if c.options:
+        out["desk_options"] = c.options
+        out["note"] = (
+            "Nothing has been cancelled. Cancelling or flying short needs two controllers."
+        )
+    if c.proposal is not None:
+        out["proposal"] = {
+            "way": c.proposal.way,
+            "summary": c.proposal.summary,
+            "proposed_by": c.proposal.proposed_by,
+            "approved_by": c.proposal.approved_by,
+        }
     return out
 
 
@@ -318,6 +375,9 @@ def check_legality(ctx: Context, args: CheckLegality) -> dict[str, Any]:
         }
     if result.slip_hours:
         out["departure_late_hours"] = result.slip_hours
+    fatigue = _fatigue(op, args.crew_id, args.trip_id)
+    if fatigue:
+        out["fatigue"] = fatigue
     return out
 
 
@@ -355,7 +415,15 @@ def find_cover_tool(ctx: Context, args: FindCover) -> dict[str, Any]:
     return {
         "trip_id": cover.trip_id,
         "seat": str(cover.seat),
-        "choices": [_choice(c) for c in choices],
+        "choices": [
+            {
+                **_choice(c),
+                **({"fatigue": f} if (f := _fatigue(op, c.crew_id, args.trip_id)) else {}),
+            }
+            if c.crew_id
+            else _choice(c)
+            for c in choices
+        ],
         "more_choices": len(cover.choices) - len(choices),
         "considered": cover.considered,
         "funnel": [
@@ -497,6 +565,107 @@ def assign_crew(ctx: Context, args: AssignCrew) -> dict[str, Any]:
     return {"trip_id": args.trip_id, "version": version, "assigned": _choice(choice)}
 
 
+class OpenIssues(BaseModel):
+    days: int = Field(7, ge=1, le=14, description="How many days ahead to look")
+    limit: int = Field(15, ge=1, le=50)
+
+
+def open_issues(ctx: Context, args: OpenIssues) -> dict[str, Any]:
+    issues = scan(ctx.operation(), horizon_days=args.days)
+    return {
+        "issues": [
+            {
+                "kind": i.kind,
+                "crew_id": i.crew_id,
+                "name": i.name,
+                "day": i.day.isoformat(),
+                "detail": i.detail,
+                **({"trip_id": i.trip_id} if i.trip_id else {}),
+                **({"rules": list(i.rule_ids)} if i.rule_ids else {}),
+                **({"suggested_cover": i.suggestion} if i.suggestion else {}),
+                **({"suggested_cost_inr": i.suggestion_cost} if i.suggestion_cost else {}),
+            }
+            for i in issues[: args.limit]
+        ],
+        "total": len(issues),
+    }
+
+
+class StartCallout(BaseModel):
+    trip_id: str = Field(pattern=TRIP_ID)
+    replace_crew_id: str = Field(pattern=CREW_ID, description="Who leaves the trip")
+
+
+def start_callout(ctx: Context, args: StartCallout) -> dict[str, Any]:
+    trip, _ = ctx.store.trip(args.trip_id)
+    seat = next((s for s in trip.crew if s.crew_id == args.replace_crew_id), None)
+    if seat is None:
+        raise ToolError(f"{args.replace_crew_id} is not on {args.trip_id}")
+    try:
+        callout = ctx.callouts().open(
+            args.trip_id, seat.rank, args.replace_crew_id, ctx.caller.user
+        )
+    except CalloutError as err:
+        raise ToolError(str(err)) from err
+    return _callout(callout)
+
+
+class CalloutStatus(BaseModel):
+    callout_id: str | None = Field(None, description="One callout; leave out to list them all")
+
+
+def callout_status(ctx: Context, args: CalloutStatus) -> dict[str, Any]:
+    desk = ctx.callouts()
+    if ctx.caller.role is Role.CREW:
+        return {"offers_to_me": [_callout(c) for c in desk.offers_for(ctx.caller.crew_id or "")]}
+    if args.callout_id:
+        return _callout(desk.get(args.callout_id))
+    return {"callouts": [_callout(c) for c in desk.all()]}
+
+
+class AnswerCallout(BaseModel):
+    callout_id: str
+    accept: bool
+    crew_id: str | None = Field(
+        None, pattern=CREW_ID, description="For a controller recording a crew member's answer"
+    )
+
+
+def answer_callout(ctx: Context, args: AnswerCallout) -> dict[str, Any]:
+    crew_id = ctx.caller.crew_id if ctx.caller.role is Role.CREW else args.crew_id
+    if not crew_id:
+        raise ToolError("say whose answer this is with crew_id")
+    try:
+        return _callout(ctx.callouts().respond(args.callout_id, crew_id, args.accept))
+    except CalloutError as err:
+        raise ToolError(str(err)) from err
+
+
+class DecideCallout(BaseModel):
+    callout_id: str
+    action: str = Field(
+        pattern="^(propose_cancel|propose_one_short|approve|reject)$",
+        description="Propose cancelling or flying one short, or approve or reject a proposal",
+    )
+
+
+def decide_callout(ctx: Context, args: DecideCallout) -> dict[str, Any]:
+    desk, by = ctx.callouts(), ctx.caller.user
+    try:
+        match args.action:
+            case "propose_cancel":
+                callout = desk.propose(args.callout_id, "cancel", by)
+            case "propose_one_short":
+                callout = desk.propose(args.callout_id, "one_short", by)
+            case "approve":
+                callout = desk.approve(args.callout_id, by)
+            case _:
+                callout = desk.reject(args.callout_id, by)
+    except CalloutError as err:
+        raise ToolError(str(err)) from err
+    return _callout(callout)
+
+
 @dataclass(frozen=True, slots=True)
 class Tool:
     name: str
@@ -609,6 +778,49 @@ TOOLS = (
         frozenset({Role.CONTROLLER}),
         writes=True,
     ),
+    Tool(
+        "open_issues",
+        "Problems in the coming days nobody has reported yet: crew who would break a rule on a "
+        "rostered trip (with the cheapest cover), high fatigue, certificates running out.",
+        OpenIssues,
+        open_issues,
+        READERS,
+    ),
+    Tool(
+        "start_callout",
+        "Start calling out replacement crew for one person's seat: offers it to the cheapest "
+        "legal crew member, then the next if they decline or do not answer. Never cancels.",
+        StartCallout,
+        start_callout,
+        frozenset({Role.CONTROLLER}),
+        writes=True,
+    ),
+    Tool(
+        "callout_status",
+        "Where callouts stand: who was asked, who answered what, who is being waited for. For "
+        "crew, the offers waiting for them.",
+        CalloutStatus,
+        callout_status,
+        EVERYONE,
+    ),
+    Tool(
+        "answer_callout",
+        "Accept or decline a callout offer. Crew answer their own; a controller can record an "
+        "answer given by phone.",
+        AnswerCallout,
+        answer_callout,
+        frozenset({Role.CONTROLLER, Role.CREW}),
+        writes=True,
+    ),
+    Tool(
+        "decide_callout",
+        "When nobody accepted: propose cancelling or flying one short, or approve or reject "
+        "another controller's proposal. Two different controllers are always needed.",
+        DecideCallout,
+        decide_callout,
+        frozenset({Role.CONTROLLER}),
+        writes=True,
+    ),
 )
 
 
@@ -641,7 +853,7 @@ class ToolBox:
             return {"error": f"invalid arguments: {problems}"}
         try:
             return tool.run(ctx, args)
-        except NotFound as err:
+        except (NotFound, CalloutError) as err:
             return {"error": str(err)}
         except ToolError as err:
             return {"error": str(err)}
