@@ -125,6 +125,35 @@ For a desktop client, add it to the client's MCP configuration:
 }
 ```
 
+## The agent
+
+```
+question -> screen -> route -> plan with tools -> check every figure -> answer
+```
+
+1. **Screen.** Known injection phrasings and over-long input are refused before any model
+   reads them; Llama Prompt Guard 2 adds a classifier when `PROMPT_GUARD_URL` is set.
+2. **Route.** Muse Spark Open sorts the question into absence, delay, cover, legality, change,
+   lookup or out of scope, from a few worked examples. The route decides which tools the
+   planner sees and how hard it reasons. On phrasings it had not seen ("Shreya's mother is in
+   hospital, she can't make the 6am") it routed 8 of 8 correctly; keyword rules, kept as the
+   fallback, got 3.
+3. **Plan.** Muse Spark calls the tools and writes a short answer for a controller: the
+   recommendation, the deciding rule and numbers, up to two alternatives.
+4. **Check.** Every crew id, trip id, flight, time, hour figure, count and rupee amount in the
+   answer is matched against the tool results, with no model involved. An answer that fails
+   gets one rewrite; if it still fails it is shown marked unverified.
+
+Conversations keep their last six turns and the people and trips discussed, so a follow-up
+such as "can Anjali do T-1010 as well?" needs no repetition. Try it:
+
+```bash
+uv run python -m crewops.agent.chat --user m.iyer
+uv run python -m crewops.agent.chat --ask "Pooja Chowdary is unwell from 5 to 8 November"
+```
+
+Set `CREWOPS_USAGE_LOG` to a file path to keep every model call's tokens, reasoning included.
+
 ## Database
 
 `CREWOPS_STORE` picks where the operation lives:

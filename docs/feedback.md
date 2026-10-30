@@ -45,3 +45,17 @@ what would have helped.
   but there is no speech output.
 - **Workaround:** The browser's built-in speech synthesis reads the answer aloud.
 - **Would help:** A TTS model, so a voice agent can stay on one platform end to end.
+
+### 2026-10-30 · Muse Spark Open · `max_tokens` spent on reasoning truncates structured output
+
+- **Tried:** Routing questions with `muse-spark-open-1026`, structured output, `minimal`
+  reasoning effort and `max_tokens` of 600, ample for a one-word JSON answer.
+- **Happened:** On a longer question the model spent 597 of the 600 tokens reasoning, so the
+  JSON answer was cut off. Nothing in the reply said the reasoning was the cause; the client
+  only saw output that did not parse.
+- **Cost:** Routing silently fell back to keyword rules for that question, which then sent it
+  down the wrong path. We only found it by reading the token log.
+- **Workaround:** `max_tokens` of 2000 on routing calls, and every call's reasoning tokens
+  logged next to its completion tokens.
+- **Would help:** A separate limit for reasoning and for the visible answer, or a
+  `finish_reason` that says the budget ran out while reasoning.

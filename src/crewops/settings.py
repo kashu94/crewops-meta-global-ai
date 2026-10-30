@@ -46,6 +46,9 @@ class Settings:
     aws_region: str
     table_name: str
     dynamodb_endpoint: str
+    prompt_guard_url: str
+    prompt_guard_token: str
+    usage_log: Path | None
     seed_dir: Path
 
     @property
@@ -85,6 +88,9 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         aws_region=get("AWS_REGION", "ap-south-1"),
         table_name=get("CREWOPS_TABLE", f"crewops-meta-{stage}-operation"),
         dynamodb_endpoint=get("CREWOPS_DYNAMODB_ENDPOINT"),
+        prompt_guard_url=get("PROMPT_GUARD_URL"),
+        prompt_guard_token=get("PROMPT_GUARD_TOKEN"),
+        usage_log=Path(get("CREWOPS_USAGE_LOG")) if get("CREWOPS_USAGE_LOG") else None,
         seed_dir=Path(get("CREWOPS_SEED_DIR", str(ROOT / "data" / "seed"))),
     )
 
