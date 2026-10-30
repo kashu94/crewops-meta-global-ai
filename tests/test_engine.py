@@ -5,8 +5,8 @@ import pytest
 from builders import DAY, Ops, at
 
 from crewops.domain import AircraftType, Rank, Rule
-from crewops.engine import NotFound, RuleBook, assess
-from crewops.engine.clock import in_local_night, overlaps_local_night, spoken_hours, window
+from crewops.engine import NotFound, RuleBook, assess, build_operation
+from crewops.engine.clock import IST, in_local_night, overlaps_local_night, spoken_hours, window
 from crewops.engine.rules import BASE, BLOCK, CERT, DUTY, FDP, NIGHT, RATING, REST, WEEKLY
 
 
@@ -149,7 +149,22 @@ def test_six_days_straight_leaves_no_weekly_rest():
 def test_an_expired_certificate_blocks_the_trip():
     op = captain(cert_expiry=DAY - timedelta(days=1)).day_trip("T-0001").build()
     [finding] = failing(assess(op, "C-1001", "T-0001"), CERT)
-    assert "expired 02 Nov 2026" in finding.detail
+    assert finding.detail == "licence runs out 02 Nov 2026, not valid that day"
+
+
+def test_a_certificate_is_not_valid_on_the_day_it_runs_out():
+    on_the_day = captain(cert_expiry=DAY).day_trip("T-0001").build()
+    assert failing(assess(on_the_day, "C-1001", "T-0001"), CERT)
+    day_after = captain(cert_expiry=DAY + timedelta(days=1)).day_trip("T-0001").build()
+    assert not failing(assess(day_after, "C-1001", "T-0001"), CERT)
+
+
+def test_a_duty_landing_after_midnight_needs_the_certificate_on_the_later_date():
+    # Departs 22:30 IST on DAY and lands after midnight IST, on the day the licence runs out.
+    ops = captain(cert_expiry=DAY + timedelta(days=1))
+    op = ops.day_trip("T-0001", start=at(DAY, 17), hours=2.0).build()
+    assert op.days_of("T-0001")[0].release.astimezone(IST).date() == DAY + timedelta(days=1)
+    assert failing(assess(op, "C-1001", "T-0001"), CERT)
 
 
 def test_not_rated_on_the_aircraft():
@@ -166,7 +181,34 @@ def test_crew_from_another_base_are_positioned_and_the_day_slips():
     assert result.legal, result.blockers
     assert result.positioning.leg_id == "KF900-2026-11-03"
     assert result.slip_hours == 0.83
-    assert result.days[0].report == at(DAY, 1, 50)
+    # Positioning is duty: the day starts an hour before the 00:00Z positioning flight, not at
+    # the trip's own (slipped) report, and the trip's release moves with the slip.
+    assert result.days[0].report == at(DAY, 0) - timedelta(hours=1)
+    unpositioned = build_operation(ops.dataset()).days_of("T-0001")[0]
+    assert result.days[0].release == unpositioned.release + timedelta(minutes=50)
+    assert result.days[0].fdp_hours > unpositioned.fdp_hours + 1.5
+
+
+def test_positioning_time_can_push_a_day_over_the_duty_limit():
+    ops = captain(base="BOM")
+    ops.leg(
+        DAY, "BOM", "HYD", at(DAY, 0) - timedelta(hours=4), 2.0, tail="VT-KFA", flight_no="KF901"
+    )
+    op = ops.day_trip("T-0001", sectors=4, hours=1.75, turn=0.75).build()
+    result = assess(op, "C-1001", "T-0001")
+    assert result.positioning.leg_id.startswith("KF901")
+    assert "FDTL-01" in {b.rule_id for b in result.blockers}
+
+
+def test_a_full_positioning_flight_cannot_be_used():
+    ops = captain(base="BOM")
+    ops.leg(DAY, "BOM", "HYD", at(DAY, 0), 1.5, tail="VT-KFA", flight_no="KF900")
+    op = ops.day_trip("T-0001").build()
+    full = op.legs["KF900-2026-11-03"]
+    op = replace(op, legs={**op.legs, full.leg_id: full.model_copy(update={"booked": full.seats})})
+    result = assess(op, "C-1001", "T-0001")
+    assert result.positioning is None
+    assert [b.rule_id for b in result.blockers] == ["FDTL-09"]
 
 
 def test_no_positioning_flight_fails_the_base_rule():

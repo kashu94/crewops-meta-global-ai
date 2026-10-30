@@ -21,6 +21,7 @@ from enum import StrEnum
 
 from crewops.domain import AircraftType, CertKind, CrewStatus, Rank, Rule
 from crewops.engine.clock import (
+    IST,
     DutyDay,
     hours_between,
     in_local_night,
@@ -378,10 +379,18 @@ def check_rating(crew: CrewState, day: DutyDay) -> Finding:
 
 
 def check_certificates(crew: CrewState, day: DutyDay) -> Finding:
+    """Every certificate must still be valid on every date the duty touches, in IST.
+
+    A certificate is not valid on its expiry date: nobody flies on the day it runs out, and a
+    duty that lands after midnight must be covered on the later date too.
+    """
+    last = max(day.day, day.release.astimezone(IST).date(), day.report.astimezone(IST).date())
     for kind, expires in crew.certs:
-        if day.day > expires:
+        if expires <= last:
             label = kind.value.replace("_", " ")
-            return failed(CERT, f"{label} expired {expires:%d %b %Y}", day=day.day)
+            return failed(
+                CERT, f"{label} runs out {expires:%d %b %Y}, not valid that day", day=day.day
+            )
     return passed(CERT, f"all {len(crew.certs)} certificates valid on {day.day}", day=day.day)
 
 

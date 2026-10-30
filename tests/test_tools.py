@@ -37,7 +37,14 @@ def call(box, store, name, caller=CONTROLLER, **args):
 def test_each_role_sees_only_its_tools(box):
     names = {role: {t.name for t in box.available(Caller("u", role, "C-1111"))} for role in Role}
     assert names[Role.CONTROLLER] == {t.name for t in TOOLS}
-    writes = {"assign_crew", "start_callout", "answer_callout", "decide_callout"}
+    writes = {
+        "assign_crew",
+        "start_callout",
+        "answer_callout",
+        "decide_callout",
+        "report_unavailable",
+        "clear_unavailable",
+    }
     assert names[Role.VIEWER] == names[Role.CONTROLLER] - writes
     assert names[Role.CREW] == {
         "find_trips",
@@ -46,6 +53,7 @@ def test_each_role_sees_only_its_tools(box):
         "check_legality",
         "callout_status",
         "answer_callout",
+        "report_unavailable",
     }
 
 
@@ -93,7 +101,7 @@ def test_search_finds_crew_by_name_or_id(box, mem):
 def test_legality_reports_the_lapsed_medical(box, mem):
     result = call(box, mem, "check_legality", crew_id=LAPSED, trip_id=TRIP)
     assert result["legal"] is False
-    assert [(b["rule"], b["day"]) for b in result["blockers"]] == [("FDTL-08", "2026-11-06")]
+    assert [(b["rule"], b["day"]) for b in result["blockers"]] == [("FDTL-08", "2026-11-05")]
     assert len({f["rule"] for f in result["findings"]}) == 9
 
 

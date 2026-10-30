@@ -27,7 +27,7 @@ from enum import StrEnum
 from typing import Protocol
 
 from crewops.domain import Rank, Seat, Trip
-from crewops.engine.cover import Choice, TripStarted, find_cover
+from crewops.engine.cover import Choice, TripStarted, arrangements, find_cover
 from crewops.engine.operation import NotFound, Operation
 from crewops.ops.notify import DESK, Notice, Outbox
 from crewops.store.roster import StaleTrip
@@ -57,7 +57,7 @@ class Offer:
     offered_at: datetime
     expires_at: datetime
     answer: str | None = None
-    """``accepted``, ``declined``, ``no answer`` or ``no longer legal``."""
+    """``accepted``, ``declined``, ``no answer``, ``unavailable`` or ``no longer legal``."""
     answered_at: datetime | None = None
 
 
@@ -90,6 +90,8 @@ class Callout:
     filled_by: str | None = None
     version: int | None = None
     """The trip's version after the seat was filled."""
+    to_arrange: tuple[str, ...] = ()
+    """What the desk must still book or retime for the person who accepted."""
 
     @property
     def current(self) -> Offer | None:
@@ -278,10 +280,14 @@ class CalloutDesk:
                 self._answer(offer, "no longer legal", now)
                 self._needs_decision(callout, [], "the trip has already reported")
                 return
-            if not any(c.crew_id == offer.crew_id for c in cover.choices):
+            choice = next((c for c in cover.choices if c.crew_id == offer.crew_id), None)
+            if choice is None:
                 self._answer(offer, "no longer legal", now)
                 self._offer_next(callout)
                 return
+            notes = arrangements(
+                self.store.operation(self.operation_clock()), callout.trip_id, choice
+            )
             trip, version = self.store.trip(callout.trip_id)
             if callout.vacated_by not in {s.crew_id for s in trip.crew}:
                 self._answer(offer, "no longer needed", now)
@@ -298,7 +304,8 @@ class CalloutDesk:
                     crew,
                     version,
                     actor=f"callout {callout.callout_id} ({callout.opened_by})",
-                    reason=f"{offer.name} accepted the callout for {callout.vacated_by}",
+                    reason=f"{offer.name} accepted the callout for {callout.vacated_by}"
+                    + "".join(f"; {n}" for n in notes),
                     at=now,
                 )
             except StaleTrip:
@@ -306,11 +313,13 @@ class CalloutDesk:
             self._answer(offer, "accepted", now)
             callout.status = Status.FILLED
             callout.filled_by = offer.crew_id
+            callout.to_arrange = notes
+            todo = "".join(f" To do: {n}." for n in notes)
             self.outbox.send(
                 Notice(
                     to=DESK,
                     subject=f"Filled: {callout.rank} on {callout.trip_id}",
-                    body=f"{offer.name} ({offer.crew_id}) accepted {callout.trip_id}.",
+                    body=f"{offer.name} ({offer.crew_id}) accepted {callout.trip_id}.{todo}",
                     at=now,
                     ref=callout.callout_id,
                 )
@@ -318,6 +327,39 @@ class CalloutDesk:
             return
         self._answer(offer, "no longer legal", now)
         self._offer_next(callout)
+
+    def withdraw(self, crew_id: str) -> list[Callout]:
+        """Pull open offers from someone who just reported they cannot fly that trip.
+
+        Called the moment they report it, so the next person is asked straight away instead of
+        after the answer window runs out. An offer stays if the dates they gave miss the trip.
+        """
+        moved = []
+        with self._lock:
+            for callout in self._callouts.values():
+                offer = callout.current
+                if offer is None or offer.crew_id != crew_id:
+                    continue
+                try:
+                    still = any(c.crew_id == crew_id for c in self._cover(callout).choices)
+                except TripStarted:
+                    still = False
+                if still:
+                    continue
+                self._answer(offer, "unavailable", self.clock())
+                self.outbox.send(
+                    Notice(
+                        to=DESK,
+                        subject=f"Offer withdrawn: {callout.rank} on {callout.trip_id}",
+                        body=f"{offer.name} ({crew_id}) reported they cannot fly. The offer has "
+                        "moved to the next legal crew member.",
+                        at=self.clock(),
+                        ref=callout.callout_id,
+                    )
+                )
+                self._offer_next(callout)
+                moved.append(callout)
+        return moved
 
     def tick(self) -> list[Callout]:
         """Move every offer that ran out of time to the next crew member. Run on a schedule."""

@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import json
 import threading
+import uuid
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
@@ -29,6 +30,7 @@ from crewops.domain import (
     Seat,
     Standby,
     Trip,
+    Unavailability,
 )
 from crewops.domain.dataset import Dataset
 from crewops.engine import NotFound, Operation, build_operation
@@ -38,6 +40,23 @@ from crewops.store import schema
 TRIP = "TRIP"
 CHANGE = "CHANGE"
 META = "META"
+UNAVAILABLE = "UNAVAIL"
+
+
+def new_report(
+    crew_id: str, first_day: date, last_day: date, reason: str, by: str, at: datetime | None
+) -> Unavailability:
+    return Unavailability(
+        report_id=f"U-{uuid.uuid4().hex[:8]}",
+        crew_id=crew_id,
+        first_day=first_day,
+        last_day=last_day,
+        reason=reason,
+        reported_by=by,
+        reported_at=(at or datetime.now(UTC)),
+    )
+
+
 ROSTER_VERSION = "roster_version"
 BATCH_SIZE = 25
 
@@ -134,12 +153,23 @@ class OperationCache:
     def dataset(self) -> Dataset:
         raise NotImplementedError
 
+    def unavailability(self, crew_id: str | None = None) -> list[Unavailability]:
+        raise NotImplementedError
+
     def operation(self, now: datetime | None = None) -> Operation:
-        """The operation at ``now``, rebuilt only when the roster has changed since last time."""
+        """The operation at ``now``, rebuilt only when the roster has changed since last time.
+
+        Reported unavailability is part of it: nobody is offered for a date they cannot fly.
+        """
         version = self.roster_version()
         with self._lock:
             if self._cached is None or self._cached[0] != version:
-                self._cached = (version, build_operation(self.dataset()))
+                op = build_operation(self.dataset())
+                out: dict[str, list[tuple[date, str]]] = {}
+                for u in self.unavailability():
+                    out.setdefault(u.crew_id, []).extend((d, u.report_id) for d in u.days())
+                op = replace(op, unavailable={k: tuple(v) for k, v in out.items()})
+                self._cached = (version, op)
             op = self._cached[1]
         if now is not None and now > op.now:
             op = replace(op, now=now)
@@ -330,6 +360,57 @@ class Store(OperationCache):
                 raise
             raise StaleTrip(trip_id, expected_version, actual) from None
         return version
+
+    # -- unavailability ---------------------------------------------------------------------
+
+    def _bump(self) -> dict[str, Any]:
+        return {
+            "Update": {
+                "TableName": self.table,
+                "Key": _item(META, ROSTER_VERSION),
+                "UpdateExpression": "ADD #value :one",
+                "ExpressionAttributeNames": {"#value": "value"},
+                "ExpressionAttributeValues": {":one": _n(1)},
+            }
+        }
+
+    def mark_unavailable(
+        self,
+        crew_id: str,
+        first_day: date,
+        last_day: date,
+        reason: str,
+        by: str,
+        at: datetime | None = None,
+    ) -> Unavailability:
+        """Record that ``crew_id`` cannot fly on these dates. The operation changes at once."""
+        self.operation().state(crew_id)
+        report = new_report(crew_id, first_day, last_day, reason, by, at)
+        item = _item(UNAVAILABLE, report.report_id, body=_json(report.model_dump(mode="json")))
+        self.dynamodb.transact_write_items(
+            TransactItems=[{"Put": {"TableName": self.table, "Item": item}}, self._bump()]
+        )
+        return report
+
+    def clear_unavailable(self, report_id: str) -> Unavailability:
+        found = self._get(UNAVAILABLE, report_id)
+        if found is None:
+            raise NotFound("unavailability report", report_id)
+        self.dynamodb.transact_write_items(
+            TransactItems=[
+                {"Delete": {"TableName": self.table, "Key": _item(UNAVAILABLE, report_id)}},
+                self._bump(),
+            ]
+        )
+        return Unavailability.model_validate_json(found["body"]["S"])
+
+    def unavailability(self, crew_id: str | None = None) -> list[Unavailability]:
+        found = [
+            Unavailability.model_validate_json(item["body"]["S"])
+            for item in self._query(UNAVAILABLE)
+        ]
+        found.sort(key=lambda u: (u.reported_at, u.report_id))
+        return [u for u in found if crew_id is None or u.crew_id == crew_id]
 
     def changes(self, trip_id: str | None = None) -> list[RosterChange]:
         """Every change to the roster, oldest first, optionally for one trip."""

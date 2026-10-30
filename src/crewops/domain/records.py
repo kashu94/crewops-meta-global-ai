@@ -141,6 +141,34 @@ class Standby(Record):
         return moment.date() in self.dates and self.window_start <= clock <= self.window_end
 
 
+class Unavailability(Record):
+    """Someone who cannot fly on these dates: sick, a family emergency, stuck in traffic.
+
+    Reported by the crew member or a controller. Until it is cleared, the engine treats them
+    as unavailable on every date from ``first_day`` to ``last_day``, inclusive.
+    """
+
+    report_id: str = Field(pattern=r"^U-[0-9a-f]{8}$")
+    crew_id: str = Field(pattern=r"^C-\d{4}$")
+    first_day: date
+    last_day: date
+    reason: str = Field(min_length=2, max_length=200)
+    reported_by: str
+    reported_at: Instant
+
+    @model_validator(mode="after")
+    def _span(self) -> Unavailability:
+        if self.last_day < self.first_day:
+            raise ValueError("last_day is before first_day")
+        if (self.last_day - self.first_day).days > 30:
+            raise ValueError("report at most 31 days at a time")
+        return self
+
+    def days(self) -> tuple[date, ...]:
+        span = (self.last_day - self.first_day).days + 1
+        return tuple(date.fromordinal(self.first_day.toordinal() + i) for i in range(span))
+
+
 class Leg(Record):
     """One flight on one day."""
 

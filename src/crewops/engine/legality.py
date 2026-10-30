@@ -4,8 +4,10 @@
 rules run, it applies what changes when the duty actually happens:
 
 * Positioning. Someone based elsewhere flies in first, so day one moves until they can report.
-  Later days keep their times, so a late first release eats into the night-stop, and the
-  rest between the trip's own days is checked again.
+  Positioning is duty: their day starts when they report for the positioning flight, so the
+  flight counts toward the duty period and the rest before it. Later days keep their times,
+  so a late first release eats into the night-stop, and the rest between the trip's own days
+  is checked again.
 * Reporting late. Someone called from home who cannot reach the airport by report time moves
   day one the same way.
 * A what-if delay. A late departure stretches one duty day; that is how a delay pushes
@@ -13,7 +15,7 @@ rules run, it applies what changes when the duty actually happens:
 
 It also applies what the roster alone does not show: a standby whose window does not cover the
 report time is not available, crew only fly for their own airline, and anyone reported
-unavailable in an open disruption is out on those dates.
+unavailable for a date is out on that date.
 """
 
 from __future__ import annotations
@@ -33,6 +35,9 @@ from crewops.engine.rules import (
     failed,
     required_rest,
 )
+
+UNAVAILABLE = "reported unavailable"
+"""How an unavailability finding starts, so cover can tell it from a rule failure."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,6 +119,10 @@ def assess(
     slip = max(positioning.slip if positioning else timedelta(0), late_by)
     if slip:
         days[0] = days[0].shifted(slip)
+    if positioning is not None:
+        first_leg = op.legs[trip.days[0].legs[0]]
+        lead = first_leg.off_block - trip.days[0].report
+        days[0] = replace(days[0], report=min(days[0].report, positioning.departs - lead))
 
     if delay_hours:
         index = 0
@@ -138,7 +147,7 @@ def assess(
     on_dates = {d.day for d in days}
     for when, report_id in op.unavailable.get(crew_id, ()):
         if when in on_dates:
-            findings.append(failed(RATING, f"reported unavailable ({report_id})", day=when))
+            findings.append(failed(RATING, f"{UNAVAILABLE} ({report_id})", day=when))
             break
 
     rostered = [s for s in op.standby.get(crew_id, ()) if days[0].day in s.dates]

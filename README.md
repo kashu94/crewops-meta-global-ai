@@ -46,10 +46,24 @@ pass or fail.
 | FDTL-05 | Rest of at least 12 h, and at least as long as the duty before it |
 | FDTL-06 | Two clear days in a row in every 7 |
 | FDTL-07 | Active, rated on the type, flying for their own airline |
-| FDTL-08 | Every certificate valid on every duty date |
-| FDTL-09 | Called out from home base, or positioned there on a same-day flight |
+| FDTL-08 | Every certificate valid on every date the duty touches (IST); not valid on its expiry date |
+| FDTL-09 | Called out from home base, or positioned there on a same-day flight with a free seat |
 
 Limits are parameters in `data/seed/rules.json`, so changing one needs no code change.
+Positioning is duty: someone flown in as a passenger is on duty from the report for that
+flight, so it counts toward their duty period and the rest before it.
+
+Before anyone is offered as cover, every rule is applied to every day of the trip, together
+with: active status and their own airline, not already on the trip or on another duty at the
+same time, rest after the trip before their next rostered duty, a standby window that covers
+the report, time to get to the airport from home (a late arrival is costed as a delay and the
+rules re-run), and no reported unavailability on those dates. A choice that holds the
+departure (positioning in, or arriving late) is only offered if everyone else on the trip
+stays legal with the later departure, and it lists what the desk must arrange: the
+positioning seat to book and the departure to retime.
+
+Not modelled yet: pilot recency (take-offs and landings in the last 90 days), restrictions on
+pairing two inexperienced pilots, and cabin crew language or type qualifications.
 Windows are checked up to every later rostered day the new duty affects, so a cover that
 looks legal today cannot break a limit on a trip already planned for Thursday.
 
@@ -91,6 +105,15 @@ a controller can prefer someone fresher. Flags never block a choice.
 | Repeated nights | A 3rd duty through 02:00-05:00 IST in 7 days (caution), 4th or more (high) | caution, high |
 
 Cover choices and legality checks show the flags their trip would leave.
+
+## Unavailability
+
+Crew report it themselves, or a controller reports it for them: the dates and a reason. From
+that moment they are out of every cover search for those dates, any callout offer waiting on
+them moves to the next person at once, and the trips they were rostered on show up in the
+watch. A would-be choice who reported unavailable is kept in the cover result as `withdrawn`,
+so a screen shows them struck through rather than silently gone. A controller clears the
+report when they can fly again.
 
 ## Callouts
 

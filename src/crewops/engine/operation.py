@@ -40,6 +40,9 @@ class Positioning:
     lands: datetime
     slip: timedelta
     """How far day one must move so they can report after landing."""
+    departs: datetime
+    """When the positioning flight leaves: their duty starts before this, not at the trip's
+    own report time."""
 
     @property
     def slip_hours(self) -> float:
@@ -96,7 +99,8 @@ class Operation:
         """The same-day flight from their base, not yet departed, that delays the trip least.
 
         None means they cannot get there that day, which fails the base rule. Any airline's
-        flight will do (positioning crew travel as passengers), except the trip's own legs.
+        flight with a free seat will do (positioning crew travel as passengers), except the
+        trip's own legs.
         """
         day = self.days_of(trip_id)[0]
         own = set(self.trip(trip_id).leg_ids)
@@ -109,11 +113,14 @@ class Operation:
                 or leg.destination != day.origin
                 or leg.off_block < self.now
                 or leg.leg_id in self.cancelled
+                or leg.booked >= leg.seats
             ):
                 continue
             slip = max(timedelta(0), leg.on_block + REPORT_AFTER_POSITIONING - day.report)
             if best is None or (slip, leg.on_block) < (best.slip, best.lands):
-                best = Positioning(leg.leg_id, leg.origin, leg.destination, leg.on_block, slip)
+                best = Positioning(
+                    leg.leg_id, leg.origin, leg.destination, leg.on_block, slip, leg.off_block
+                )
         return best
 
 

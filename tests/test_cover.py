@@ -1,11 +1,11 @@
-from datetime import UTC, datetime, time
+from datetime import UTC, datetime, time, timedelta
 
 import pytest
 from builders import DAY, Ops, at
 
 from crewops.domain import Rank
 from crewops.engine import build_operation
-from crewops.engine.cover import TripStarted, Way, find_cover
+from crewops.engine.cover import TripStarted, Way, arrangements, find_cover
 from crewops.engine.rules import CERT
 from crewops.seed import load_dataset
 from crewops.settings import ROOT
@@ -134,3 +134,45 @@ def test_cover_on_the_demo_operation():
     assert all(op.state(c.crew_id).airline == "SY" for c in crewed)
     assert sum(s.dropped for s in cover.funnel) == len(cover.excluded)
     assert all(e.rule_ids for e in cover.excluded)
+
+
+def positioned(fo_next_rest_hours=None):
+    """C-1001 is sick on T-0001; the only captain, C-2001, positions in from BOM, holding the
+    departure 50 minutes. The first officer optionally flies again ``fo_next_rest_hours`` after
+    T-0001's scheduled release."""
+    ops = Ops().person("C-1001").person("C-1002", Rank.FIRST_OFFICER).person("C-2001", base="BOM")
+    ops.leg(DAY, "BOM", "HYD", at(DAY, 0), 1.5, tail="VT-KFA", flight_no="KF900")
+    ops.day_trip("T-0001", crew=CAPTAINS_ON_TRIP)
+    if fo_next_rest_hours is not None:
+        probe = ops.build()
+        first = probe.days_of("T-0001")[0]
+        lead = probe.legs[probe.trips["T-0001"].leg_ids[0]].off_block - first.report
+        nxt = DAY + timedelta(days=1)
+        start = first.release + timedelta(hours=fo_next_rest_hours) + lead
+        ops.day_trip(
+            "T-0002", day=nxt, start=start, tail="VT-SYB", crew=[("C-1002", Rank.FIRST_OFFICER)]
+        )
+    op = ops.build()
+    return op, find_cover(op, "T-0001", Rank.CAPTAIN, vacated_by="C-1001")
+
+
+def test_a_choice_that_holds_the_departure_lists_what_to_arrange():
+    op, cover = positioned()
+    best = cover.best
+    assert (best.crew_id, best.way, best.slip_hours) == ("C-2001", Way.POSITIONING, 0.83)
+    assert arrangements(op, "T-0001", best) == (
+        "book a positioning seat on KF900 (BOM-HYD, departs 03 Nov 05:30 IST)",
+        "T-0001 departs 0h50m late: operations to retime and inform passengers",
+    )
+    assert arrangements(op, "T-0001", cover.choices[-1]) == ()  # cancelling: nothing to book
+
+
+def test_a_late_departure_that_breaks_a_colleagues_rest_rules_the_choice_out():
+    assert positioned(fo_next_rest_hours=13)[1].best.crew_id == "C-2001"  # 12h10m: still legal
+
+    _, cover = positioned(fo_next_rest_hours=12.5)  # 11h40m after a 50 minute slip
+    assert [c.way for c in cover.choices] == [Way.CANCEL]
+    excluded = cover.why_not("C-2001")
+    assert (excluded.stage, excluded.rule_ids) == ("keeps the crew legal", ("FDTL-05",))
+    assert excluded.reasons[0].startswith("departing 0h50m late: Crew C-1002 (C-1002) would fail")
+    assert cover.funnel[-1].stage == "keeps the crew legal" and cover.funnel[-1].dropped == 1

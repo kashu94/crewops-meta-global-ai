@@ -16,6 +16,7 @@ from crewops.domain.records import (
     Standby,
     Trip,
     TripDay,
+    Unavailability,
 )
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "Standby",
     "Trip",
     "TripDay",
+    "Unavailability",
 ]

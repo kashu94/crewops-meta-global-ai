@@ -24,10 +24,10 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field, ValidationError
 
-from crewops.domain import Rank, Seat, Trip
+from crewops.domain import Rank, Seat, Trip, Unavailability
 from crewops.engine import Finding, NotFound, Operation, assess
 from crewops.engine.clock import IST, window
-from crewops.engine.cover import Choice, TripStarted, find_cover
+from crewops.engine.cover import Choice, TripStarted, arrangements, find_cover
 from crewops.engine.fatigue import fatigue_flags
 from crewops.engine.impact import absence_gaps, delay_impact, joint_cover, with_unavailable
 from crewops.engine.watch import scan
@@ -69,6 +69,11 @@ class Roster(Protocol):
         at: datetime | None = None,
     ) -> int: ...
     def changes(self, trip_id: str | None = None) -> list[RosterChange]: ...
+    def mark_unavailable(
+        self, crew_id: str, first_day: date, last_day: date, reason: str, by: str
+    ) -> Unavailability: ...
+    def clear_unavailable(self, report_id: str) -> Unavailability: ...
+    def unavailability(self, crew_id: str | None = None) -> list[Unavailability]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,12 +149,33 @@ def _choice(c: Choice) -> dict[str, Any]:
     return out
 
 
+def _cover_choice(op: Operation, trip_id: str, c: Choice) -> dict[str, Any]:
+    out = _choice(c)
+    if c.crew_id:
+        if fatigue := _fatigue(op, c.crew_id, trip_id):
+            out["fatigue"] = fatigue
+        if todo := arrangements(op, trip_id, c):
+            out["to_arrange"] = list(todo)
+    return out
+
+
 def _fatigue(op: Operation, crew_id: str, trip_id: str) -> list[dict[str, str]]:
     """Fatigue patterns taking this trip would leave: legal, but worth weighing."""
     return [
         {"severity": str(f.severity), "detail": f.detail}
         for f in fatigue_flags(op, crew_id, trip_id)
     ]
+
+
+def _unavailability(u: Unavailability) -> dict[str, Any]:
+    return {
+        "report_id": u.report_id,
+        "from": u.first_day.isoformat(),
+        "to": u.last_day.isoformat(),
+        "reason": u.reason,
+        "reported_by": u.reported_by,
+        "reported_at": _when(u.reported_at),
+    }
 
 
 def _callout(c: Callout) -> dict[str, Any]:
@@ -174,6 +200,8 @@ def _callout(c: Callout) -> dict[str, Any]:
         out["answer_by"] = _when(c.current.expires_at)
     if c.filled_by:
         out["filled_by"] = c.filled_by
+    if c.to_arrange:
+        out["to_arrange"] = list(c.to_arrange)
     if c.reason:
         out["reason"] = c.reason
     if c.options:
@@ -343,6 +371,7 @@ def crew_profile(ctx: Context, args: CrewProfile) -> dict[str, Any]:
             for d in crew.rostered()
             if d.release > op.now
         ][:10],
+        "unavailable": [_unavailability(u) for u in ctx.store.unavailability(crew.crew_id)],
         "standby_days": sorted(
             {day.isoformat() for s in op.standby.get(crew.crew_id, ()) for day in s.dates}
         ),
@@ -415,15 +444,7 @@ def find_cover_tool(ctx: Context, args: FindCover) -> dict[str, Any]:
     return {
         "trip_id": cover.trip_id,
         "seat": str(cover.seat),
-        "choices": [
-            {
-                **_choice(c),
-                **({"fatigue": f} if (f := _fatigue(op, c.crew_id, args.trip_id)) else {}),
-            }
-            if c.crew_id
-            else _choice(c)
-            for c in choices
-        ],
+        "choices": [_cover_choice(op, args.trip_id, c) for c in choices],
         "more_choices": len(cover.choices) - len(choices),
         "considered": cover.considered,
         "funnel": [
@@ -432,7 +453,25 @@ def find_cover_tool(ctx: Context, args: FindCover) -> dict[str, Any]:
         ],
         "facts": cover.facts,
         **({"why_not": explained} if explained else {}),
+        **({"withdrawn": _withdrawn(ctx, cover.withdrawn)} if cover.withdrawn else {}),
     }
+
+
+def _withdrawn(ctx: Context, withdrawn) -> list[dict[str, Any]]:
+    """Would-be choices who reported they cannot fly: shown struck through, never offered."""
+    reports = {u.report_id: u for u in ctx.store.unavailability()}
+    out = []
+    for w in withdrawn:
+        why = [reports[r] for r in w.report_ids if r in reports]
+        out.append(
+            {
+                **_choice(w.choice),
+                "withdrawn": True,
+                "reason": "; ".join(f"{u.reason} (reported by {u.reported_by})" for u in why)
+                or "reported unavailable",
+            }
+        )
+    return out
 
 
 class AbsenceImpact(BaseModel):
@@ -554,15 +593,23 @@ def assign_crew(ctx: Context, args: AssignCrew) -> dict[str, Any]:
         Seat(crew_id=args.with_crew_id, rank=s.rank) if s.crew_id == args.replace_crew_id else s
         for s in trip.crew
     ]
+    todo = arrangements(op, args.trip_id, choice)
     try:
         version = ctx.store.change_crew(
-            args.trip_id, crew, args.expected_version, ctx.caller.user, args.reason
+            args.trip_id,
+            crew,
+            args.expected_version,
+            ctx.caller.user,
+            args.reason + "".join(f"; {n}" for n in todo),
         )
     except StaleTrip as err:
         raise ToolError(
             f"{err}. Someone changed the trip; call trip_details and decide again."
         ) from err
-    return {"trip_id": args.trip_id, "version": version, "assigned": _choice(choice)}
+    out = {"trip_id": args.trip_id, "version": version, "assigned": _choice(choice)}
+    if todo:
+        out["to_arrange"] = list(todo)
+    return out
 
 
 class OpenIssues(BaseModel):
@@ -664,6 +711,47 @@ def decide_callout(ctx: Context, args: DecideCallout) -> dict[str, Any]:
     except CalloutError as err:
         raise ToolError(str(err)) from err
     return _callout(callout)
+
+
+class ReportUnavailable(BaseModel):
+    first_day: date
+    last_day: date
+    reason: str = Field(min_length=2, max_length=200, description="Such as 'sick' or 'family'")
+    crew_id: str | None = Field(
+        None, pattern=CREW_ID, description="For a controller reporting someone else"
+    )
+
+
+def report_unavailable(ctx: Context, args: ReportUnavailable) -> dict[str, Any]:
+    crew_id = ctx.caller.crew_id if ctx.caller.role is Role.CREW else args.crew_id
+    if not crew_id:
+        raise ToolError("say who cannot fly with crew_id")
+    if args.last_day < args.first_day:
+        raise ToolError("last_day is before first_day")
+    report = ctx.store.mark_unavailable(
+        crew_id, args.first_day, args.last_day, args.reason, ctx.caller.user
+    )
+    op = ctx.operation()
+    days = set(report.days())
+    affected = sorted(
+        {d.trip_id for d in op.state(crew_id).rostered() if d.day in days and d.report > op.now}
+    )
+    moved = ctx.desk.withdraw(crew_id) if ctx.desk is not None else []
+    return {
+        **_unavailability(report),
+        "crew_id": crew_id,
+        "own_trips_now_short": affected,
+        "callout_offers_withdrawn": [c.callout_id for c in moved],
+    }
+
+
+class ClearUnavailable(BaseModel):
+    report_id: str = Field(pattern=r"^U-[0-9a-f]{8}$")
+
+
+def clear_unavailable(ctx: Context, args: ClearUnavailable) -> dict[str, Any]:
+    report = ctx.store.clear_unavailable(args.report_id)
+    return {**_unavailability(report), "crew_id": report.crew_id, "cleared": True}
 
 
 @dataclass(frozen=True, slots=True)
@@ -775,6 +863,23 @@ TOOLS = (
         "legal, and only if the trip is still at expected_version.",
         AssignCrew,
         assign_crew,
+        frozenset({Role.CONTROLLER}),
+        writes=True,
+    ),
+    Tool(
+        "report_unavailable",
+        "Record that someone cannot fly on some dates (sick, family, stuck). From then on they "
+        "are never offered as cover for those dates, and any callout offer to them moves on.",
+        ReportUnavailable,
+        report_unavailable,
+        frozenset({Role.CONTROLLER, Role.CREW}),
+        writes=True,
+    ),
+    Tool(
+        "clear_unavailable",
+        "Remove an unavailability report, for someone who can fly again.",
+        ClearUnavailable,
+        clear_unavailable,
         frozenset({Role.CONTROLLER}),
         writes=True,
     ),

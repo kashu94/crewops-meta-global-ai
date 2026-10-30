@@ -10,13 +10,13 @@ import copy
 import threading
 from collections.abc import Iterable
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
-from crewops.domain import Seat, Trip
+from crewops.domain import Seat, Trip, Unavailability
 from crewops.domain.dataset import Dataset
 from crewops.engine import NotFound
-from crewops.store.roster import OperationCache, RosterChange, StaleTrip, _seats
+from crewops.store.roster import OperationCache, RosterChange, StaleTrip, _seats, new_report
 
 
 class MemoryStore(OperationCache):
@@ -27,6 +27,7 @@ class MemoryStore(OperationCache):
         self._meta: dict[str, Any] = {}
         self._trips: dict[str, tuple[Trip, int]] = {}
         self._changes: list[RosterChange] = []
+        self._unavailable: dict[str, Unavailability] = {}
         self._version = 0
 
     def is_empty(self) -> bool:
@@ -38,6 +39,7 @@ class MemoryStore(OperationCache):
             self._meta = {**copy.deepcopy(meta), "as_of": data.as_of.isoformat()}
             self._trips = {t.trip_id: (t, 1) for t in data.trips}
             self._changes = []
+            self._unavailable = {}
             self._version = 1
 
     def meta(self) -> dict[str, Any]:
@@ -88,6 +90,34 @@ class MemoryStore(OperationCache):
             )
             self._version += 1
         return version
+
+    def mark_unavailable(
+        self,
+        crew_id: str,
+        first_day: date,
+        last_day: date,
+        reason: str,
+        by: str,
+        at: datetime | None = None,
+    ) -> Unavailability:
+        self.operation().state(crew_id)
+        report = new_report(crew_id, first_day, last_day, reason, by, at)
+        with self._write_lock:
+            self._unavailable[report.report_id] = report
+            self._version += 1
+        return report
+
+    def clear_unavailable(self, report_id: str) -> Unavailability:
+        with self._write_lock:
+            report = self._unavailable.pop(report_id, None)
+            if report is None:
+                raise NotFound("unavailability report", report_id)
+            self._version += 1
+        return report
+
+    def unavailability(self, crew_id: str | None = None) -> list[Unavailability]:
+        found = sorted(self._unavailable.values(), key=lambda u: (u.reported_at, u.report_id))
+        return [u for u in found if crew_id is None or u.crew_id == crew_id]
 
     def changes(self, trip_id: str | None = None) -> list[RosterChange]:
         found = sorted(self._changes, key=lambda c: c.change_id)

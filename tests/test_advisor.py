@@ -82,6 +82,7 @@ def test_the_route_limits_the_tools_and_sets_the_effort(mem, seed):
         "search_crew",
         "find_trips",
         "trip_details",
+        "report_unavailable",
         "absence_impact",
         "find_cover",
         "check_legality",

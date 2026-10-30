@@ -76,5 +76,6 @@ async def test_a_crew_member_sees_only_their_own_tools_and_record(mem):
         "check_legality",
         "callout_status",
         "answer_callout",
+        "report_unavailable",
     }
     assert other.is_error

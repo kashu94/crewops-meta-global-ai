@@ -179,3 +179,20 @@ def test_a_trip_that_has_reported_goes_straight_to_the_desk(mem, outbox, clock):
 def test_only_crew_on_the_trip_can_be_replaced(desk):
     with pytest.raises(CalloutError, match="not on T-1018"):
         desk.open(TRIP, Rank.CAPTAIN, "C-1157", by="m.iyer")
+
+
+def test_accepting_a_positioned_seat_tells_the_desk_what_to_book(desk, mem, outbox, monkeypatch):
+    callout = open_callout(desk)
+    judge = desk._cover
+
+    def first_positions_in(c):
+        cover = judge(c)
+        first = replace(cover.choices[0], positioning_leg="KF502-2026-11-05", slip_hours=1.5)
+        return replace(cover, choices=(first, *cover.choices[1:]))
+
+    monkeypatch.setattr(desk, "_cover", first_positions_in)
+    desk.respond(callout.callout_id, LEGAL_CAPTAINS[0], accept=True)
+    assert callout.to_arrange[0].startswith("book a positioning seat on KF502")
+    assert "T-1018 departs 1h30m late" in callout.to_arrange[1]
+    assert "To do: book a positioning seat on KF502" in outbox.sent(DESK)[-1].body
+    assert "book a positioning seat" in mem.changes(TRIP)[0].reason

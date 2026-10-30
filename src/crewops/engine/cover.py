@@ -24,7 +24,8 @@ from datetime import timedelta
 from enum import StrEnum
 
 from crewops.domain import Rank
-from crewops.engine.legality import Assessment, assess
+from crewops.engine.clock import IST, spoken_hours
+from crewops.engine.legality import UNAVAILABLE, Assessment, assess
 from crewops.engine.operation import Operation
 from crewops.engine.rules import BASE, BLOCK, CERT, DUTY, FDP, NIGHT, RATING, REST, WEEKLY
 
@@ -40,6 +41,7 @@ FUNNEL = (
     ("in position", (BASE,), "cannot get to the departure, or standby window misses it"),
     ("rested", (REST, WEEKLY), "rest too short, weekly rest broken, or already flying"),
     ("within limits", (FDP, NIGHT, DUTY, BLOCK), "would break a duty or flying-hour limit"),
+    ("keeps the crew legal", (), "the late departure they cause would break a rule for others"),
 )
 """The order a controller thinks in. A candidate leaves at the first stage they fail."""
 
@@ -106,6 +108,15 @@ class Excluded:
 
 
 @dataclass(frozen=True, slots=True)
+class Withdrawn:
+    """Someone who would be a choice, but has reported they cannot fly. Kept so a screen can
+    show them struck through instead of making them vanish."""
+
+    choice: Choice
+    report_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class Stage:
     stage: str
     left: int
@@ -125,6 +136,7 @@ class Cover:
     considered: int
     facts: dict[str, float | int | str] = field(default_factory=dict)
     """Comparisons an answer may quote, worked out here."""
+    withdrawn: tuple[Withdrawn, ...] = ()
 
     @property
     def best(self) -> Choice:
@@ -141,6 +153,47 @@ def _stage_of(a: Assessment) -> tuple[str, tuple[str, ...], tuple[str, ...]]:
         if hit:
             return stage, tuple(f.rule_id for f in hit), tuple(f.detail for f in hit)
     return "within limits", tuple(f.rule_id for f in blockers), tuple(f.detail for f in blockers)
+
+
+def _delay_breaks(
+    op: Operation, trip_id: str, staying: list[str], hours: float, memo: dict
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Rules the rest of the crew would break if the trip left ``hours`` late.
+
+    A positioned or late-arriving replacement holds the departure, and everyone already on
+    the trip flies the longer day: a choice that is legal for them can still push a colleague
+    over a duty limit or cut their rest before the next trip. Only breaks the delay causes
+    count; someone already illegal is another seat's problem.
+    """
+    if hours not in memo:
+        rule_ids: list[str] = []
+        reasons: list[str] = []
+        for crew_id in staying:
+            if not assess(op, crew_id, trip_id).legal:
+                continue
+            for b in assess(op, crew_id, trip_id, delay_hours=hours).blockers:
+                rule_ids.append(b.rule_id)
+                name = op.state(crew_id).name
+                reasons.append(f"{name} ({crew_id}) would fail {b.rule_id}: {b.detail}")
+        memo[hours] = (tuple(dict.fromkeys(rule_ids)), tuple(reasons))
+    return memo[hours]
+
+
+def arrangements(op: Operation, trip_id: str, choice: Choice) -> tuple[str, ...]:
+    """What the desk must still arrange if this choice is taken: never left implicit."""
+    notes = []
+    if choice.positioning_leg:
+        leg = op.legs[choice.positioning_leg]
+        notes.append(
+            f"book a positioning seat on {leg.flight_no} ({leg.origin}-{leg.destination}, "
+            f"departs {leg.off_block.astimezone(IST):%d %b %H:%M} IST)"
+        )
+    if choice.slip_hours:
+        notes.append(
+            f"{trip_id} departs {spoken_hours(choice.slip_hours)} late: operations to retime "
+            "and inform passengers"
+        )
+    return tuple(notes)
 
 
 def _late_by(op: Operation, crew_id: str, trip_id: str) -> timedelta:
@@ -264,14 +317,42 @@ def find_cover(op: Operation, trip_id: str, seat: Rank, vacated_by: str | None =
 
     own: list[Choice] = []
     excluded: list[Excluded] = []
+    withdrawn: list[Withdrawn] = []
+    staying = [s.crew_id for s in trip.crew if s.crew_id != vacated_by]
+    memo: dict[float, tuple[tuple[str, ...], tuple[str, ...]]] = {}
+
+    def keeps_crew_legal(crew_id: str, name: str, a: Assessment) -> bool:
+        if not a.slip:
+            return True
+        rule_ids, reasons = _delay_breaks(op, trip_id, staying, a.slip_hours, memo)
+        if rule_ids:
+            late = f"departing {spoken_hours(a.slip_hours)} late: "
+            excluded.append(
+                Excluded(
+                    crew_id,
+                    name,
+                    "keeps the crew legal",
+                    rule_ids,
+                    tuple(late + r for r in reasons),
+                )
+            )
+        return not rule_ids
+
     candidates = [c for c in op.crew_of(trip.airline, seat) if c.crew_id not in on_trip]
     for crew in candidates:
         a = _judge(op, crew.crew_id, trip_id)
         if a.legal:
-            own.append(_choice(op, a, _own_way(a)))
-        else:
-            stage, rule_ids, reasons = _stage_of(a)
-            excluded.append(Excluded(crew.crew_id, crew.name, stage, rule_ids, reasons))
+            if keeps_crew_legal(crew.crew_id, crew.name, a):
+                own.append(_choice(op, a, _own_way(a)))
+            continue
+        stage, rule_ids, reasons = _stage_of(a)
+        excluded.append(Excluded(crew.crew_id, crew.name, stage, rule_ids, reasons))
+        if all(b.detail.startswith(UNAVAILABLE) for b in a.blockers):
+            others = {k: v for k, v in op.unavailable.items() if k != crew.crew_id}
+            judged = _judge(replace(op, unavailable=others), crew.crew_id, trip_id)
+            if judged.legal:
+                ids = tuple(dict.fromkeys(r for _, r in op.unavailable[crew.crew_id]))
+                withdrawn.append(Withdrawn(_choice(op, judged, _own_way(judged)), ids))
 
     substitutes: list[Choice] = []
     if seat.is_pilot and len(own) < SUBSTITUTES_BELOW:
@@ -282,7 +363,7 @@ def find_cover(op: Operation, trip_id: str, seat: Rank, vacated_by: str | None =
         for crew in op.crew_of(trip.airline, other):
             if crew.crew_id in qualified and crew.crew_id not in on_trip:
                 a = _judge(op, crew.crew_id, trip_id)
-                if a.legal:
+                if a.legal and keeps_crew_legal(crew.crew_id, crew.name, a):
                     substitutes.append(_choice(op, a, way))
 
     choices = _order(own) + _order(substitutes)
@@ -308,4 +389,5 @@ def find_cover(op: Operation, trip_id: str, seat: Rank, vacated_by: str | None =
         funnel=tuple(funnel),
         considered=len(candidates),
         facts=_facts(choices),
+        withdrawn=tuple(sorted(withdrawn, key=lambda w: (w.choice.cost, w.choice.crew_id or ""))),
     )

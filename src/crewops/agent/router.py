@@ -35,7 +35,14 @@ LOOKUPS = ("search_crew", "find_trips", "trip_details")
 CALLOUTS = ("start_callout", "callout_status")
 
 TOOLS_FOR: dict[Intent, tuple[str, ...]] = {
-    Intent.ABSENCE: (*LOOKUPS, "absence_impact", "find_cover", "check_legality", *CALLOUTS),
+    Intent.ABSENCE: (
+        *LOOKUPS,
+        "report_unavailable",
+        "absence_impact",
+        "find_cover",
+        "check_legality",
+        *CALLOUTS,
+    ),
     Intent.DELAY: (*LOOKUPS, "delay_impact", "find_cover", "check_legality"),
     Intent.COVER: (
         *LOOKUPS,
@@ -54,6 +61,8 @@ TOOLS_FOR: dict[Intent, tuple[str, ...]] = {
         *CALLOUTS,
         "answer_callout",
         "decide_callout",
+        "report_unavailable",
+        "clear_unavailable",
     ),
     Intent.LOOKUP: (*LOOKUPS, "crew_profile", "roster_changes", "open_issues", "callout_status"),
     Intent.OTHER: (),
