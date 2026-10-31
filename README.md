@@ -216,9 +216,10 @@ question -> screen -> route -> plan with tools -> check every figure -> answer
 ```
 
 1. **Screen.** Known injection phrasings and over-long input are refused before any model
-   reads them; Llama Prompt Guard 2 adds a classifier when `PROMPT_GUARD_URL` is set.
+   reads them.
 2. **Route.** Muse Spark Open sorts the question into absence, delay, cover, legality, change,
-   lookup or out of scope, from a few worked examples. The route decides which tools the
+   lookup or out of scope, from a few worked examples, and flags attempts to steer the
+   assistant (new instructions, role play, asking for its rules), which are then refused. The route decides which tools the
    planner sees and how hard it reasons. On phrasings it had not seen ("Shreya's mother is in
    hospital, she can't make the 6am") it routed 8 of 8 correctly; keyword rules, kept as the
    fallback, got 3.
@@ -247,7 +248,7 @@ Set `CREWOPS_USAGE_LOG` to a file path to keep every model call's tokens, reason
 
 * `memory` (the default): the demo operation, loaded at start. Changes last until restart.
   Nothing to set up.
-* `dynamodb`: one DynamoDB table (`crewops-meta-<stage>-operation`, region `ap-south-1`).
+* `dynamodb`: one DynamoDB table (`crewops-meta-<stage>-operation`, region `ap-southeast-2`).
 
 The tests run against both, with DynamoDB simulated, so they need no AWS account. Load the
 demo operation into the deployed table with:
@@ -294,10 +295,12 @@ Scorecard tab in the console; rerun it with `uv run python -m crewops.eval.score
 
 ## Deploying to AWS
 
-One stack, `crewops-meta-<stage>` in ap-south-1: DynamoDB, Lambda behind a function URL (the
-API, console and board), a second Lambda every 10 minutes (callout deadlines, watch alerts by
-email through SNS, the shift brief), S3, and Cognito with the demo accounts. No Docker is
-needed: the bundle is built from Linux wheels.
+One stack, `crewops-meta-<stage>` in ap-southeast-2 (Sydney): DynamoDB, Lambda behind a
+function URL (the API, console and board), a second Lambda every 10 minutes (callout
+deadlines, watch alerts by email through SNS, the shift brief), S3, and Cognito with the demo
+accounts. It is bootstrapped with its own toolkit stack (`CrewOpsMetaToolkit`, qualifier
+`crewmeta`), so it shares nothing with other CDK projects in the account. No Docker is needed:
+the bundle is built from Linux wheels.
 
 ```bash
 uv sync --group infra
@@ -306,8 +309,8 @@ uv run python scripts/deploy.py               # build and deploy; prints the URL
 ```
 
 The script refuses to run unless the AWS profile is `crewops-meta`, the identity is the
-`crewops-meta-deployer` user and the region is ap-south-1. Model keys come from `.env` and are
-never committed. A daily allowance (`CREWOPS_DAILY_ASKS`) protects the model credits on a
+`crewops-meta-deployer` user and the region is ap-southeast-2. Model keys come from `.env` and
+are never committed. A daily allowance (`CREWOPS_DAILY_ASKS`) protects the model credits on a
 public demo.
 
 ## Scope and limits

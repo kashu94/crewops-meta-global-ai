@@ -5,8 +5,9 @@
     uv run python scripts/deploy.py --destroy     # remove the stack and its data
 
 It refuses to run unless the AWS profile is ``crewops-meta``, the signed-in identity is the
-``crewops-meta-deployer`` user, and the region is ap-south-1. Every stack it touches is named
-``crewops-meta-<stage>``, so nothing else in the account can be changed by it.
+``crewops-meta-deployer`` user, and the region is ap-southeast-2. Every stack it touches is named
+``crewops-meta-<stage>``, and it bootstraps with its own toolkit stack (``CrewOpsMetaToolkit``)
+and qualifier, so nothing else in the account can be changed by it.
 
 Settings come from ``.env``: the model keys, ``CREWOPS_ALERT_EMAIL`` for desk alerts, and
 ``CREWOPS_DEMO_PASSWORD`` for the demo accounts (made up and saved there on first deploy).
@@ -25,7 +26,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE = "crewops-meta"
-REGION = "ap-south-1"
+REGION = "ap-southeast-2"
+# CDK's own bootstrap stack, kept apart from any other project's CDKToolkit in the account.
+TOOLKIT = "CrewOpsMetaToolkit"
+QUALIFIER = "crewmeta"
 DEPLOYER = ":user/crewops-meta-deployer"
 CDK = "aws-cdk@latest"
 
@@ -108,24 +112,37 @@ def main() -> None:
     }
     env["CREWOPS_DEMO_PASSWORD"] = ensure_password(values)
     cdk = [npx(), "--yes", CDK]
-    common = ["--profile", PROFILE, "-c", f"stage={args.stage}"]
+    common = ["--profile", PROFILE, "--toolkit-stack-name", TOOLKIT, "-c", f"stage={args.stage}"]
     stack = f"crewops-meta-{args.stage}"
 
     if args.bootstrap:
+        # From the repo root, away from infra/cdk.json: bootstrapping needs no app.
         subprocess.run(
-            [*cdk, "bootstrap", f"aws://{account}/{REGION}", "--profile", PROFILE],
+            [
+                *cdk,
+                "bootstrap",
+                f"aws://{account}/{REGION}",
+                "--toolkit-stack-name",
+                TOOLKIT,
+                "--qualifier",
+                QUALIFIER,
+                "--profile",
+                PROFILE,
+            ],
             check=True,
-            cwd=ROOT / "infra",
+            cwd=ROOT,
             env=env,
         )
         return
+
+    # The app is synthesised for deploy and destroy alike, and it needs the bundle.
+    subprocess.run([sys.executable, str(ROOT / "scripts" / "build_lambda.py")], check=True)
     if args.destroy:
         subprocess.run(
             [*cdk, "destroy", stack, "--force", *common], check=True, cwd=ROOT / "infra", env=env
         )
         return
 
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "build_lambda.py")], check=True)
     outputs = ROOT / "build" / "outputs.json"
     subprocess.run(
         [

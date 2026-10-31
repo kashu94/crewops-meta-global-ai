@@ -1,4 +1,4 @@
-"""Everything CrewOps needs on AWS, named ``crewops-meta-<stage>-...`` in ap-south-1.
+"""Everything CrewOps needs on AWS, named ``crewops-meta-<stage>-...`` in ap-southeast-2.
 
 * DynamoDB: the operation, callouts, conversations and notices, in one table.
 * Lambda behind a function URL: the API, the web console and the TV board. A function URL

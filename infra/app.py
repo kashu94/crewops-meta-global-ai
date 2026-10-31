@@ -14,7 +14,9 @@ CrewOpsStack(
     app,
     name,
     stage=stage,
-    env=cdk.Environment(account=os.environ["CDK_DEFAULT_ACCOUNT"], region="ap-south-1"),
+    env=cdk.Environment(account=os.environ["CDK_DEFAULT_ACCOUNT"], region="ap-southeast-2"),
+    # Matches the qualifier scripts/deploy.py bootstraps with.
+    synthesizer=cdk.DefaultStackSynthesizer(qualifier="crewmeta"),
 )
 cdk.Tags.of(app).add("project", "crewops-meta")
 app.synth()
