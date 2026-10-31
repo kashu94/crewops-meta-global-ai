@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CrewOps Board (Meta)</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%231d4ed8%27/%3E%3C/svg%3E">
+  <style>
+    :root { --bg: #0b1017; --panel: #141c26; --ink: #eef2f7; --muted: #93a1b3; --bad: #ff7b72; --warn: #f2b45c; --good: #56d38a; --line: #243042; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 22px/1.4 system-ui, sans-serif; }
+    header { display: flex; justify-content: space-between; align-items: baseline; padding: 1.2rem 2rem; border-bottom: 1px solid var(--line); }
+    header b { font-size: 1.6rem; }
+    main { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1.5rem; padding: 1.5rem 2rem; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } body { font-size: 18px; } }
+    .strip { display: flex; flex-wrap: wrap; gap: .75rem; padding: 0 2rem; }
+    .stat { background: var(--panel); border-radius: 10px; padding: .5rem 1rem; }
+    .stat b { display: block; font-size: 1.6rem; }
+    .stat span { color: var(--muted); font-size: .7rem; letter-spacing: .05em; }
+    .card { border-radius: 14px; background: var(--panel); border-left: 8px solid var(--line); margin-bottom: 1.5rem; }
+    .card .text { padding: 1.2rem 1.4rem; }
+    table { width: 100%; border-collapse: collapse; } td, th { text-align: left; padding: .2rem .4rem; }
+    .zero { color: var(--bad); font-weight: 700; }
+    .card h1 { margin: 0 0 .4rem; font-size: 2rem; }
+    .card li { margin: .2rem 0; }
+    section { background: var(--panel); border-radius: 14px; padding: 1.1rem 1.4rem; margin-bottom: 1.5rem; }
+    h2 { margin: 0 0 .6rem; font-size: 1.1rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .row { padding: .45rem 0; border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .tag { font-size: .75rem; padding: .05rem .5rem; border-radius: 999px; border: 1px solid currentColor; margin-right: .5rem; }
+    .bad { color: var(--bad); } .warn { color: var(--warn); } .good { color: var(--good); } .muted { color: var(--muted); }
+    .struck { text-decoration: line-through; color: var(--muted); }
+    .mood-critical h1 { color: var(--bad); } .mood-busy h1 { color: var(--warn); } .mood-calm h1 { color: var(--good); }
+  </style>
+</head>
+<body>
+  <header><b>CrewOps Board (Meta)</b><span class="muted" id="clock"></span></header>
+  <div class="strip" id="strip"></div>
+  <main>
+    <div>
+      <div class="card" id="card"><div class="text"><h1>Loading…</h1></div></div>
+      <section><h2>Controller desks</h2><div id="desks" class="muted">No callouts in progress.</div></section>
+      <section><h2>Callouts</h2><div id="callouts" class="muted">None.</div></section>
+    </div>
+    <div>
+      <section><h2>What the watch found</h2><div id="issues" class="muted">Nothing found.</div></section>
+      <section><h2>Next departures</h2><div id="departures" class="muted">None.</div></section>
+      <section><h2>Standby on call (today and tomorrow)</h2><div id="standby" class="muted"></div></section>
+      <section><h2>Latest roster changes</h2><div id="changes" class="muted">None.</div></section>
+    </div>
+  </main>
+  <script>
+    "use strict";
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    let token = null;
+    try { token = localStorage.getItem("crewops.token"); } catch { /* private window */ }
+    async function load() {
+      const h = token ? { Authorization: "Bearer " + token } : { "X-Demo-User": "ops.board", "X-Demo-Role": "viewer" };
+      const res = await fetch("/api/board", { headers: h });
+      if (!res.ok) { document.getElementById("clock").textContent = "Board unavailable"; return; }
+      const b = await res.json();
+      document.getElementById("clock").textContent = b.clock;
+      const brief = b.brief;
+      if (brief) {
+        const color = { calm: "var(--good)", busy: "var(--warn)", critical: "var(--bad)" }[brief.mood];
+        const card = document.getElementById("card");
+        card.className = "card mood-" + esc(brief.mood);
+        card.style.borderLeftColor = color;
+        card.innerHTML = `<div class="text"><h1>${esc(brief.headline)}</h1><ul>${brief.lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul><div class="muted">${brief.written_by === "muse-wonder" ? "Written by Muse Wonder; every figure checked against the engine" : "Built from the engine's facts"}</div></div>`;
+      }
+      const n = b.next_24h;
+      if (n) {
+        const stat = (v, l, c) => `<div class="stat"><b class="${c || ""}">${esc(v)}</b><span>${l}</span></div>`;
+        document.getElementById("strip").innerHTML = stat(n.flights, "FLIGHTS NEXT 24H") + stat(n.passengers.toLocaleString("en-IN"), "PASSENGERS") + stat(n.crew_out, "CREW OUT", n.crew_out ? "warn" : "") + stat(n.open_callouts, "OPEN CALLOUTS", n.open_callouts ? "warn" : "") + stat(n.illegal, "ILLEGAL", n.illegal ? "bad" : "good") + stat(n.fatigue, "FATIGUE", n.fatigue ? "warn" : "") + stat(n.certificates, "CERTS DUE");
+      }
+      document.getElementById("desks").innerHTML = (b.desks || []).length ? b.desks.map((d) => `<div class="row"><b>${esc(d.controller)}</b> <span class="muted">${d.open} open · ${d.filled} filled${d.to_approve ? " · " + d.to_approve + " to approve" : ""}</span></div>`).join("") : "No callouts in progress.";
+      document.getElementById("departures").innerHTML = (b.departures || []).length ? b.departures.slice(0, 6).map((d) => `<div class="row"><b>${esc(d.flight)}</b> ${esc(d.route)} <span class="muted">${esc(d.departs)} IST · ${esc(d.tail)} · ${d.booked} booked</span> <span class="tag ${d.state === "affected" ? "bad" : "good"}">${esc(d.state)}</span></div>`).join("") : "None.";
+      const sb = b.standby || [];
+      const ranks = ["Captain", "First Officer", "Purser", "Cabin Crew"];
+      const airlines = [...new Set(sb.map((x) => x.airline))];
+      document.getElementById("standby").innerHTML = `<table><tr><th></th>${ranks.map((r) => `<th class="muted">${esc(r)}</th>`).join("")}</tr>${airlines.map((a) => `<tr><td><b>${esc(a)}</b></td>${ranks.map((r) => { const on = (sb.find((x) => x.airline === a && x.rank === r) || {}).on_call || 0; return `<td class="${on ? "" : "zero"}">${on}</td>`; }).join("")}</tr>`).join("")}</table>`;
+      document.getElementById("issues").innerHTML = b.issues.length ? b.issues.map((i) => `<div class="row"><span class="tag ${i.kind === "illegal" ? "bad" : i.kind === "fatigue" ? "warn" : "muted"}">${esc(i.kind)}</span>${esc(i.name)} ${i.trip_id ? "· " + esc(i.trip_id) : ""}<div class="muted">${esc(i.detail)}</div></div>`).join("") : "Nothing found.";
+      document.getElementById("callouts").innerHTML = b.callouts.length ? b.callouts.map((c) => `<div class="row"><b>${esc(c.trip_id)} ${esc(c.seat)}</b> <span class="tag ${c.status === "filled" ? "good" : c.status === "offered" ? "muted" : "warn"}">${esc(c.status.replace("_", " "))}</span><div>${c.asked.map((o) => `<span class="${["declined", "unavailable", "no answer", "no longer legal"].includes(o.answer) ? "struck" : ""}">${esc(o.name)}</span> <span class="muted">${esc(o.answer)}</span>`).join(" · ")}</div></div>`).join("") : "None.";
+      document.getElementById("changes").innerHTML = b.changes.length ? b.changes.slice().reverse().map((c) => `<div class="row">${esc(c.trip_id)} v${c.version}: +${c.added.map(esc).join(", ")} −${c.removed.map(esc).join(", ")} <span class="muted">by ${esc(c.by)}, ${esc(c.at)}</span></div>`).join("") : "None.";
+    }
+    load().catch(() => {});
+    setInterval(() => load().catch(() => {}), 10000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CrewOps Console</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%231d4ed8%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+  <header class="bar">
+    <div class="brand">CrewOps <span class="muted" id="clock"></span></div>
+    <nav class="tabs" role="tablist">
+      <button data-tab="ask" class="on">Ask</button>
+      <button data-tab="desk">Desk</button>
+      <button data-tab="cover">Cover</button>
+      <button data-tab="photos">Photos</button>
+      <button data-tab="score">Scorecard</button>
+      <a href="/board" target="_blank" rel="noopener">TV board</a>
+    </nav>
+    <div class="who">
+      <select id="identity" aria-label="Demo identity" hidden></select>
+      <span id="signed" class="muted"></span>
+      <button id="signout" class="link" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <section id="login" class="panel narrow" hidden>
+    <h2>Sign in</h2>
+    <p class="muted">Use one of the demo accounts listed in the README.</p>
+    <form id="login-form">
+      <label>Username <input name="username" autocomplete="username" required></label>
+      <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+      <p id="login-error" class="bad"></p>
+    </form>
+  </section>
+
+  <main id="app" hidden>
+    <section data-panel="ask" class="grid two">
+      <div class="panel">
+        <h2>Ask the crew desk</h2>
+        <form id="ask-form">
+          <textarea id="question" rows="3" placeholder="Pooja Chowdary is unwell from 5 to 8 November. How should we cover it?"></textarea>
+          <div class="row">
+            <button type="submit" id="ask-btn">Ask</button>
+            <button type="button" id="mic" title="Hold a conversation by voice">🎙 Speak</button>
+            <select id="lang" aria-label="Spoken language">
+              <option value="English">English</option>
+              <option value="Hindi,English">Hindi</option>
+              <option value="Telugu,English">Telugu</option>
+              <option value="Hindi,Telugu,English">Mixed</option>
+            </select>
+            <label class="check"><input type="checkbox" id="speak"> Read answers aloud</label>
+            <button type="button" id="new-convo" class="link">New conversation</button>
+          </div>
+          <p id="mic-state" class="muted"></p>
+        </form>
+        <div id="answers"></div>
+      </div>
+      <div class="panel">
+        <h2>How the last answer was made</h2>
+        <div id="trace" class="muted">Ask something to see the route, every tool call, and the evidence check.</div>
+      </div>
+    </section>
+
+    <section data-panel="desk" class="grid two" hidden>
+      <div class="panel">
+        <h2>What the watch found</h2>
+        <div id="issues" class="list"></div>
+      </div>
+      <div class="panel">
+        <h2>Callouts</h2>
+        <div id="callouts" class="list"></div>
+        <h2>Report unavailable</h2>
+        <form id="unavail-form" class="stack">
+          <input name="crew_id" placeholder="Crew id, such as C-1157" pattern="C-\d{4}">
+          <div class="row">
+            <label>From <input name="first_day" type="date" required></label>
+            <label>To <input name="last_day" type="date" required></label>
+          </div>
+          <input name="reason" placeholder="Reason, such as fever" required minlength="2">
+          <button type="submit">Report</button>
+          <p id="unavail-result" class="muted"></p>
+        </form>
+        <h2>Messages</h2>
+        <div id="notices" class="list small"></div>
+      </div>
+    </section>
+
+    <section data-panel="cover" hidden>
+      <div class="panel">
+        <h2>Find cover</h2>
+        <form id="cover-form" class="row">
+          <input name="trip_id" placeholder="Trip, such as T-1018" required pattern="T-\d{4}" value="T-1018">
+          <select name="rank">
+            <option>Captain</option><option>First Officer</option><option>Purser</option><option>Cabin Crew</option>
+          </select>
+          <input name="vacated_by" placeholder="Who left, such as C-1111" pattern="C-\d{4}" value="C-1111">
+          <button type="submit">Find</button>
+        </form>
+        <div id="cover"></div>
+      </div>
+    </section>
+
+    <section data-panel="photos" class="grid two" hidden>
+      <div class="panel">
+        <h2>Send a photo</h2>
+        <form id="photo-form" class="stack">
+          <select name="kind">
+            <option value="defect">Aircraft defect</option>
+            <option value="sick_note">Sick note</option>
+            <option value="disruption">Departures board or delay notice</option>
+            <option value="roster_swap">Roster swap request</option>
+            <option value="certificate">Certificate</option>
+          </select>
+          <input name="tail" placeholder="Aircraft, such as VT-SYB (for defects)">
+          <input name="image" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required>
+          <button type="submit">Check photo</button>
+        </form>
+        <p class="muted">Photos go through fixed checks: picture quality first, then a fixed form, then rules in code. Nothing is changed by a photo; a person confirms.</p>
+      </div>
+      <div class="panel">
+        <h2>Result</h2>
+        <div id="photo-result" class="muted">No photo yet.</div>
+        <canvas id="photo-canvas" hidden></canvas>
+      </div>
+    </section>
+
+    <section data-panel="score" hidden>
+      <div class="panel">
+        <h2>Scorecard</h2>
+        <div id="score" class="muted">Loading.</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js?v=2"></script>
+</body>
+</html>
