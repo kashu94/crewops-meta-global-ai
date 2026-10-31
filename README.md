@@ -23,13 +23,34 @@ November 4, 2026). This README grows with the code.
 
 ## How Meta's models are used
 
-| Job | Model |
+| Job | Model | How |
+|---|---|---|
+| Planning each answer: which engine tools to call, then the reply | **Muse Spark 1.3** | Tool calling, reasoning effort set per kind of question, prompt caching of the rule book |
+| Sorting each question (absence, delay, cover, legality, change, lookup) and flagging attacks on the assistant | **Muse Spark Open** (open weights, on Baseten) | Strict JSON-schema structured output; 8 of 8 unseen phrasings routed right where keyword rules got 3 |
+| Reading photos: sick notes, roster swaps, certificates, departures boards, aircraft defects | **Muse Spark 1.3 vision** | Each photo fills a fixed form (structured output); code decides what happens |
+| Finding the damage in a defect photo | **SAM 3.1** | Streamed segmentation; its box and confidence are one of the signals behind the confidence level |
+| Spoken questions, including Hindi, Telugu and mixed speech | **Muse Voice Transcribe** | Push-to-talk WAV recorded in the browser, with a language hint |
+| The shift brief on the ops board | **Muse Wonder** | Structured output, then the same evidence check as every answer |
+| Optional artwork for the brief (`CREWOPS_BOARD_ART`) | **Muse Image** | One picture per mood per day, no text in it |
+
+No model ever does the arithmetic: every crew id, hour, cost and verdict comes from the rules
+engine, and a deterministic check compares each figure in an answer with the tools' results.
+
+## Try it
+
+| Where | What |
 |---|---|
-| Choosing which engine tools to call, drafting the answer | Muse Spark 1.3 (Meta Model API) |
-| Reading photos of sick notes, handwritten roster swaps and defect slips | Muse Spark 1.3 vision |
-| Spoken questions from the crew desk | Muse Voice Transcribe |
-| Marking the damaged area on an aircraft defect photo | SAM 3.1 |
-| Fast triage and plain-language rewrites | Muse Spark Open (open weights, partner inference) |
+| Web console (`/`) | Ask by text or voice, see how each answer was made (route, tool calls, evidence check, tokens), run the desk (issues, callouts, unavailability), find cover with withdrawn crew struck through, check photos, read the scorecard |
+| Ops board (`/board`) | The ops-room wall: next 24 hours, shift brief, controller desks, callouts, the watch, departures, standby cover. Read-only, no sign-in |
+| Fire TV (`tv/`) | The same board as a Vega OS app, **CrewOps Board (Meta)** |
+| MCP server | The tools, with roles, for any MCP client |
+| Terminal | `uv run python -m crewops.agent.chat` |
+
+Run it locally (demo data in memory, pick a demo identity at the top right):
+
+```bash
+uv run python -m crewops.api        # http://localhost:8000
+```
 
 ## The rules
 
@@ -243,6 +264,59 @@ and add `--create-table` to the first load.
 Every change to a trip's crew is checked against the version of the trip the caller last
 read, in the same transaction that records the change, so two controllers can never overwrite
 each other's change, and each change is kept with who made it and why.
+
+## Photos
+
+Every photo passes fixed gates, and code, not the model, decides the outcome: picture quality
+measured from the pixels (blur and darkness send it back before any model is asked), then a
+fixed form filled by Muse Spark, then the rules. The outcome is `rejected` (not what it should
+be), `reshoot` (with the reason), `confirm` (a person or aircraft that does not match) or
+`draft`. A draft is a proposal a person confirms with one click; nothing changes because of a
+photo.
+
+| Photo | What it becomes |
+|---|---|
+| Sick note | A proposed unavailability report for the named crew member and dates |
+| Departures board or delay notice | Each delayed flight matched to its trip, with a delay-impact check to run |
+| Aircraft defect | A draft defect report needing engineer confirmation, with SAM 3.1's box on the damage and a high, medium or low confidence built from picture quality, the model's view, whether SAM found the damage and whether the tail matches |
+| Roster swap, certificate | Checked against the roster and the certificates on file |
+
+The aircraft is chosen by the reporter; a tail number in the photo is only a cross-check. A
+clear photo of no damage is reported as "no damage identified, inspect in person", never as a
+clearance.
+
+## Scorecard
+
+28 scripted crew-desk questions run against the live models and scored by code: routing, the
+tools used, what the answer names, the evidence check, refusals and role limits. Each starts
+from a fresh copy of the demo operation. See [docs/scorecard.md](docs/scorecard.md), or the
+Scorecard tab in the console; rerun it with `uv run python -m crewops.eval.scorecard`.
+
+## Deploying to AWS
+
+One stack, `crewops-meta-<stage>` in ap-south-1: DynamoDB, Lambda behind a function URL (the
+API, console and board), a second Lambda every 10 minutes (callout deadlines, watch alerts by
+email through SNS, the shift brief), S3, and Cognito with the demo accounts. No Docker is
+needed: the bundle is built from Linux wheels.
+
+```bash
+uv sync --group infra
+uv run python scripts/deploy.py --bootstrap   # once per account and region
+uv run python scripts/deploy.py               # build and deploy; prints the URLs
+```
+
+The script refuses to run unless the AWS profile is `crewops-meta`, the identity is the
+`crewops-meta-deployer` user and the region is ap-south-1. Model keys come from `.env` and are
+never committed. A daily allowance (`CREWOPS_DAILY_ASKS`) protects the model credits on a
+public demo.
+
+## Scope and limits
+
+Domestic Indian regional operations under simplified DGCA duty rules; other regulators can be
+added as rule files. Not modelled yet: pilot recency, rules on pairing two inexperienced
+pilots, cabin crew language qualifications, and recording a positioning flight as its own
+duty (the desk is told to book the seat). Video defect reports and a fine-tuned Muse Glimmer
+router are next.
 
 ## Disclaimer
 

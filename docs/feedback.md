@@ -59,3 +59,25 @@ what would have helped.
   logged next to its completion tokens.
 - **Would help:** A separate limit for reasoning and for the visible answer, or a
   `finish_reason` that says the budget ran out while reasoning.
+
+### 2026-10-31 · SAM 3.1 · A request without streaming returns an empty result
+
+- **Tried:** Segmenting a defect photo with `sam-3.1` on the Responses API, `stream` off.
+- **Happened:** HTTP 200, status `completed`, and an empty output text. The same request with
+  `stream: true` returned the boxes and masks.
+- **Cost:** It looked like "no match"; we only found the cause by trying the streaming form
+  from the docs' example.
+- **Workaround:** Always stream SAM requests and collect the `response.output_text.delta`
+  events.
+- **Would help:** Either the same output without streaming, or an error saying streaming is
+  required.
+
+### 2026-10-31 · SAM 3.1 · Concept prompts are sensitive to wording
+
+- **Tried:** Locating the damage in a photo of a dented engine panel.
+- **Happened:** "dent" matched nothing; "dented area" matched the whole panel; "damage"
+  matched the dent itself.
+- **Workaround:** Try the phrase Muse Spark used to describe the damage, then "damage", then
+  the damage type, and keep the most confident box that covers less than 60% of the photo.
+- **Would help:** Guidance on phrasing for surface defects (dents, cracks, scratches), which
+  are not "objects" in the usual sense.
