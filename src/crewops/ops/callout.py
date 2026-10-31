@@ -26,6 +26,8 @@ from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Protocol
 
+from pydantic import TypeAdapter
+
 from crewops.domain import Rank, Seat, Trip
 from crewops.engine.cover import Choice, TripStarted, arrangements, find_cover
 from crewops.engine.operation import NotFound, Operation
@@ -116,7 +118,22 @@ class Roster(Protocol):
     ) -> int: ...
 
 
+class Docs(Protocol):
+    def put_doc(self, kind: str, key: str, body: dict) -> None: ...
+    def docs(self, kind: str) -> list[dict]: ...
+
+
+_callout = TypeAdapter(Callout)
+
+
 class CalloutDesk:
+    """Every callout in progress.
+
+    Kept in memory, or with ``docs`` in the store, read afresh at the start of every call and
+    written after every change, so a desk on a short-lived server picks up where another left
+    off.
+    """
+
     def __init__(
         self,
         store: Roster,
@@ -124,6 +141,7 @@ class CalloutDesk:
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
         respond_within: timedelta = RESPOND_WITHIN,
         operation_clock: Callable[[], datetime | None] = lambda: None,
+        docs: Docs | None = None,
     ) -> None:
         self.store = store
         self.outbox = outbox
@@ -131,19 +149,39 @@ class CalloutDesk:
         self.respond_within = respond_within
         self.operation_clock = operation_clock
         """The time the roster is judged at; ``None`` uses the operation's own clock."""
+        self.docs = docs
         self._lock = threading.RLock()
         self._callouts: dict[str, Callout] = {}
+
+    def _sync(self) -> None:
+        if self.docs is not None:
+            self._callouts = {
+                d["callout_id"]: _callout.validate_python(d) for d in self.docs.docs("callout")
+            }
+
+    def _save(self, *callouts: Callout) -> None:
+        if self.docs is not None:
+            for c in callouts:
+                self.docs.put_doc("callout", c.callout_id, _callout.dump_python(c, mode="json"))
 
     # -- reading ----------------------------------------------------------------------------
 
     def get(self, callout_id: str) -> Callout:
+        """The callout as it stands now. Methods that change it read it once, at their start."""
+        with self._lock:
+            self._sync()
+            return self._get(callout_id)
+
+    def _get(self, callout_id: str) -> Callout:
         try:
             return self._callouts[callout_id]
         except KeyError:
             raise NotFound("callout", callout_id) from None
 
     def all(self) -> list[Callout]:
-        return sorted(self._callouts.values(), key=lambda c: c.opened_at)
+        with self._lock:
+            self._sync()
+            return sorted(self._callouts.values(), key=lambda c: c.opened_at)
 
     def offers_for(self, crew_id: str) -> list[Callout]:
         return [c for c in self.all() if c.current and c.current.crew_id == crew_id]
@@ -156,6 +194,7 @@ class CalloutDesk:
         Opening the same seat twice returns the callout already running.
         """
         with self._lock:
+            self._sync()
             for c in self._callouts.values():
                 if (c.trip_id, c.rank, c.vacated_by) == (
                     trip_id,
@@ -180,6 +219,7 @@ class CalloutDesk:
             )
             self._callouts[callout.callout_id] = callout
             self._offer_next(callout)
+            self._save(callout)
             return callout
 
     def _cover(self, callout: Callout):
@@ -194,7 +234,14 @@ class CalloutDesk:
             self._needs_decision(callout, [], "the trip has already reported")
             return
         asked = {o.crew_id for o in callout.offers}
-        crewed = [c for c in cover.choices if c.crew_id and c.crew_id not in asked]
+        # Someone already holding an open offer for another seat is not offered a second one
+        # at the same time; they come back into the running if they decline that one.
+        busy = {
+            c.current.crew_id
+            for c in self._callouts.values()
+            if c.callout_id != callout.callout_id and c.current is not None
+        }
+        crewed = [c for c in cover.choices if c.crew_id and c.crew_id not in asked | busy]
         if not crewed:
             options = [c for c in cover.choices if c.way.value in NO_CREW_WAYS]
             why = "every legal crew member has been asked" if asked else "no legal crew"
@@ -252,7 +299,8 @@ class CalloutDesk:
 
     def respond(self, callout_id: str, crew_id: str, accept: bool) -> Callout:
         with self._lock:
-            callout = self.get(callout_id)
+            self._sync()
+            callout = self._get(callout_id)
             offer = callout.current
             if offer is None or offer.crew_id != crew_id:
                 raise CalloutError(f"there is no open offer for {crew_id} on {callout_id}")
@@ -260,12 +308,14 @@ class CalloutDesk:
             if now > offer.expires_at:
                 self._answer(offer, "no answer", offer.expires_at)
                 self._offer_next(callout)
+                self._save(callout)
                 raise CalloutError("the offer expired and has gone to the next crew member")
             if not accept:
                 self._answer(offer, "declined", now)
                 self._offer_next(callout)
-                return callout
-            self._fill(callout, offer, now)
+            else:
+                self._fill(callout, offer, now)
+            self._save(callout)
             return callout
 
     def _answer(self, offer: Offer, answer: str, at: datetime) -> None:
@@ -336,6 +386,7 @@ class CalloutDesk:
         """
         moved = []
         with self._lock:
+            self._sync()
             for callout in self._callouts.values():
                 offer = callout.current
                 if offer is None or offer.crew_id != crew_id:
@@ -359,12 +410,14 @@ class CalloutDesk:
                 )
                 self._offer_next(callout)
                 moved.append(callout)
+            self._save(*moved)
         return moved
 
     def tick(self) -> list[Callout]:
         """Move every offer that ran out of time to the next crew member. Run on a schedule."""
         moved = []
         with self._lock:
+            self._sync()
             now = self.clock()
             for callout in self._callouts.values():
                 offer = callout.current
@@ -372,13 +425,15 @@ class CalloutDesk:
                     self._answer(offer, "no answer", offer.expires_at)
                     self._offer_next(callout)
                     moved.append(callout)
+            self._save(*moved)
         return moved
 
     # -- the desk's decision ----------------------------------------------------------------
 
     def propose(self, callout_id: str, way: str, by: str) -> Callout:
         with self._lock:
-            callout = self.get(callout_id)
+            self._sync()
+            callout = self._get(callout_id)
             if callout.status is not Status.NEEDS_DECISION:
                 raise CalloutError(f"{callout_id} is {callout.status}, not waiting for a decision")
             option = next((o for o in callout.options if o["way"] == way), None)
@@ -399,11 +454,13 @@ class CalloutDesk:
                     ref=callout.callout_id,
                 )
             )
+            self._save(callout)
             return callout
 
     def approve(self, callout_id: str, by: str) -> Callout:
         with self._lock:
-            callout = self.get(callout_id)
+            self._sync()
+            callout = self._get(callout_id)
             proposal = callout.proposal
             if callout.status is not Status.AWAITING_APPROVAL or proposal is None:
                 raise CalloutError(f"{callout_id} has nothing waiting for approval")
@@ -423,14 +480,17 @@ class CalloutDesk:
                     ref=callout.callout_id,
                 )
             )
+            self._save(callout)
             return callout
 
     def reject(self, callout_id: str, by: str) -> Callout:
         """Send a proposal back; the callout waits for a decision again."""
         with self._lock:
-            callout = self.get(callout_id)
+            self._sync()
+            callout = self._get(callout_id)
             if callout.status is not Status.AWAITING_APPROVAL:
                 raise CalloutError(f"{callout_id} has nothing waiting for approval")
             callout.proposal = None
             callout.status = Status.NEEDS_DECISION
+            self._save(callout)
             return callout

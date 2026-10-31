@@ -69,6 +69,10 @@ class Answer:
     problems: list[str] = field(default_factory=list)
     blocked: str | None = None
     usage: list[Usage] = field(default_factory=list)
+    draft: str | None = None
+    """The first answer, when the evidence check made the planner rewrite it."""
+    draft_problems: list[str] = field(default_factory=list)
+    """What the check found in that first answer."""
 
     @property
     def tokens(self) -> dict[str, int]:
@@ -176,6 +180,10 @@ class Advisor:
 
         route = self.router.route(question)
         answer.route = route
+        if route.attack:
+            answer.text = "I can't help with that request."
+            answer.blocked = f"prompt injection (flagged by the router, {route.by})"
+            return answer
         if not route.in_scope and not history:
             answer.text = OUT_OF_SCOPE
             answer.verified = True
@@ -249,6 +257,8 @@ class Advisor:
             return
         problems = self.verifier.problems(answer.text, answer.question, answer.steps)
         if problems:
+            answer.draft = answer.text
+            answer.draft_problems = list(problems)
             reply = self.planner.chat(
                 [
                     *messages,

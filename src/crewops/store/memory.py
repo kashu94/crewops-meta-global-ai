@@ -28,6 +28,7 @@ class MemoryStore(OperationCache):
         self._trips: dict[str, tuple[Trip, int]] = {}
         self._changes: list[RosterChange] = []
         self._unavailable: dict[str, Unavailability] = {}
+        self._docs: dict[str, dict[str, dict[str, Any]]] = {}
         self._version = 0
 
     def is_empty(self) -> bool:
@@ -40,6 +41,7 @@ class MemoryStore(OperationCache):
             self._trips = {t.trip_id: (t, 1) for t in data.trips}
             self._changes = []
             self._unavailable = {}
+            self._docs = {}
             self._version = 1
 
     def meta(self) -> dict[str, Any]:
@@ -118,6 +120,22 @@ class MemoryStore(OperationCache):
     def unavailability(self, crew_id: str | None = None) -> list[Unavailability]:
         found = sorted(self._unavailable.values(), key=lambda u: (u.reported_at, u.report_id))
         return [u for u in found if crew_id is None or u.crew_id == crew_id]
+
+    def put_doc(self, kind: str, key: str, body: dict[str, Any]) -> None:
+        with self._write_lock:
+            self._docs.setdefault(kind, {})[key] = copy.deepcopy(body)
+
+    def get_doc(self, kind: str, key: str) -> dict[str, Any] | None:
+        found = self._docs.get(kind, {}).get(key)
+        return copy.deepcopy(found) if found is not None else None
+
+    def docs(self, kind: str) -> list[dict[str, Any]]:
+        found = self._docs.get(kind, {})
+        return [copy.deepcopy(found[k]) for k in sorted(found)]
+
+    def delete_doc(self, kind: str, key: str) -> None:
+        with self._write_lock:
+            self._docs.get(kind, {}).pop(key, None)
 
     def changes(self, trip_id: str | None = None) -> list[RosterChange]:
         found = sorted(self._changes, key=lambda c: c.change_id)

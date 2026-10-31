@@ -412,6 +412,25 @@ class Store(OperationCache):
         found.sort(key=lambda u: (u.reported_at, u.report_id))
         return [u for u in found if crew_id is None or u.crew_id == crew_id]
 
+    # -- documents --------------------------------------------------------------------------
+
+    def put_doc(self, kind: str, key: str, body: dict[str, Any]) -> None:
+        """Keep a small JSON document: a callout, a conversation, a notice."""
+        self.dynamodb.put_item(
+            TableName=self.table, Item=_item(f"DOC#{kind}", key, body=_json(body))
+        )
+
+    def get_doc(self, kind: str, key: str) -> dict[str, Any] | None:
+        item = self._get(f"DOC#{kind}", key)
+        return json.loads(item["body"]["S"]) if item else None
+
+    def docs(self, kind: str) -> list[dict[str, Any]]:
+        """Every document of a kind, in key order."""
+        return [json.loads(item["body"]["S"]) for item in self._query(f"DOC#{kind}")]
+
+    def delete_doc(self, kind: str, key: str) -> None:
+        self.dynamodb.delete_item(TableName=self.table, Key=_item(f"DOC#{kind}", key))
+
     def changes(self, trip_id: str | None = None) -> list[RosterChange]:
         """Every change to the roster, oldest first, optionally for one trip."""
         found = [

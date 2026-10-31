@@ -17,6 +17,9 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from pydantic import TypeAdapter
 
 from crewops.agent.advisor import Advisor, Answer
 from crewops.agent.tools import Caller
@@ -28,10 +31,16 @@ IDS = re.compile(r"\b[CT]-\d{4}\b")
 
 
 @dataclass
+class Turn:
+    question: str
+    text: str
+
+
+@dataclass
 class Conversation:
     id: str
     caller: Caller
-    turns: list[Answer] = field(default_factory=list)
+    turns: list[Turn] = field(default_factory=list)
     names: dict[str, str] = field(default_factory=dict)
     focus: list[str] = field(default_factory=list)
     """Crew and trip ids discussed, most recent first."""
@@ -53,7 +62,7 @@ class Conversation:
     def remember(self, answer: Answer) -> None:
         if answer.blocked:
             return
-        self.turns = [*self.turns, answer][-MAX_TURNS:]
+        self.turns = [*self.turns, Turn(answer.question, answer.text)][-MAX_TURNS:]
         seen: list[str] = []
         for step in answer.steps:
             for match in step.result.get("matches", []):
@@ -72,11 +81,21 @@ class Conversation:
         self.updated = datetime.now(UTC)
 
 
-class Conversations:
-    """Every open conversation, in memory. Idle ones are dropped after 30 minutes."""
+_conversation = TypeAdapter(Conversation)
 
-    def __init__(self, clock: Callable[[], datetime] = lambda: datetime.now(UTC)) -> None:
+
+class Conversations:
+    """Every open conversation. Idle ones are dropped after 30 minutes.
+
+    Kept in memory, or with ``docs`` in the store, so a follow-up still works when it lands on
+    a different server from the question before it.
+    """
+
+    def __init__(
+        self, clock: Callable[[], datetime] = lambda: datetime.now(UTC), docs: Any = None
+    ) -> None:
         self.clock = clock
+        self.docs = docs
         self._lock = threading.Lock()
         self._open: dict[str, Conversation] = {}
 
@@ -86,10 +105,21 @@ class Conversations:
             for key in [k for k, c in self._open.items() if now - c.updated > IDLE]:
                 del self._open[key]
             found = self._open.get(conversation_id or "")
+            if found is None and conversation_id and self.docs is not None:
+                stored = self.docs.get_doc("conversation", conversation_id)
+                if stored is not None:
+                    found = _conversation.validate_python(stored)
+                    if now - found.updated > IDLE:
+                        found = None
             if found is None or found.caller != caller:
                 found = Conversation(uuid.uuid4().hex, caller, updated=now)
-                self._open[found.id] = found
+            self._open[found.id] = found
             return found
+
+    def save(self, conversation: Conversation) -> None:
+        if self.docs is not None:
+            body = _conversation.dump_python(conversation, mode="json")
+            self.docs.put_doc("conversation", conversation.id, body)
 
     def ask(
         self,
@@ -105,4 +135,5 @@ class Conversations:
         )
         conversation.remember(answer)
         conversation.updated = self.clock()
+        self.save(conversation)
         return conversation, answer

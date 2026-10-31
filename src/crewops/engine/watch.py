@@ -121,7 +121,8 @@ def scan(
                         crew_id=crew.crew_id,
                         name=crew.name,
                         day=expires,
-                        detail=f"{kind} expires {expires:%d %b %Y}, {(expires - today).days} "
+                        detail=f"{kind.value.replace('_', ' ')} expires {expires:%d %b %Y}, "
+                        f"{(expires - today).days} "
                         "days from now",
                     )
                 )

@@ -5,6 +5,7 @@ import pytest
 from conftest import SEED_DIR
 
 from crewops.domain import Rank, Seat
+from crewops.engine.cover import find_cover
 from crewops.ops import DESK, CalloutDesk, CalloutError, MemoryOutbox, Status
 from crewops.seed import read_meta
 from crewops.store import MemoryStore
@@ -196,3 +197,27 @@ def test_accepting_a_positioned_seat_tells_the_desk_what_to_book(desk, mem, outb
     assert "T-1018 departs 1h30m late" in callout.to_arrange[1]
     assert "To do: book a positioning seat on KF502" in outbox.sent(DESK)[-1].body
     assert "book a positioning seat" in mem.changes(TRIP)[0].reason
+
+
+def test_nobody_is_offered_two_seats_at_once(desk, mem):
+    first = open_callout(desk)
+    trip = next(
+        t
+        for t in mem.dataset().trips
+        if t.trip_id != TRIP
+        and any(s.rank is Rank.CAPTAIN for s in t.crew)
+        and mem.operation().days_of(t.trip_id)[0].report > mem.operation().now
+        and first.current.crew_id
+        in {
+            c.crew_id
+            for c in find_cover(
+                mem.operation(),
+                t.trip_id,
+                Rank.CAPTAIN,
+                next(s.crew_id for s in t.crew if s.rank is Rank.CAPTAIN),
+            ).choices
+        }
+    )
+    captain = next(s.crew_id for s in trip.crew if s.rank is Rank.CAPTAIN)
+    second = desk.open(trip.trip_id, Rank.CAPTAIN, captain, by="m.iyer")
+    assert second.current.crew_id != first.current.crew_id

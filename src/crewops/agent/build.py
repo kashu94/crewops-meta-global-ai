@@ -7,7 +7,7 @@ from crewops.agent.guard import GuardChain, PatternGuard, PromptGuard
 from crewops.agent.router import Router
 from crewops.agent.verify import EvidenceVerifier
 from crewops.models import Endpoint, Ledger, ModelClient
-from crewops.ops import CalloutDesk, MemoryOutbox, Outbox
+from crewops.ops import CalloutDesk, Outbox, StoreOutbox
 from crewops.settings import Settings
 from crewops.store import MemoryStore, Store
 
@@ -17,7 +17,8 @@ def build_advisor(
 ) -> Advisor:
     """Muse Spark plans; Muse Spark Open routes when its key is set, Muse Spark otherwise.
 
-    Callout messages go to ``outbox``: kept in memory unless a sender is given.
+    Callouts are kept in the store, and their messages too unless another outbox is given,
+    so any server can carry on a callout another one started.
     """
     ledger = Ledger(config.usage_log)
     planner = ModelClient(Endpoint.meta(config), ledger)
@@ -35,5 +36,5 @@ def build_advisor(
         router=Router(router_model),
         guard=GuardChain(guards),
         verifier=EvidenceVerifier("\n".join(f"{r.rule_id} {r.text}" for r in rules)),
-        desk=CalloutDesk(store, outbox or MemoryOutbox()),
+        desk=CalloutDesk(store, outbox or StoreOutbox(store), docs=store),
     )

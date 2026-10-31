@@ -11,8 +11,10 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(os.environ.get("CREWOPS_ROOT") or Path(__file__).resolve().parents[2])
+"""The repository root, or where the deployed bundle unpacks (``CREWOPS_ROOT``)."""
 STORES = ("memory", "dynamodb")
+AUTH_MODES = ("demo", "cognito")
 
 
 def _read_dotenv(path: Path) -> dict[str, str]:
@@ -49,6 +51,19 @@ class Settings:
     prompt_guard_url: str
     prompt_guard_token: str
     usage_log: Path | None
+    wonder_model: str
+    image_model: str
+    auth: str
+    """``demo``: callers pick a demo identity (local use). ``cognito``: signed-in users only."""
+    cognito_pool_id: str
+    cognito_client_id: str
+    bucket: str
+    """Where generated images are kept when deployed; empty keeps them in memory."""
+    alert_topic_arn: str
+    daily_asks: int
+    """Model-backed requests allowed per day across all users, to protect the credits."""
+    board_art: bool
+    """Draw artwork for the shift brief with Muse Image (off: the board shows text only)."""
     seed_dir: Path
 
     @property
@@ -70,6 +85,9 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
     store = get("CREWOPS_STORE", "memory")
     if store not in STORES:
         raise ValueError(f"CREWOPS_STORE must be one of {', '.join(STORES)}, not {store!r}")
+    auth = get("CREWOPS_AUTH", "demo")
+    if auth not in AUTH_MODES:
+        raise ValueError(f"CREWOPS_AUTH must be one of {', '.join(AUTH_MODES)}, not {auth!r}")
     return Settings(
         model_api_key=get("MODEL_API_KEY"),
         meta_base_url=get("META_BASE_URL", "https://api.meta.ai/v1").rstrip("/"),
@@ -91,6 +109,15 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         prompt_guard_url=get("PROMPT_GUARD_URL"),
         prompt_guard_token=get("PROMPT_GUARD_TOKEN"),
         usage_log=Path(get("CREWOPS_USAGE_LOG")) if get("CREWOPS_USAGE_LOG") else None,
+        wonder_model=get("CREWOPS_WONDER_MODEL", "muse-wonder-1.0"),
+        image_model=get("CREWOPS_IMAGE_MODEL", "muse-image-1.0"),
+        auth=auth,
+        cognito_pool_id=get("COGNITO_POOL_ID"),
+        cognito_client_id=get("COGNITO_CLIENT_ID"),
+        bucket=get("CREWOPS_BUCKET"),
+        alert_topic_arn=get("CREWOPS_ALERT_TOPIC_ARN"),
+        daily_asks=int(get("CREWOPS_DAILY_ASKS", "300")),
+        board_art=get("CREWOPS_BOARD_ART", "false").lower() in ("1", "true", "yes"),
         seed_dir=Path(get("CREWOPS_SEED_DIR", str(ROOT / "data" / "seed"))),
     )
 
