@@ -16,3 +16,7 @@ node_modules/
 .DS_Store
 .idea/
 .vscode/
+
+# Build output
+build/
+infra/cdk.out/
