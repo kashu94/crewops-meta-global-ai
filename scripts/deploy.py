@@ -9,6 +9,9 @@ It refuses to run unless the AWS profile is ``crewops-meta``, the signed-in iden
 ``crewops-meta-<stage>``, and it bootstraps with its own toolkit stack (``CrewOpsMetaToolkit``)
 and qualifier, so nothing else in the account can be changed by it.
 
+After the stack, it builds the web console (``npm ci``, ``next build``) with the API's address
+and publishes it to the stack's own Amplify app, ``crewops-meta-<stage>-console``.
+
 Settings come from ``.env``: the model keys, ``CREWOPS_ALERT_EMAIL`` for desk alerts, and
 ``CREWOPS_DEMO_PASSWORD`` for the demo accounts (made up and saved there on first deploy).
 """
@@ -44,6 +47,59 @@ def dotenv() -> dict[str, str]:
                 key, _, value = line.partition("=")
                 values[key.strip()] = value.strip().strip("'\"")
     return values
+
+
+def build_console(api_url: str) -> Path:
+    """The web console as static files, built to call the API at ``api_url``."""
+    npm = shutil.which("npm")
+    if npm is None:
+        sys.exit("npm is not installed: the web console is built with Node.js")
+    web = ROOT / "web"
+    env = {**os.environ, "NEXT_PUBLIC_CREWOPS_API": api_url.rstrip("/")}
+    subprocess.run([npm, "ci", "--no-audit", "--no-fund"], check=True, cwd=web, env=env)
+    subprocess.run([npm, "run", "build"], check=True, cwd=web, env=env)
+    out = web / "out"
+    if not (out / "index.html").is_file():
+        sys.exit("the console build did not produce web/out/index.html")
+    return out
+
+
+def publish_console(site: Path, app_id: str, branch: str) -> None:
+    """Upload ``site`` to the Amplify app as a manual deployment and wait for it to go live."""
+    import time
+    import urllib.request
+    import zipfile
+
+    import boto3
+
+    archive = ROOT / "build" / "console.zip"
+    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(site.rglob("*")):
+            if path.is_file():
+                zf.write(path, path.relative_to(site).as_posix())
+    amplify = boto3.Session(profile_name=PROFILE, region_name=REGION).client("amplify")
+    job = amplify.create_deployment(appId=app_id, branchName=branch)
+    upload = urllib.request.Request(
+        job["zipUploadUrl"],
+        data=archive.read_bytes(),
+        method="PUT",
+        headers={"Content-Type": "application/zip"},
+    )
+    with urllib.request.urlopen(upload) as reply:
+        if reply.status >= 300:
+            sys.exit(f"uploading the console failed: HTTP {reply.status}")
+    amplify.start_deployment(appId=app_id, branchName=branch, jobId=job["jobId"])
+    print(f"publishing the console to Amplify ({app_id}, branch {branch})", flush=True)
+    for _ in range(120):
+        status = amplify.get_job(appId=app_id, branchName=branch, jobId=job["jobId"])["job"][
+            "summary"
+        ]["status"]
+        if status == "SUCCEED":
+            return
+        if status in ("FAILED", "CANCELLED"):
+            sys.exit(f"the Amplify deployment {job['jobId']} {status.lower()}")
+        time.sleep(5)
+    sys.exit("the Amplify deployment did not finish within 10 minutes")
 
 
 def check_identity() -> str:
@@ -160,10 +216,13 @@ def main() -> None:
         env=env,
     )
     out = json.loads(outputs.read_text())[stack]
+    site = build_console(out["ApiUrl"])
+    publish_console(site, out["ConsoleAppId"], out["ConsoleBranch"])
     print("\nCrewOps is live.")
     print(f"  Console: {out['ConsoleUrl']}")
     print(f"  Board:   {out['BoardUrl']}")
-    print(f"  Speaker: {out['ConsoleUrl'].rstrip('/')}/speaker")
+    print(f"  Speaker: {out['ConsoleUrl'].rstrip('/')}/speaker/")
+    print(f"  API:     {out['ApiUrl']}")
     print("  Demo accounts: m.iyer, s.reddy, d.rao (controllers, desks 1-3), a.nair (approver),")
     print("                 ops.hyd (reporter), v.shah (auditor), k.menon (admin),")
     print("                 r.kapoor (super admin), ops.speaker (speaker),")

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Logo } from "@/components/shell";
 import { cx } from "@/components/ui";
-import { authMode, demoIdentity, headers, loadConfig, message, saved, token } from "@/lib/api";
+import { apiUrl, authMode, demoIdentity, headers, loadConfig, message, saved, token } from "@/lib/api";
 import type { Answer, SpeakerFeed } from "@/lib/types";
 import { LANGUAGES, Recorder, say, transcribe } from "@/lib/voice";
 
@@ -97,7 +97,7 @@ export default function SpeakerPage() {
     let alive = true;
     const poll = async () => {
       try {
-        const r = await fetch("/api/speaker", { cache: "no-store" });
+        const r = await fetch(apiUrl("/api/speaker"), { cache: "no-store" });
         if (!r.ok) throw new Error();
         const f = (await r.json()) as SpeakerFeed;
         if (!alive) return;
@@ -187,7 +187,7 @@ export default function SpeakerPage() {
       // The room device asks as whoever is signed in on this browser, or as the speaker.
       const signedIn = authMode() === "cognito" ? Boolean(token()) : Boolean(demoIdentity());
       const h = signedIn ? headers() : { "X-Demo-User": "ops.speaker", "X-Demo-Role": "speaker" };
-      const r = await fetch("/api/ask", { method: "POST", headers: { ...h, "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
+      const r = await fetch(apiUrl("/api/ask"), { method: "POST", headers: { ...h, "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
       const a = (await r.json().catch(() => ({}))) as Partial<Answer> & { detail?: string };
       const text = a.text || a.detail || "No answer.";
       setAnswer({ q, text });

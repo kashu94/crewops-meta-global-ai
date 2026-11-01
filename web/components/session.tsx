@@ -4,7 +4,7 @@ import { CheckCircle2, CircleAlert, Clock3, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-import { api, hasSession, loadConfig, message, tool, toSignIn, type Config } from "@/lib/api";
+import { api, apiUrl, hasSession, loadConfig, message, tool, toSignIn, type Config } from "@/lib/api";
 import { homeFor, isDeskRole, type Me } from "@/lib/roles";
 import type { QueueItem, SpeakerFeed } from "@/lib/types";
 
@@ -71,7 +71,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const refreshCounts = useCallback(async (m: Me) => {
     const next = { approvals: 0, queue: 0, critical: 0 };
     if (isDeskRole(m.role)) {
-      const feed = await fetch("/api/speaker", { cache: "no-store" })
+      const feed = await fetch(apiUrl("/api/speaker"), { cache: "no-store" })
         .then((r) => (r.ok ? (r.json() as Promise<SpeakerFeed>) : null))
         .catch(() => null);
       if (feed) next.approvals = feed.waiting.plans + feed.waiting.decisions;

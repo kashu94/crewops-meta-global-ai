@@ -442,14 +442,16 @@ seconds per answer, crew privacy); rerun it with `uv run python -m crewops.eval.
 
 ## Deploying to AWS
 
-One stack, `crewops-meta-<stage>` in ap-southeast-2 (Sydney): DynamoDB, Lambda behind a
-function URL (the API, console, board and speaker), a second Lambda every 10 minutes (callout
+One stack, `crewops-meta-<stage>` in ap-southeast-2 (Sydney): the web console on Amplify
+Hosting (app `crewops-meta-<stage>-console`, a static Next.js export built and uploaded by the
+deploy script), DynamoDB, Lambda behind a function URL (the API, answering browsers from the
+console's address only), a second Lambda every 10 minutes (callout
 deadlines, watch alerts and escalations by email through SNS, the shift brief), S3, and
 Cognito with a group per role and the demo accounts: `m.iyer`, `s.reddy` and `d.rao`
 (controllers, desks 1 to 3), `a.nair` (approver), `ops.hyd` (reporter), `v.shah` (auditor),
 `k.menon` (admin), `r.kapoor` (super admin), `ops.speaker` (speaker), `anjali` and `pooja.f`
-(crew). A store seeded from older demo data is reseeded when the data version changes. The
-console is built with npm into the bundle. It is bootstrapped with its own toolkit stack (`CrewOpsMetaToolkit`, qualifier
+(crew). A store seeded from older demo data is reseeded when the data version changes. It is
+bootstrapped with its own toolkit stack (`CrewOpsMetaToolkit`, qualifier
 `crewmeta`), so it shares nothing with other CDK projects in the account. No Docker is needed:
 the bundle is built from Linux wheels.
 

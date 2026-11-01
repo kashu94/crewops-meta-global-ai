@@ -40,12 +40,19 @@ export const saved = {
   },
 };
 
+/** Where the API lives. Empty when the console is served by the API itself; the API's own
+ *  address when the console is hosted apart from it (Amplify), set at build time. */
+export const API_BASE = (process.env.NEXT_PUBLIC_CREWOPS_API ?? "").replace(/\/+$/, "");
+
+/** The full address of an API path such as /api/me. */
+export const apiUrl = (path: string) => `${API_BASE}${path}`;
+
 let config: Config | null = null;
 let configLoading: Promise<Config> | null = null;
 
 export function loadConfig(): Promise<Config> {
   if (config) return Promise.resolve(config);
-  configLoading ??= fetch("/api/config", { cache: "no-store" })
+  configLoading ??= fetch(apiUrl("/api/config"), { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : { auth: "demo" }))
     .catch(() => ({ auth: "demo" }))
     .then((c: Config) => (config = c));
@@ -137,7 +144,7 @@ export async function api<T = unknown>(
   }
   let res: Response;
   try {
-    res = await fetch(path, init);
+    res = await fetch(apiUrl(path), init);
   } catch {
     throw new ApiError("The CrewOps server cannot be reached.", 0);
   }

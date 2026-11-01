@@ -1,7 +1,7 @@
-"""Build the Lambda bundle in ``build/lambda``: the code, its dependencies, the console and
+"""Build the Lambda bundle in ``build/lambda``: the code, its dependencies and
 the demo data. Dependencies are Linux x86_64 wheels, so it builds the same on Windows, macOS
-or Linux, with no Docker. The console is a Next.js static export, built with npm (Node 20 or
-later, which the CDK needs anyway).
+or Linux, with no Docker. The web console is not in it: it is hosted on Amplify
+(``scripts/deploy.py``).
 
     uv run python scripts/build_lambda.py
 """
@@ -24,26 +24,10 @@ def run(*args: str) -> None:
     subprocess.run(args, check=True, cwd=ROOT)
 
 
-def build_console() -> Path:
-    """``npm ci`` and ``next build`` in web/; returns the exported site."""
-    npm = shutil.which("npm")
-    if npm is None:
-        sys.exit("npm is not installed: the console is built with Node.js")
-    web = ROOT / "web"
-    print("+ npm ci && npm run build (web)", flush=True)
-    subprocess.run([npm, "ci", "--no-audit", "--no-fund"], check=True, cwd=web)
-    subprocess.run([npm, "run", "build"], check=True, cwd=web)
-    out = web / "out"
-    if not (out / "index.html").is_file():
-        sys.exit("the console build did not produce web/out/index.html")
-    return out
-
-
 def main() -> None:
     uv = shutil.which("uv")
     if uv is None:
         sys.exit("uv is not installed")
-    console = build_console()
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
@@ -83,7 +67,6 @@ def main() -> None:
         ":all:",
     )
     shutil.copytree(ROOT / "src" / "crewops", OUT / "crewops")
-    shutil.copytree(console, OUT / "web" / "out")
     shutil.copytree(ROOT / "data" / "seed", OUT / "data" / "seed")
     scorecard = ROOT / "docs" / "scorecard.json"
     if scorecard.is_file():

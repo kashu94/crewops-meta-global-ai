@@ -16,10 +16,11 @@ import json
 import threading
 from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 from fastapi import Body, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from crewops.agent.advisor import Advisor, Answer
@@ -52,6 +53,21 @@ BRIEF_EVERY_SECONDS = 120
 AUDIO_LIMIT = 10 * 1024 * 1024
 IMAGE_LIMIT = 8 * 1024 * 1024
 LANGUAGES = {"English", "Hindi", "Telugu", "Tamil", "Kannada", "Marathi", "Bengali"}
+
+
+class ConsoleFiles(StaticFiles):
+    """The console, a static export: each page is a folder with an index.html.
+
+    A page is served with or without its trailing slash. Behind a Lambda function URL the
+    slash can be gone by the time the request arrives, and the usual redirect to add it back
+    would then loop.
+    """
+
+    async def get_response(self, path: str, scope: Any) -> Response:
+        page = (Path(str(self.directory)) / path / "index.html").resolve()
+        if page.is_file() and page.is_relative_to(Path(str(self.directory)).resolve()):
+            return FileResponse(page)
+        return await super().get_response(path, scope)
 
 
 class Services:
@@ -595,8 +611,7 @@ def create_app(config: Settings | None = None, services: Services | None = None)
     # -- the pages ------------------------------------------------------------------------
 
     if WEB.is_dir():
-        # The console is a static export: each page is a folder with an index.html.
-        app.mount("/", StaticFiles(directory=WEB, html=True), name="console")
+        app.mount("/", ConsoleFiles(directory=WEB, html=True), name="console")
 
     return app
 

@@ -1,9 +1,11 @@
 """Everything CrewOps needs on AWS, named ``crewops-meta-<stage>-...`` in ap-southeast-2.
 
 * DynamoDB: the operation, callouts, conversations and notices, in one table.
-* Lambda behind a function URL: the API, the web console and the TV board. A function URL
-  rather than API Gateway, because planning an answer can take longer than a gateway's 30
-  seconds.
+* Lambda behind a function URL: the API the console, the board and the TV app call. A function
+  URL rather than API Gateway, because planning an answer can take longer than a gateway's 30
+  seconds. It answers browsers from the console's Amplify address only (CORS).
+* Amplify Hosting: the web console, a static Next.js export, as app
+  ``crewops-meta-<stage>-console``. ``scripts/deploy.py`` builds it and uploads it.
 * A second Lambda on a 10-minute schedule: moves unanswered callout offers on, and emails the
   crew desk about new problems the watch finds (SNS).
 * S3: the board's artwork from Muse Image.
@@ -17,6 +19,7 @@ never committed. This is a demo stack: deleting it deletes its data.
 import os
 
 import aws_cdk as cdk
+from aws_cdk import aws_amplify as amplify
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_events as events
@@ -133,7 +136,35 @@ class CrewOpsStack(cdk.Stack):
             timeout=cdk.Duration.seconds(180),
             environment=environment,
         )
-        url = api.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
+        console = amplify.CfnApp(
+            self,
+            "ConsoleApp",
+            name=f"{prefix}-console",
+            description="CrewOps Meta web console (static Next.js export)",
+            platform="WEB",
+            custom_rules=[
+                amplify.CfnApp.CustomRuleProperty(source="/<*>", target="/404.html", status="404")
+            ],
+            tags=[cdk.CfnTag(key="project", value="crewops-meta")],
+        )
+        branch = amplify.CfnBranch(
+            self,
+            "ConsoleAppBranch",
+            app_id=console.attr_app_id,
+            branch_name=stage,
+            stage="PRODUCTION",
+            enable_auto_build=False,
+        )
+        console_url = f"https://{branch.branch_name}.{console.attr_default_domain}"
+        url = api.add_function_url(
+            auth_type=lambda_.FunctionUrlAuthType.NONE,
+            cors=lambda_.FunctionUrlCorsOptions(
+                allowed_origins=[console_url, "http://localhost:3000"],
+                allowed_methods=[lambda_.HttpMethod.ALL],
+                allowed_headers=["authorization", "content-type"],
+                max_age=cdk.Duration.hours(1),
+            ),
+        )
         watch = lambda_.Function(
             self,
             "Watch",
@@ -183,8 +214,11 @@ class CrewOpsStack(cdk.Stack):
             )
         )
 
-        cdk.CfnOutput(self, "ConsoleUrl", value=url.url)
-        cdk.CfnOutput(self, "BoardUrl", value=f"{url.url}board")
+        cdk.CfnOutput(self, "ConsoleUrl", value=f"{console_url}/")
+        cdk.CfnOutput(self, "BoardUrl", value=f"{console_url}/board/")
+        cdk.CfnOutput(self, "ApiUrl", value=url.url)
+        cdk.CfnOutput(self, "ConsoleAppId", value=console.attr_app_id)
+        cdk.CfnOutput(self, "ConsoleBranch", value=branch.branch_name)
         cdk.CfnOutput(self, "UserPoolId", value=pool.user_pool_id)
         cdk.CfnOutput(self, "ClientId", value=client.user_pool_client_id)
         cdk.CfnOutput(self, "TableName", value=table.table_name)

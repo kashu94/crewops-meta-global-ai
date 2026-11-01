@@ -86,7 +86,10 @@ def test_public_endpoints_and_pages(services, tmp_path, monkeypatch):
     assert client.get("/api/health").json() == {"status": "ok"}
     assert client.get("/api/config").json()["auth"] == "demo"
     assert "CrewOps Console" in client.get("/").text
-    assert "speaker" in client.get("/speaker/").text
+    for path in ("/speaker/", "/speaker"):  # with or without the slash, never a redirect
+        page = client.get(path, follow_redirects=False)
+        assert page.status_code == 200 and "speaker" in page.text
+    assert client.get("/../etc/passwd").status_code == 404
     accounts = client.get("/api/accounts/demo").json()["accounts"]
     assert len({a["role"] for a in accounts}) == 8
     assert not any("password" in a for a in accounts)

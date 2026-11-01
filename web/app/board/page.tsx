@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/shell";
 import { cx } from "@/components/ui";
-import { headers, loadConfig } from "@/lib/api";
+import { apiUrl, headers, loadConfig } from "@/lib/api";
 import type { Board, ReportSummary } from "@/lib/types";
 
 type Wall = Board & { disruptions?: ReportSummary[] };
@@ -34,7 +34,7 @@ export default function BoardPage() {
     const load = async () => {
       await loadConfig();
       try {
-        const r = await fetch("/api/board", { headers: headers(), cache: "no-store" });
+        const r = await fetch(apiUrl("/api/board"), { headers: headers(), cache: "no-store" });
         if (!r.ok) throw new Error();
         const data = (await r.json()) as Wall;
         if (alive) {
