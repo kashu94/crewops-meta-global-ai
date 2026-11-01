@@ -66,6 +66,7 @@ export type Board = {
     illegal: number;
     fatigue: number;
     certificates: number;
+    plans_waiting?: number;
   };
   desks?: Desk[];
   departures?: Departure[];
@@ -74,7 +75,13 @@ export type Board = {
 };
 
 /** Offers that are over: shown struck through rather than dropped. */
-export const GONE = ['declined', 'unavailable', 'no answer', 'no longer legal'];
+export const GONE = [
+  'declined',
+  'unavailable',
+  'no answer',
+  'no longer legal',
+  'not approved',
+];
 
 export async function fetchBoard(base: string = API_BASE): Promise<Board> {
   const res = await fetch(`${base}/api/board`).catch((e: Error) => {

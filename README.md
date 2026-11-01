@@ -40,8 +40,9 @@ engine, and a deterministic check compares each figure in an answer with the too
 
 | Where | What |
 |---|---|
-| Web console (`/`) | Ask by text or voice, see how each answer was made (route, tool calls, evidence check, tokens), run the desk (issues, callouts, unavailability), find cover with withdrawn crew struck through, check photos, read the scorecard |
+| Web console (`/`) | A Next.js app, one page per job and a home page per role. **Controllers**: their desk's disruptions, the problems the watch finds, callouts, find cover, gates, the assistant with its trace panel. **Approvers**: plans, cancellations and resolutions to sign off. **Reporters**: the day's operation and a report form. **Everyone at the desk**: a page per disruption report with its lifecycle. **Admins**: team accounts and password resets, alert addresses, roster upload, revoking reports, duty limits, the logs. **Crew**: their calendar, flights, duty limits, risk, certificates, callout offers and reports. Desktop alerts, and the evaluation |
 | Ops board (`/board`) | The ops-room wall: next 24 hours, shift brief, controller desks, callouts, the watch, departures, standby cover. Read-only, no sign-in |
+| Speaker (`/speaker`) | The desk's notices read aloud as they happen, critical ones repeated until acknowledged; "what's waiting?" on request; spoken questions answered by the agent |
 | Fire TV (`tv/`) | The same board as a Vega OS app, **CrewOps Board (Meta)** |
 | MCP server | The tools, with roles, for any MCP client |
 | Terminal | `uv run python -m crewops.agent.chat` |
@@ -49,7 +50,8 @@ engine, and a deterministic check compares each figure in an answer with the too
 Run it locally (demo data in memory, pick a demo identity at the top right):
 
 ```bash
-uv run python -m crewops.api        # http://localhost:8000
+cd web && npm install && npm run build && cd ..    # the console, exported to web/out
+uv run python -m crewops.api                       # http://localhost:8000
 ```
 
 ## The rules
@@ -127,6 +129,56 @@ a controller can prefer someone fresher. Flags never block a choice.
 
 Cover choices and legality checks show the flags their trip would leave.
 
+## Severity
+
+Every problem the watch raises is graded high, medium or low with its reasons, from what the
+engine knows (`crewops.engine.severity`): how soon the trip reports, how many passengers are
+booked, and whether anyone can still fill the seat. Someone rostered illegally is never low.
+The desk lists problems in that order.
+
+## Disruption reports
+
+Whatever goes wrong is filed as one report (`crewops.ops.reports`): crew out (sick, fatigue,
+personal), **several crew out at once** (food poisoning after a crew meal, a road accident on
+the way in), planned leave, a certificate lapse, a flight delay, an aircraft fault, a station
+closed, gates closed or a gate change. Filing it records the absences, grades its severity,
+assigns it to a desk, tells the crew desk and the teams the kind of problem needs, and comes
+back with the engine's analysis: for absences, every seat left empty and the cheapest way to
+fill **all of them together**, never using one person twice and never one absent crew member
+for another's seat.
+
+    OPEN --plan or callout--> IN_PROGRESS --controller closes--> RESOLVED --approver--> CLOSED
+                                    ^                                |
+                                    '-------- approver returns ------'
+    any state but CLOSED --admin--> REVOKED   (filed in error; its absences are withdrawn)
+
+Station duty managers, controllers and approvers file any kind; crew report only themselves;
+planned leave is booked by an admin, the way rostering would. Each report has its own page.
+
+## Desks
+
+Three controllers share the operation, one desk each (`crewops.ops.desks`). A new report goes
+to the desk with the fewest open ones, then the fewest overall, so the load evens out and
+nobody picks. Only the owning desk's controller plans and closes it; an approver or an admin
+can move it to another desk. Cover is still checked across desks, because two reports on
+different desks can want the same standby.
+
+## Risk
+
+Legal is yes or no; risk is a matter of degree (`crewops.engine.risk`). A score from 0 to 100
+adds points for a fatigue pattern ahead, duty or block hours near a limit, absences reported in
+the operation, a certificate running out and a long drive to the airport, and says which
+drivers did it. It is shown beside every cover choice and on the crew record, and **never ranks
+cover or rules anyone out**: the rules engine alone decides who is legal, and cost alone orders
+the legal choices.
+
+## Teams
+
+A disruption rarely stops at the crew desk (`crewops.ops.teams`). Gate and stand control, the
+station duty manager, flight information, operations monitoring, maintenance control, crew
+records and customer care each have a fixed job; the kind of report decides which are told,
+with who is on duty at that station or at the operations centre (`data/seed/contacts.json`).
+
 ## Unavailability
 
 Crew report it themselves, or a controller reports it for them: the dates and a reason. From
@@ -134,18 +186,78 @@ that moment they are out of every cover search for those dates, any callout offe
 them moves to the next person at once, and the trips they were rostered on show up in the
 watch. A would-be choice who reported unavailable is kept in the cover result as `withdrawn`,
 so a screen shows them struck through rather than silently gone. A controller clears the
-report when they can fly again.
+report when they can fly again, and crew can withdraw their own. A report carries its kind
+(sick, fatigue, personal, other) and, for someone taken ill part-way through a day, the time:
+duties that end before then are still theirs to fly.
 
 ## Callouts
 
 A callout fills one seat by asking crew in turn, cheapest legal first. A decline, or no answer
 within 20 minutes, moves it to the next; cover is worked out again before every offer and on
-every acceptance, so nobody gets a seat they stopped being legal for. An acceptance changes
-the roster through the same version check as any other change.
+every acceptance, so nobody gets a seat they stopped being legal for. An acceptance becomes a plan for
+an approver to decide (see below).
 
 When nobody is left to ask, **the callout does not cancel the flight or fly it short**. It
 stops, tells the crew desk what options remain and what each costs, and waits. Cancelling or
-flying short then needs two controllers: one proposes, a different one approves.
+flying short then needs two people: a controller proposes, an approver decides.
+
+## Four eyes on every change
+
+Nothing changes a trip's crew on one person's word (`crewops.ops.plans`). A controller submits
+a plan, or a callout submits one in the name of the controller who opened it when crew accept.
+An approver approves, rejects with a reason, or sends it back with a note; the submitter may
+withdraw it. At approval the plan is judged again as the roster stands: if the
+trip changed since, or the crew member is no longer legal, it goes **stale** and nothing
+changes. Every plan keeps its history.
+
+## Escalation
+
+Every ten minutes, what the desk has left untouched for ten minutes goes to the duty
+supervisor by email (`crewops.ops.escalation`): a plan nobody approved, a callout with nobody
+left to ask, a high-severity problem with no callout and no plan on its seat, a high-severity
+report its desk has not started. Each escalates once.
+
+## Alerts
+
+Notices go out three ways. Every notice is kept and shown on the screens and the speaker.
+**Email**: an admin subscribes addresses to a group (the crew desk, the duty supervisor or one
+of the teams); each message names its group, so the topic delivers it only to that group's
+addresses (`crewops.ops.alerts`). **Desktop alerts**: a browser that allows notifications gets
+the desk's notices by Web Push even with the tab closed, encrypted for that browser (RFC 8291)
+and signed with the server's VAPID key (`crewops.ops.push`).
+
+## Gates, stations and aircraft
+
+Each departure holds a gate from 45 minutes before off-block (`crewops.engine.gates`); the demo
+data holds five contact gates, two remote stands and an emergency gate at Hyderabad, where the
+morning wave sends five departures out within an hour. When gates close, or a late flight is
+still at its gate, each displaced departure goes to the first free gate, then the emergency
+gate, then a remote stand by bus, which adds 15 minutes, and that delay is judged against
+crew duty. A gate change is checked for a clash with whoever holds the gate.
+
+A station closure holds every departure and arrival inside the window, and an aircraft out of
+service holds its flights that day (`crewops.engine.disruption`). Both are judged like a
+reported delay, and only breaches the delay causes are counted against it: someone illegal
+even on time is shown apart.
+
+## Governance
+
+Every change made through a tool is logged with who, their role and when; every refused
+question is logged for the admins and auditors (`crewops.ops.governance`). An admin may make a
+duty limit stricter than the regulator's (a shorter duty, longer rest); relaxing it again, back
+towards the regulator's figure and never past it, needs a super admin. Each change needs a
+reason, and the engine applies it at once.
+
+Admins look after the team's accounts (`crewops.ops.accounts`): add people, change roles,
+switch accounts off and reset passwords to a temporary one that must be changed at sign-in.
+Only a super admin manages admins, and nobody changes their own account.
+
+**Roster upload.** Rostering publishes in bulk: an admin uploads crew, certificates, standby or
+trips as JSON in the demo data's shapes (`crewops.ops.roster_upload`). The whole merged roster
+is checked before anything is written (a trip naming someone who does not exist, a leg nobody
+flies), and the engine lists every rule problem the upload would add. A dry run stops there;
+otherwise new trips are added and changed crew lists are applied as roster changes by the
+uploader, at each trip's current version.
 
 ## Calling the models
 
@@ -161,8 +273,8 @@ uv run python -m crewops.models.check
 
 ## Tools and roles
 
-The models never touch the data directly. They call fifteen typed tools (`crewops.agent`), each a
-thin wrapper over the rules engine or the database:
+The models never touch the data directly. They call forty-nine typed tools (`crewops.agent`),
+each a thin wrapper over the rules engine or the database:
 
 | Tool | Returns |
 |---|---|
@@ -175,16 +287,47 @@ thin wrapper over the rules engine or the database:
 | `absence_impact` | Every seat an absence empties, and the cheapest joint cover |
 | `delay_impact` | Who a late departure pushes over a limit, and its cost |
 | `roster_changes` | Who changed which trip, when and why |
-| `assign_crew` | Makes the change, only for legal cover and the current version |
+| `assign_crew` | Submits a change for an approver, only for legal cover at the current version |
+| `plan_status` | Changes waiting for approval, or one plan and what was decided |
+| `review_plan` | Approve (rules checked again), reject or send back; the submitter may withdraw |
 | `open_issues` | What the watch finds in the coming days |
 | `start_callout` | Starts asking crew for a seat, cheapest legal first |
 | `callout_status` | Who was asked, who answered what; for crew, offers waiting for them |
 | `answer_callout` | Accept or decline (crew, or a controller recording a phone answer) |
-| `decide_callout` | Propose or approve cancelling or flying short: two controllers |
+| `decide_callout` | A controller proposes cancelling or flying short; an approver decides |
+| `report_unavailable`, `clear_unavailable` | Record who cannot fly (kind, dates, from what time), or withdraw it |
+| `gate_status` | Gates and stands at a station, and who holds which on a day |
+| `gate_closure`, `late_at_gate`, `gate_change` | Where displaced departures board, and any crew impact |
+| `station_closure`, `aircraft_out_of_service` | Flights held, and who the delay pushes over a limit |
+| `rule_limits`, `set_rule_limit` | Duty limits against the regulator's; admins tighten, super admins may relax back |
+| `report_disruption` | Files a report of any kind, one or several crew; returns it with its analysis |
+| `disruptions`, `my_reports`, `show_disruption` | Reports by state and desk, the caller's own, or one with its lifecycle |
+| `submit_report_plan` | Submits a report's cheapest joint cover as plans, one per seat |
+| `close_disruption`, `confirm_resolution`, `return_resolution` | A controller resolves; an approver signs off or returns it |
+| `reassign_disruption`, `revoke_report` | Move a report to another desk; revoke one filed in error |
+| `desk_load` | Each desk's reports by state, and how new ones are assigned |
+| `crew_risk` | Crew most at risk of dropping out, with what drives each score |
+| `contacts` | The operational teams, their jobs and who is on duty where |
+| `my_queue` | What is waiting for the caller now |
+| `team_accounts`, `create_account`, `set_account`, `reset_password` | Team accounts and passwords (admins) |
+| `alert_addresses`, `add_alert_address`, `remove_alert_address` | Who hears which group's alerts by email (admins) |
+| `upload_roster` | Roster records from a file, checked whole first; dry run or apply (admins) |
 
-Each caller has a role. A `viewer` reads the operation, a `controller` may also change it, and
-a `crew` member sees only their own record and trips, and answers their own callouts. Arguments are validated before a tool
-runs, and every problem comes back as a readable error for the model to recover from.
+Each caller has one of eight roles:
+
+| Role | Does |
+|---|---|
+| `crew` | Sees only their own record and trips, answers their own callouts, reports themselves unavailable |
+| `reporter` | A station duty manager: sees the flights and gates, files disruption reports, follows their own |
+| `controller` | Owns a desk: works its reports, finds cover, runs callouts, submits changes, closes reports |
+| `approver` | Approves, rejects or sends back changes; decides cancellations; signs off resolutions |
+| `auditor` | Reads everything, the activity and security logs included; changes nothing |
+| `admin` | Accounts, passwords, alert addresses, roster uploads, planned leave, revoking reports, tightening limits |
+| `super_admin` | What an admin does, plus managing admins and relaxing a limit back towards the regulator's |
+| `speaker` | The ops-room speaker, a device: hears what is waiting and nothing else |
+
+Arguments are validated before a tool runs, and every problem comes back as a readable error
+for the model to recover from.
 
 ## MCP server
 
@@ -288,17 +431,25 @@ clearance.
 
 ## Scorecard
 
-28 scripted crew-desk questions run against the live models and scored by code: routing, the
+36 scripted crew-desk questions run against the live models and scored by code: routing, the
 tools used, what the answer names, the evidence check, refusals and role limits. Each starts
-from a fresh copy of the demo operation. See [docs/scorecard.md](docs/scorecard.md), or the
-Scorecard tab in the console; rerun it with `uv run python -m crewops.eval.scorecard`.
+from a fresh copy of the demo operation. The last run: 36 of 36 passed; routing 33 of 33;
+every figure checked in 33 of 33 answers; 3 of 3 attacks refused; 13,706 tokens and 10.0 s per
+question on average. It covers several crew sick in one report, the risk score and desk load.
+See
+[docs/scorecard.md](docs/scorecard.md), or the Evaluation page in the console (median and p95
+seconds per answer, crew privacy); rerun it with `uv run python -m crewops.eval.scorecard`.
 
 ## Deploying to AWS
 
 One stack, `crewops-meta-<stage>` in ap-southeast-2 (Sydney): DynamoDB, Lambda behind a
-function URL (the API, console and board), a second Lambda every 10 minutes (callout
-deadlines, watch alerts by email through SNS, the shift brief), S3, and Cognito with the demo
-accounts. It is bootstrapped with its own toolkit stack (`CrewOpsMetaToolkit`, qualifier
+function URL (the API, console, board and speaker), a second Lambda every 10 minutes (callout
+deadlines, watch alerts and escalations by email through SNS, the shift brief), S3, and
+Cognito with a group per role and the demo accounts: `m.iyer`, `s.reddy` and `d.rao`
+(controllers, desks 1 to 3), `a.nair` (approver), `ops.hyd` (reporter), `v.shah` (auditor),
+`k.menon` (admin), `r.kapoor` (super admin), `ops.speaker` (speaker), `anjali` and `pooja.f`
+(crew). A store seeded from older demo data is reseeded when the data version changes. The
+console is built with npm into the bundle. It is bootstrapped with its own toolkit stack (`CrewOpsMetaToolkit`, qualifier
 `crewmeta`), so it shares nothing with other CDK projects in the account. No Docker is needed:
 the bundle is built from Linux wheels.
 
@@ -318,8 +469,7 @@ public demo.
 Domestic Indian regional operations under simplified DGCA duty rules; other regulators can be
 added as rule files. Not modelled yet: pilot recency, rules on pairing two inexperienced
 pilots, cabin crew language qualifications, and recording a positioning flight as its own
-duty (the desk is told to book the seat). Video defect reports and a fine-tuned Muse Glimmer
-router are next.
+duty (the desk is told to book the seat). Video defect reports are next.
 
 ## Disclaimer
 

@@ -1,0 +1,286 @@
+"use client";
+
+import { ArrowRight, Eye, EyeOff, KeyRound, Lock, LogOut } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+
+import { RouteMap } from "@/components/login-art";
+import { Logo } from "@/components/shell";
+import { Button, control, cx, Label, Notice, Spinner } from "@/components/ui";
+import { api, hasSession, loadConfig, message, setDemoIdentity, signOut, type Config, type DemoAccount } from "@/lib/api";
+import { setNewPassword, signIn, type Challenge } from "@/lib/cognito";
+import { demoAccounts } from "@/lib/demo";
+import { initials } from "@/lib/format";
+import { homeFor, ROLE_LABEL, ROLES, type Me } from "@/lib/roles";
+
+/** Where to go after signing in: `?next=` on this site only, else the role's home. */
+function nextPage(me: Me): string {
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (next && next.startsWith("/")) {
+    try {
+      const url = new URL(next, window.location.origin);
+      if (url.origin === window.location.origin && !url.pathname.startsWith("/login")) return url.pathname + url.search;
+    } catch {
+      /* fall through */
+    }
+  }
+  return homeFor(me.role);
+}
+
+const AIRLINES = [
+  ["Sahyadri Air", "#1d5c96"],
+  ["Kaveri Flyers", "#e08a1e"],
+  ["Godavari Link", "#2a9d6f"],
+] as const;
+
+const WHO = [
+  ["Controllers", "see problems ranked by urgency, call out cover and work the disruptions on their desk."],
+  ["Approvers", "are the second pair of eyes on every roster change and every resolution."],
+  ["Station reporters", "file a sick call, a delay or a closed gate and follow it to the end."],
+  ["Crew", "see their roster and duty limits, answer callouts and report when they cannot fly."],
+] as const;
+
+function PasswordInput({ name, autoComplete, label }: { name: string; autoComplete: string; label: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <Label label={label}>
+      <span className="relative">
+        <input name={name} type={show ? "text" : "password"} autoComplete={autoComplete} required className={cx(control, "h-10 pr-10")} />
+        <button
+          type="button"
+          onClick={() => setShow((v) => !v)}
+          aria-label={show ? "Hide password" : "Show password"}
+          aria-pressed={show}
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-faint hover:bg-sunken hover:text-foreground"
+        >
+          {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </span>
+    </Label>
+  );
+}
+
+export default function Login() {
+  const [config, setConfig] = useState<Config | null>(null);
+  const [current, setCurrent] = useState<Me | null>(null);
+  const [accounts, setAccounts] = useState<DemoAccount[]>([]);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const c = await loadConfig();
+      setConfig(c);
+      if (c.auth === "demo") demoAccounts().then(setAccounts);
+      if (hasSession()) setCurrent(await api<Me>("/api/me").catch(() => null));
+    })();
+  }, []);
+
+  async function finish() {
+    const me = await api<Me>("/api/me");
+    window.location.replace(nextPage(me));
+  }
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    setBusy("signin");
+    setError(null);
+    try {
+      const c = await signIn(String(f.get("username") ?? "").trim(), String(f.get("password") ?? ""));
+      if (c) {
+        setChallenge(c);
+        setBusy(null);
+        return;
+      }
+      await finish();
+    } catch (err) {
+      setError(message(err));
+      setBusy(null);
+    }
+  }
+
+  async function choose(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!challenge) return;
+    const f = new FormData(e.currentTarget);
+    const a = String(f.get("new") ?? "");
+    const b = String(f.get("again") ?? "");
+    if (a !== b) return setError("The two passwords are not the same.");
+    setBusy("new");
+    setError(null);
+    try {
+      await setNewPassword(challenge, a);
+      await finish();
+    } catch (err) {
+      setError(message(err));
+      setBusy(null);
+    }
+  }
+
+  async function actAs(a: DemoAccount) {
+    setBusy(a.user);
+    setError(null);
+    setDemoIdentity(a);
+    try {
+      await finish();
+    } catch (err) {
+      setError(message(err));
+      setBusy(null);
+    }
+  }
+
+  const grouped = ROLES.map((r) => [r, accounts.filter((a) => a.role === r)] as const).filter(([, list]) => list.length);
+
+  return (
+    <main className="grid min-h-screen flex-1 bg-surface lg:grid-cols-[1.08fr_1fr]">
+      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#050c18] px-12 py-10 text-white lg:flex">
+        <RouteMap />
+        <div className="relative flex items-center gap-2.5">
+          <Logo size={30} />
+          <span className="text-[15px] font-semibold">CrewOps</span>
+          <span className="text-sm text-[#a9bbd0]">Crew control</span>
+        </div>
+        <div className="relative max-w-lg">
+          <h2 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.015em]">Every seat legally crewed, before the flight is at risk.</h2>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[#cdd9e6]">
+            A sick call, a late departure or a closed gate becomes a report with legal cover, the teams to tell and a plan a
+            second person approves. The rules engine decides who is legal and what it costs.
+          </p>
+          <dl className="mt-8 grid gap-2.5 rounded-lg bg-[#050c18]/60 p-4 text-sm ring-1 ring-white/10 backdrop-blur-[2px]">
+            {WHO.map(([who, what]) => (
+              <div key={who} className="flex gap-2">
+                <dt className="shrink-0 font-semibold text-white">{who}</dt>
+                <dd className="text-[#c3d1e0]">{what}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="relative flex flex-wrap items-center justify-between gap-4 text-sm text-[#c3d1e0]">
+          <ul className="flex flex-wrap gap-x-5 gap-y-2">
+            {AIRLINES.map(([name, color]) => (
+              <li key={name} className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                {name}
+              </li>
+            ))}
+          </ul>
+          <span className="text-xs text-[#8ea3ba]">Demo operation, 30 Oct – 12 Nov 2026. All names are made up.</span>
+        </div>
+      </section>
+
+      <section className="flex items-center justify-center px-4 py-10 sm:px-8">
+        <div className={cx("w-full", config?.auth === "demo" ? "max-w-xl" : "max-w-sm")}>
+          <div className="mb-8 flex items-center gap-2.5 lg:hidden">
+            <Logo size={30} />
+            <span className="text-[15px] font-semibold">CrewOps</span>
+            <span className="text-sm text-muted">Crew control</span>
+          </div>
+
+          {current && (
+            <div className="mb-6 rounded-lg border border-line bg-sunken p-4">
+              <p className="text-sm">
+                This browser is signed in as <b>{current.name || current.user}</b> ({ROLE_LABEL[current.role] ?? current.role}).
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button tone="accent" onClick={() => window.location.replace(nextPage(current))}>
+                  Continue <ArrowRight size={14} />
+                </Button>
+                <Button
+                  tone="secondary"
+                  onClick={() => {
+                    signOut();
+                    setCurrent(null);
+                  }}
+                >
+                  <LogOut size={14} /> Sign in as someone else
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!config ? (
+            <div className="flex items-center gap-2 text-sm text-muted">
+              <Spinner /> Loading…
+            </div>
+          ) : config.auth === "demo" ? (
+            <>
+              <h1 className="text-2xl font-semibold tracking-tight">Choose who to be</h1>
+              <p className="mt-1 text-sm text-muted">
+                This server runs in demo mode: no passwords. Each account sees exactly what its role may see and do.
+              </p>
+              {error && <Notice tone="error" className="mt-4">{error}</Notice>}
+              <div className="mt-6 flex flex-col gap-5">
+                {grouped.map(([role, list]) => (
+                  <div key={role}>
+                    <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">{ROLE_LABEL[role]}</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {list.map((a) => (
+                        <button
+                          key={a.user}
+                          onClick={() => actAs(a)}
+                          disabled={busy !== null}
+                          className="group flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5 text-left transition-colors hover:border-control hover:bg-sunken disabled:opacity-60"
+                        >
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
+                            {busy === a.user ? <Spinner className="h-3.5 w-3.5" /> : initials(a.label)}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium">{a.label}</span>
+                            <span className="block font-mono text-xs text-muted">
+                              {a.user}
+                              {a.crew_id ? ` · ${a.crew_id}` : ""}
+                            </span>
+                          </span>
+                          <ArrowRight size={14} className="text-faint transition-colors group-hover:text-accent" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : challenge ? (
+            <>
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-accent-soft text-accent">
+                <KeyRound size={18} />
+              </span>
+              <h1 className="mt-4 text-2xl font-semibold tracking-tight">Choose a new password</h1>
+              <p className="mt-1 text-sm text-muted">
+                Your password was reset by an administrator. Pick a new one for <b className="text-foreground">{challenge.username}</b>; the
+                temporary one stops working.
+              </p>
+              <form onSubmit={choose} className="mt-6 flex flex-col gap-4">
+                <PasswordInput name="new" autoComplete="new-password" label="New password" />
+                <PasswordInput name="again" autoComplete="new-password" label="The same again" />
+                <p className="text-xs text-faint">At least 12 characters with upper and lower case letters, a number and a symbol.</p>
+                {error && <Notice tone="error">{error}</Notice>}
+                <Button type="submit" disabled={busy !== null} className="h-10">
+                  {busy ? <Spinner /> : <Lock size={14} />} Set password and sign in
+                </Button>
+                <Button type="button" tone="ghost" onClick={() => setChallenge(null)}>
+                  Back
+                </Button>
+              </form>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+              <p className="mt-1 text-sm text-muted">Use the account your administrator created.</p>
+              <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+                <Label label="Username">
+                  <input name="username" autoComplete="username" required autoFocus className={cx(control, "h-10")} />
+                </Label>
+                <PasswordInput name="password" autoComplete="current-password" label="Password" />
+                {error && <Notice tone="error">{error}</Notice>}
+                <Button type="submit" disabled={busy !== null} className="h-10">
+                  {busy ? <Spinner /> : <Lock size={14} />} Sign in
+                </Button>
+              </form>
+            </>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}

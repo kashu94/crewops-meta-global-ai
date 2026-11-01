@@ -302,6 +302,11 @@ export const App = ({load = fetchBoard}: {load?: () => Promise<Board>}) => {
               color={n.fatigue ? C.warn : undefined}
             />
             <Stat value={n.certificates} label="CERTS DUE" />
+            <Stat
+              value={n.plans_waiting ?? 0}
+              label="TO APPROVE"
+              color={n.plans_waiting ? C.warn : undefined}
+            />
           </View>
         ) : null}
 
