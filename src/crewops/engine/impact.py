@@ -91,9 +91,12 @@ class DelayImpact:
     hours: float
     day: date
     breaches: tuple[Breach, ...]
+    """Crew the delay pushes over a limit they met on time."""
     still_legal: tuple[str, ...]
     passengers: int
     delay_cost: int
+    already_illegal: tuple[str, ...] = ()
+    """Crew who break a rule even on time: another problem, not this delay's."""
 
     @property
     def crew_affected(self) -> int:
@@ -104,8 +107,11 @@ def delay_impact(op: Operation, trip_id: str, hours: float, day: date | None = N
     """Re-judge everyone rostered on ``trip_id`` with its departure ``hours`` late."""
     trip = op.trip(trip_id)
     target = day or trip.first_day.day
-    breaches, legal = [], []
+    breaches, legal, already = [], [], []
     for seat in trip.crew:
+        if not assess(op, seat.crew_id, trip_id).legal:
+            already.append(seat.crew_id)
+            continue
         a = assess(op, seat.crew_id, trip_id, delay_hours=hours, delay_day=target)
         if a.legal:
             legal.append(seat.crew_id)
@@ -129,6 +135,7 @@ def delay_impact(op: Operation, trip_id: str, hours: float, day: date | None = N
         still_legal=tuple(legal),
         passengers=sum(op.legs[leg].booked for leg in on_day.legs),
         delay_cost=round(op.rates.delay_per_hour * hours),
+        already_illegal=tuple(already),
     )
 
 

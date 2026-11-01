@@ -25,7 +25,7 @@ from crewops.settings import ROOT, settings
 from crewops.store import MemoryStore
 
 CONTROLLER = Caller("m.iyer", Role.CONTROLLER)
-VIEWER = Caller("ops.board", Role.VIEWER)
+VIEWER = Caller("ops.board", Role.AUDITOR)
 ANJALI = Caller("anjali", Role.CREW, "C-1157")
 
 
@@ -158,6 +158,60 @@ SCENARIOS: tuple[Scenario, ...] = (
         forbidden_tools=("assign_crew", "start_callout"),
     ),
     Scenario("U1", "Is Zara Quill legal for T-1018?", ("legality",), ("search_crew",)),
+    Scenario(
+        "X1",
+        "Gates 21 and 22 at Hyderabad are closed from 6 to 9 am on 5 November. What happens to "
+        "the departures?",
+        ("delay", "lookup"),
+        ("gate_closure",),
+        ("E1",),
+    ),
+    Scenario(
+        "X2",
+        "Can SY201 on 5 November move to gate 22?",
+        ("delay", "lookup", "change"),
+        ("gate_change",),
+        ("GL701",),
+    ),
+    Scenario(
+        "X3",
+        "Fog closes Hyderabad from 6:30 to 9:30 am on 5 November. Which crew go over a limit?",
+        ("delay",),
+        ("station_closure",),
+    ),
+    Scenario(
+        "X4",
+        "VT-SYB has a hydraulic leak and is out of service until 11 am on 5 November.",
+        ("delay",),
+        ("aircraft_out_of_service",),
+        ("SY221",),
+    ),
+    Scenario(
+        "P1",
+        "Which roster changes are waiting for an approver?",
+        ("lookup", "change"),
+        ("plan_status",),
+    ),
+    Scenario(
+        "M1",
+        "Pooja Chowdary and Anjali Goud both have food poisoning on 5 and 6 November. "
+        "Report it and tell me how to cover them.",
+        ("absence",),
+        ("report_disruption", "absence_impact"),
+        ("T-1018",),
+    ),
+    Scenario(
+        "K5",
+        "Which crew are most at risk of dropping out of the roster, and why?",
+        ("lookup", "legality"),
+        ("crew_risk",),
+    ),
+    Scenario(
+        "W1",
+        "How many open disruptions does each desk have?",
+        ("lookup",),
+        ("desk_load", "disruptions"),
+    ),
 )
 
 

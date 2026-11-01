@@ -34,7 +34,8 @@ from PIL import Image, ImageFilter, ImageStat, UnidentifiedImageError
 from pydantic import BaseModel
 
 from crewops.engine.clock import IST
-from crewops.engine.operation import Operation
+from crewops.engine.gates import check_gate
+from crewops.engine.operation import NotFound, Operation
 from crewops.models.media import Box
 
 MAX_BYTES = 8 * 1024 * 1024
@@ -122,6 +123,8 @@ class FlightStatus(BaseModel):
     """The new departure time as HH:MM if shown, otherwise empty."""
     delay_minutes: int
     """If the delay is stated in minutes or hours, in minutes; otherwise 0."""
+    new_gate: str = ""
+    """The gate it now leaves from, as shown, such as 23; otherwise empty."""
 
 
 class DisruptionNotice(BaseModel):
@@ -529,6 +532,26 @@ def _disruption(op: Operation, form: DisruptionNotice, result: Intake) -> Intake
             "trip_id": trip_id,
             "scheduled": leg.off_block.astimezone(IST).strftime("%d %b %H:%M IST"),
         }
+        gate = f.new_gate.strip().upper().removeprefix("GATE").strip()
+        if f.status == "gate_change" and gate and leg.gate:
+            try:
+                check = check_gate(op, leg.leg_id, gate)
+            except NotFound:
+                entry["gate"] = f"{gate} is not one of our gates at {leg.origin}"
+            else:
+                entry["gate"] = (
+                    f"{leg.gate} to {gate}: free"
+                    if check.free
+                    else f"{leg.gate} to {gate}: held by {', '.join(check.clashes)}"
+                    + (
+                        f"; free instead: {', '.join(check.alternatives)}"
+                        if check.alternatives
+                        else ""
+                    )
+                )
+                checks.append(
+                    {"tool": "gate_change", "arguments": {"leg_id": leg.leg_id, "gate": gate}}
+                )
         if f.status == "delayed" and minutes > 0 and trip_id:
             entry["delay_minutes"] = minutes
             checks.append(
@@ -557,7 +580,7 @@ def _disruption(op: Operation, form: DisruptionNotice, result: Intake) -> Intake
         f"{f['flight_no']} cancelled: the desk decides" for f in found if f["status"] == "cancelled"
     ]
     parts += [
-        f"{f['flight_no']} gate change: no crew impact"
+        f"{f['flight_no']} gate change" + (f" ({f['gate']})" if "gate" in f else ": no crew impact")
         for f in found
         if f["status"] == "gate_change"
     ]
@@ -565,6 +588,6 @@ def _disruption(op: Operation, form: DisruptionNotice, result: Intake) -> Intake
     if unknown:
         result.message += f" Not ours: {', '.join(unknown)}."
     if checks:
-        result.message += " Check what each delay does to the crew before acting."
+        result.message += " Check each change before acting."
         result.proposal = checks[0] if len(checks) == 1 else {"tool": "several", "calls": checks}
     return result

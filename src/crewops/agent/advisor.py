@@ -25,6 +25,7 @@ from crewops.domain import Rule
 from crewops.engine.clock import IST
 from crewops.models import ModelClient, ModelError, Usage
 from crewops.ops.callout import CalloutDesk
+from crewops.ops.governance import log
 
 MAX_STEPS = 6
 OUT_OF_SCOPE = (
@@ -115,7 +116,8 @@ How to answer:
 - When someone says they cannot fly, record it with report_unavailable first, for the dates
   they gave, so they are never offered as cover elsewhere.
 - To arrange cover with the crew, start a callout. If nobody accepts, it waits for the desk:
-  never cancel or fly short yourself; two controllers must agree through decide_callout.
+  never cancel or fly short yourself; a controller proposes and an approver decides
+  through decide_callout.
 - Mention fatigue the tools report next to a choice (legal, but worth weighing), and
   anything listed to arrange (a positioning seat to book, a departure to retime).
 - Write for a busy controller reading on a phone: at most about 120 words.
@@ -155,7 +157,22 @@ class Advisor:
         self.guard = guard
         self.verifier = verifier
         self.desk = desk
+        self.reports = None
+        """Disruption reports (``crewops.ops.reports.ReportDesk``), set by the API."""
         self.max_steps = max_steps
+
+    def _refused(self, question: str, caller: Caller, reason: str, source: str) -> None:
+        """Keep a record of every refused question for the admin."""
+        if hasattr(self.store, "put_doc"):
+            log(
+                self.store,
+                "security",
+                by=caller.user,
+                role=str(caller.role),
+                question=question[:300],
+                reason=reason,
+                source=source,
+            )
 
     def ask(
         self,
@@ -176,6 +193,7 @@ class Advisor:
             if not screening.allowed:
                 answer.text = "I can't help with that request."
                 answer.blocked = screening.reason or "blocked"
+                self._refused(question, caller, answer.blocked, screening.by)
                 return answer
 
         route = self.router.route(question)
@@ -183,13 +201,14 @@ class Advisor:
         if route.attack:
             answer.text = "I can't help with that request."
             answer.blocked = f"prompt injection (flagged by the router, {route.by})"
+            self._refused(question, caller, answer.blocked, f"router ({route.by})")
             return answer
         if not route.in_scope and not history:
             answer.text = OUT_OF_SCOPE
             answer.verified = True
             return answer
 
-        ctx = Context(self.store, caller, now, self.desk)
+        ctx = Context(self.store, caller, now, self.desk, reports=self.reports)
         op = ctx.operation()
         allowed = {t.name for t in self.toolbox.available(caller)}
         names = [n for n in route.tools if n in allowed] or sorted(allowed)

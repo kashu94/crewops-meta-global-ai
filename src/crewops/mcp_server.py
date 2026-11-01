@@ -22,6 +22,7 @@ from mcp.server.lowlevel import Server
 from crewops.agent import Caller, Context, Role, ToolBox
 from crewops.agent.tools import Roster
 from crewops.ops import CalloutDesk, StoreOutbox
+from crewops.ops.reports import ReportDesk
 from crewops.settings import settings
 from crewops.store import open_store
 
@@ -38,9 +39,10 @@ def build_server(
     toolbox: ToolBox | None = None,
     now: datetime | None = None,
     desk: CalloutDesk | None = None,
+    reports: ReportDesk | None = None,
 ) -> Server:
     box = toolbox or ToolBox()
-    ctx = Context(store, caller, now, desk)
+    ctx = Context(store, caller, now, desk, reports=reports)
 
     async def list_tools(_ctx, _params) -> types.ListToolsResult:
         return types.ListToolsResult(
@@ -76,14 +78,21 @@ def build_server(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--role", choices=[r.value for r in Role], default=Role.VIEWER.value)
+    parser.add_argument("--role", choices=[r.value for r in Role], default=Role.AUDITOR.value)
     parser.add_argument("--user", default="mcp", help="recorded as who made a roster change")
     parser.add_argument("--crew-id", help="for --role crew: whose record this is")
     args = parser.parse_args()
 
     caller = Caller(args.user, Role(args.role), args.crew_id)
-    store = open_store(settings())
-    server = build_server(store, caller, desk=CalloutDesk(store, StoreOutbox(store), docs=store))
+    config = settings()
+    store = open_store(config)
+    outbox = StoreOutbox(store)
+    server = build_server(
+        store,
+        caller,
+        desk=CalloutDesk(store, outbox, docs=store, four_eyes=True),
+        reports=ReportDesk(store, outbox, config.seed_dir),
+    )
 
     async def serve() -> None:
         async with stdio_server() as (read, write):

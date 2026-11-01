@@ -24,7 +24,7 @@ def mem(seed):
 
 @pytest.mark.anyio
 async def test_a_viewer_lists_read_only_tools(mem):
-    async with Client(build_server(mem, Caller("ops", Role.VIEWER))) as client:
+    async with Client(build_server(mem, Caller("ops", Role.AUDITOR))) as client:
         tools = (await client.list_tools()).tools
     names = {t.name for t in tools}
     assert "assign_crew" not in names and {"find_cover", "check_legality"} <= names
@@ -34,7 +34,7 @@ async def test_a_viewer_lists_read_only_tools(mem):
 
 @pytest.mark.anyio
 async def test_tools_return_the_engine_result_as_structured_content(mem):
-    async with Client(build_server(mem, Caller("ops", Role.VIEWER))) as client:
+    async with Client(build_server(mem, Caller("ops", Role.AUDITOR))) as client:
         result = await client.call_tool("check_legality", {"crew_id": LAPSED, "trip_id": "T-1018"})
     assert not result.is_error
     assert result.structured_content["legal"] is False
@@ -51,7 +51,7 @@ async def test_a_controller_can_change_the_roster_and_a_viewer_cannot(mem):
         "expected_version": 1,
         "reason": "medical lapses",
     }
-    async with Client(build_server(mem, Caller("ops", Role.VIEWER))) as client:
+    async with Client(build_server(mem, Caller("ops", Role.AUDITOR))) as client:
         refused = await client.call_tool("assign_crew", args)
     assert refused.is_error and "cannot use" in refused.structured_content["error"]
 
@@ -77,5 +77,11 @@ async def test_a_crew_member_sees_only_their_own_tools_and_record(mem):
         "callout_status",
         "answer_callout",
         "report_unavailable",
+        "clear_unavailable",
+        "report_disruption",
+        "my_reports",
+        "show_disruption",
+        "crew_risk",
+        "my_queue",
     }
     assert other.is_error

@@ -7,7 +7,8 @@
 * A second Lambda on a 10-minute schedule: moves unanswered callout offers on, and emails the
   crew desk about new problems the watch finds (SNS).
 * S3: the board's artwork from Muse Image.
-* Cognito: sign-in, with roles as groups and the demo accounts created at deploy time.
+* Cognito: sign-in, with the eight roles as groups and the demo accounts created at deploy
+  time. Admins manage accounts from the console.
 
 Model keys come from the deploying machine's ``.env`` and are set on the functions; they are
 never committed. This is a demo stack: deleting it deletes its data.
@@ -20,12 +21,16 @@ from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_sns as sns
 from aws_cdk import aws_sns_subscriptions as subscriptions
 from aws_cdk import custom_resources as cr
 from constructs import Construct
+
+from crewops.agent.tools import Role
+from crewops.ops.accounts import DEMO_ACCOUNTS
 
 BUNDLE = os.path.join(os.path.dirname(__file__), "..", "build", "lambda")
 PASSED_THROUGH = (
@@ -42,13 +47,8 @@ PASSED_THROUGH = (
     "CREWOPS_OPEN_MODEL",
     "CREWOPS_DAILY_ASKS",
 )
-DEMO_USERS = (
-    ("m.iyer", "controller", None),
-    ("s.reddy", "controller", None),
-    ("ops.board", "viewer", None),
-    ("anjali", "crew", "C-1157"),
-    ("pooja.f", "crew", "C-1167"),
-)
+DEMO_USERS = tuple((a.user, str(a.role), a.crew_id) for a in DEMO_ACCOUNTS)
+ROLES = tuple(str(r) for r in Role)
 
 
 class CrewOpsStack(cdk.Stack):
@@ -96,9 +96,12 @@ class CrewOpsStack(cdk.Stack):
         )
         groups = {
             role: cognito.CfnUserPoolGroup(
-                self, f"Group{role.title()}", user_pool_id=pool.user_pool_id, group_name=role
+                self,
+                f"Group{role.title().replace('_', '')}",
+                user_pool_id=pool.user_pool_id,
+                group_name=role,
             )
-            for role in ("controller", "viewer", "crew")
+            for role in ROLES
         }
         password = os.environ.get("CREWOPS_DEMO_PASSWORD", "")
         if password:
@@ -154,6 +157,31 @@ class CrewOpsStack(cdk.Stack):
             table.grant_read_write_data(fn)
             bucket.grant_read_write(fn)
             topic.grant_publish(fn)
+        # Admins manage the team's accounts and the alert addresses from the console.
+        api.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "cognito-idp:ListUsers",
+                    "cognito-idp:AdminGetUser",
+                    "cognito-idp:AdminListGroupsForUser",
+                    "cognito-idp:AdminCreateUser",
+                    "cognito-idp:AdminAddUserToGroup",
+                    "cognito-idp:AdminRemoveUserFromGroup",
+                    "cognito-idp:AdminEnableUser",
+                    "cognito-idp:AdminDisableUser",
+                    "cognito-idp:AdminSetUserPassword",
+                ],
+                resources=[pool.user_pool_arn],
+            )
+        )
+        api.add_to_role_policy(
+            iam.PolicyStatement(actions=["sns:Subscribe"], resources=[topic.topic_arn])
+        )
+        api.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["sns:Unsubscribe", "sns:GetSubscriptionAttributes"], resources=["*"]
+            )
+        )
 
         cdk.CfnOutput(self, "ConsoleUrl", value=url.url)
         cdk.CfnOutput(self, "BoardUrl", value=f"{url.url}board")

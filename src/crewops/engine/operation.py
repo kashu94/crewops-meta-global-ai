@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
-from crewops.domain import Leg, Rank, Rates, Standby, Trip
+from crewops.domain import Gate, Leg, Rank, Rates, Standby, Trip
 from crewops.domain.dataset import Dataset
 from crewops.engine.clock import DutyDay
 from crewops.engine.rules import CrewState, Duty, RuleBook
@@ -66,6 +66,10 @@ class Operation:
     right_seat_qualified: frozenset[str] = frozenset()
     unavailable: Mapping[str, tuple[tuple[date, str], ...]] = field(default_factory=dict)
     """Crew id -> (date, report id) from open disruptions; empty on the published roster."""
+    unavailable_since: Mapping[str, datetime] = field(default_factory=dict)
+    """Report id -> the moment someone fell ill part-way through its first day."""
+    gates: Mapping[str, tuple[Gate, ...]] = field(default_factory=dict)
+    """Station -> its gates and stands, in the order they are offered."""
     cancelled: frozenset[str] = frozenset()
     """Legs cancelled by an approved plan. Nobody flies or positions on them."""
 
@@ -200,5 +204,9 @@ def build_operation(data: Dataset, now: datetime | None = None) -> Operation:
         years_of_service={c.crew_id: c.years_of_service for c in data.crew},
         airline_names={a.code: a.name for a in data.airlines},
         command_qualified=frozenset(c.crew_id for c in data.crew if c.command_qualified),
+        gates={
+            s: tuple(g for g in data.gates if g.station == s)
+            for s in {g.station for g in data.gates}
+        },
         right_seat_qualified=frozenset(c.crew_id for c in data.crew if c.right_seat_qualified),
     )

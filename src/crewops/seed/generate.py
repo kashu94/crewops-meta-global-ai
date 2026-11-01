@@ -31,6 +31,8 @@ from crewops.domain import (
     CrewStatus,
     DayHours,
     DutyHistory,
+    Gate,
+    GateKind,
     Leg,
     Rank,
     Rates,
@@ -42,6 +44,7 @@ from crewops.domain import (
 )
 from crewops.domain.dataset import Dataset
 from crewops.engine import assess, build_operation
+from crewops.engine.gates import BOARDING
 from crewops.engine.rules import BASE, BLOCK, CERT, DUTY, FDP, NIGHT, RATING, REST, WEEKLY
 from crewops.settings import ROOT
 
@@ -51,6 +54,13 @@ DAYS = 14
 AS_OF = datetime(2026, 10, 29, 18, 0, tzinfo=UTC)
 HISTORY_DAYS = 28
 HUB = "HYD"
+DATA_VERSION = 3
+"""Raised whenever the generated data changes shape, so a deployed store reloads it."""
+
+HUB_GATES = (("21", "22", "23", "24", "25"), ("R1", "R2"), ("E1",))
+"""Contact gates, remote stands and the emergency gate the operation holds at the hub. The
+morning wave sends five departures out within an hour, so losing one gate is felt."""
+OUTSTATION_GATES = (("1", "2"), ("R1",), ("E1",))
 
 AIRLINES = (
     Airline(
@@ -346,6 +356,7 @@ class Generator:
         self.histories: list[DutyHistory] = []
         self.standby: list[Standby] = []
         self.known_issues: list[dict[str, str]] = []
+        self.gate_list: list[Gate] = []
         self._names: set[str] = set()
 
     # -- schedule ---------------------------------------------------------------------------
@@ -514,6 +525,7 @@ class Generator:
             rules=RULES,
             rates=RATES,
             as_of=AS_OF,
+            gates=tuple(self.gate_list),
         )
 
     def _needs(self, trip: Trip) -> list[Rank]:
@@ -606,8 +618,37 @@ class Generator:
                     }
                 )
 
+    def gates(self) -> None:
+        """Give every departure the first gate free for its boarding window, earliest first."""
+        stations = sorted(
+            {leg.origin for leg in self.legs} | {leg.destination for leg in self.legs}
+        )
+        for station in stations:
+            contact, remote, emergency = HUB_GATES if station == HUB else OUTSTATION_GATES
+            self.gate_list += [
+                Gate(station=station, gate=g, kind=GateKind.CONTACT) for g in contact
+            ]
+            self.gate_list += [Gate(station=station, gate=g, kind=GateKind.REMOTE) for g in remote]
+            self.gate_list += [
+                Gate(station=station, gate=g, kind=GateKind.EMERGENCY) for g in emergency
+            ]
+            held: dict[str, list[tuple[datetime, datetime]]] = {g: [] for g in contact + remote}
+            leaving = sorted(
+                (i for i, leg in enumerate(self.legs) if leg.origin == station),
+                key=lambda i: (self.legs[i].off_block, self.legs[i].leg_id),
+            )
+            for i in leaving:
+                leg = self.legs[i]
+                start, end = leg.off_block - BOARDING, leg.off_block
+                gate = next(
+                    g for g, slots in held.items() if all(e <= start or end <= s for s, e in slots)
+                )
+                held[gate].append((start, end))
+                self.legs[i] = leg.model_copy(update={"gate": gate})
+
     def build(self) -> Dataset:
         self.schedule()
+        self.gates()
         self.people()
         self.history()
         self.roster()
@@ -618,6 +659,65 @@ class Generator:
 
 def _dump(records: Any) -> Any:
     return [r.model_dump(mode="json") for r in records]
+
+
+STATIONS = ("HYD", "DEL", "BOM", "BLR", "MAA", "GOI", "VGA", "TIR", "RJA", "VTZ")
+ON_DUTY = {
+    "gate_control": (
+        "Ravi Teja",
+        "Neha Bansal",
+        "Arjun Pillai",
+        "Kavya Shetty",
+        "Senthil Kumar",
+        "Rohan Naik",
+        "Srinivas Rao",
+        "Lakshmi Prasanna",
+        "Harsha Varma",
+        "Bhavana Reddy",
+    ),
+    "station_ops": (
+        "Farhan Qureshi",
+        "Meera Joshi",
+        "Vikram Desai",
+        "Shreya Hegde",
+        "Karthik Raman",
+        "Anita Fernandes",
+        "Prakash Babu",
+        "Deepika Naidu",
+        "Suresh Chandra",
+        "Swathi Kiran",
+    ),
+}
+NETWORK_DESKS = (
+    ("flight_info", "Nisha Kapoor", "+91 40 6612 3100"),
+    ("ops_monitoring", "Venkat Subramanian", "+91 40 6612 3200"),
+    ("maintenance_control", "Imran Sheikh", "+91 40 6612 3300"),
+    ("crew_records", "Padma Iyengar", "+91 40 6612 3400"),
+    ("customer_care", "Rahul Mehta", "+91 40 6612 3500"),
+)
+
+
+def contacts() -> list[dict[str, str]]:
+    """Who is on duty in each operational team: one per station for the station teams, one
+    at the operations centre for the rest. Made-up names and numbers."""
+    out = []
+    for team, names in ON_DUTY.items():
+        prefix = "98" if team == "gate_control" else "97"
+        for station, name in zip(STATIONS, names, strict=True):
+            n = len(out)
+            out.append(
+                {
+                    "team": team,
+                    "station": station,
+                    "name": name,
+                    "phone": f"+91 {prefix}{n % 10}4{n % 7} {31000 + n * 731:05d}",
+                }
+            )
+    out += [
+        {"team": team, "station": "NETWORK", "name": name, "phone": phone}
+        for team, name, phone in NETWORK_DESKS
+    ]
+    return out
 
 
 def write(directory: Path, seed: int = SEED) -> Dataset:
@@ -634,7 +734,10 @@ def write(directory: Path, seed: int = SEED) -> Dataset:
         "trips": _dump(data.trips),
         "rules": _dump(data.rules),
         "rates": data.rates.model_dump(mode="json"),
+        "gates": _dump(data.gates),
+        "contacts": contacts(),
         "meta": {
+            "data_version": DATA_VERSION,
             "as_of": AS_OF.isoformat(),
             "first_day": START.isoformat(),
             "last_day": (START + timedelta(days=DAYS - 1)).isoformat(),

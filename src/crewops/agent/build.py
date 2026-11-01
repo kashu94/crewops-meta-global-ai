@@ -8,6 +8,7 @@ from crewops.agent.router import Router
 from crewops.agent.verify import EvidenceVerifier
 from crewops.models import Endpoint, Ledger, ModelClient
 from crewops.ops import CalloutDesk, Outbox, StoreOutbox
+from crewops.ops.reports import ReportDesk
 from crewops.settings import Settings
 from crewops.store import MemoryStore, Store
 
@@ -29,12 +30,15 @@ def build_advisor(
     if config.prompt_guard_url:
         guards.append(PromptGuard(config.prompt_guard_url, config.prompt_guard_token))
     rules = store.dataset().rules
-    return Advisor(
+    outbox = outbox or StoreOutbox(store)
+    advisor = Advisor(
         store,
         planner,
         rules,
         router=Router(router_model),
         guard=GuardChain(guards),
         verifier=EvidenceVerifier("\n".join(f"{r.rule_id} {r.text}" for r in rules)),
-        desk=CalloutDesk(store, outbox or StoreOutbox(store), docs=store),
+        desk=CalloutDesk(store, outbox, docs=store, four_eyes=True),
     )
+    advisor.reports = ReportDesk(store, outbox, config.seed_dir)
+    return advisor

@@ -19,7 +19,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from fastapi import Body, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from crewops.agent.advisor import Advisor, Answer
@@ -28,17 +28,25 @@ from crewops.agent.memory import Conversations
 from crewops.agent.tools import Caller, Context, Role, ToolBox
 from crewops.api.auth import caller_from
 from crewops.engine.clock import IST
+from crewops.engine.severity import for_issue
 from crewops.engine.watch import scan
 from crewops.models import Endpoint, ModelClient, ModelError
 from crewops.models.media import MediaClient
-from crewops.ops import CalloutDesk, StoreOutbox
+from crewops.ops import DESK, SUPERVISOR, CalloutDesk, StoreOutbox
+from crewops.ops.accounts import DEMO_ACCOUNTS, CognitoAccounts, StoreAccounts
+from crewops.ops.alerts import AlertAddresses
 from crewops.ops.brief import BucketImages, Images, MemoryImages, draw_card, write_brief
+from crewops.ops.desks import desk_of
+from crewops.ops.governance import entries
+from crewops.ops.push import Push, PushingOutbox
+from crewops.ops.reports import ReportDesk, ReportStatus
+from crewops.ops.roster_upload import MAX_BYTES as ROSTER_LIMIT
 from crewops.seed import load_dataset, read_meta
 from crewops.settings import ROOT, Settings, settings
 from crewops.store import MemoryStore, Store, open_store
 from crewops.vision import Kind, ModelReader, read_photo
 
-WEB = ROOT / "web"
+WEB = ROOT / "web" / "out"
 SCORECARD = ROOT / "docs" / "scorecard.json"
 BRIEF_EVERY_SECONDS = 120
 AUDIO_LIMIT = 10 * 1024 * 1024
@@ -52,10 +60,24 @@ class Services:
     def __init__(self, config: Settings, store: Store | MemoryStore | None = None) -> None:
         self.config = config
         self.store = store or open_store(config)
-        if self.store.is_empty():
-            self.store.load(load_dataset(config.seed_dir), read_meta(config.seed_dir))
-        self.outbox = StoreOutbox(self.store)
-        self.desk = CalloutDesk(self.store, self.outbox, docs=self.store)
+        meta = read_meta(config.seed_dir)
+        # A store seeded from older demo data is reseeded: the demo always runs on one shape.
+        if self.store.is_empty() or self.store.meta().get("data_version") != meta.get(
+            "data_version"
+        ):
+            self.store.load(load_dataset(config.seed_dir), meta)
+        self.push = Push(self.store)
+        self.outbox = PushingOutbox(StoreOutbox(self.store), self.push)
+        self.desk = CalloutDesk(self.store, self.outbox, docs=self.store, four_eyes=True)
+        self.reports = ReportDesk(self.store, self.outbox, config.seed_dir)
+        self.alerts = AlertAddresses(self.store)
+        if config.auth == "cognito" and config.cognito_pool_id:
+            import boto3
+
+            cognito = boto3.client("cognito-idp", region_name=config.aws_region or None)
+            self.accounts = CognitoAccounts(cognito, config.cognito_pool_id)
+        else:
+            self.accounts = StoreAccounts(self.store)
         self.conversations = Conversations(docs=self.store)
         self.toolbox = ToolBox()
         self.media = MediaClient(config)
@@ -75,10 +97,26 @@ class Services:
             if self._advisor is None:
                 self._advisor = build_advisor(self.config, self.store, self.outbox)
                 self._advisor.desk = self.desk
+                self._advisor.reports = self.reports
             return self._advisor
 
     def context(self, caller: Caller) -> Context:
-        return Context(self.store, caller, desk=self.desk)
+        return Context(
+            self.store,
+            caller,
+            desk=self.desk,
+            reports=self.reports,
+            accounts=self.accounts,
+            alerts=self.alerts,
+        )
+
+    def set_outbox(self, outbox: Any) -> None:
+        """Send every notice through ``outbox`` from now on (emails, when deployed)."""
+        self.outbox = outbox
+        self.desk.outbox = outbox
+        if self.desk.plans is not None:
+            self.desk.plans.outbox = outbox
+        self.reports.outbox = outbox
 
     def spend(self, what: str) -> None:
         """Count one model-backed request against today's allowance."""
@@ -130,7 +168,24 @@ def answer_json(answer: Answer, conversation_id: str) -> dict[str, Any]:
     }
 
 
-OPEN = ("offered", "needs_decision", "awaiting_approval")
+OPEN = ("offered", "accepted", "needs_decision", "awaiting_approval")
+
+TONES = (
+    ("Escalated", "critical"),
+    ("Decision needed", "critical"),
+    ("Watch", "critical"),
+    ("Approval needed", "pending"),
+    ("Sent back", "pending"),
+    ("Stale", "pending"),
+    ("Offer withdrawn", "pending"),
+    ("Approved", "ok"),
+    ("Filled", "ok"),
+)
+"""How a desk notice reads on the speaker and the screens, from the start of its subject."""
+
+
+def tone_of(subject: str) -> str:
+    return next((tone for prefix, tone in TONES if subject.startswith(prefix)), "info")
 
 
 def ops_room(s: Services, op: Any, issues: list[Any], callouts: list[Any]) -> dict[str, Any]:
@@ -151,16 +206,19 @@ def ops_room(s: Services, op: Any, issues: list[Any], callouts: list[Any]) -> di
         if u.first_day <= tomorrow and u.last_day >= today
     }
 
+    def desk(name: str) -> dict[str, Any]:
+        return desks.setdefault(name, {"controller": name, "open": 0, "filled": 0, "to_approve": 0})
+
     desks: dict[str, dict[str, Any]] = {}
     for c in callouts:
-        desk = desks.setdefault(
-            c.opened_by, {"controller": c.opened_by, "open": 0, "filled": 0, "to_approve": 0}
-        )
         status = str(c.status)
-        desk["open"] += status in OPEN
-        desk["filled"] += status == "filled"
+        desk(c.opened_by)["open"] += status in OPEN
+        desk(c.opened_by)["filled"] += status == "filled"
         if status == "awaiting_approval":
-            desk["to_approve"] += 1
+            desk(c.opened_by)["to_approve"] += 1
+    waiting = s.desk.plans.waiting() if s.desk.plans is not None else []
+    for p in waiting:
+        desk(p.submitted_by)["to_approve"] += 1
 
     standby: dict[tuple[str, str], int] = {}
     for crew in op.crew.values():
@@ -181,6 +239,8 @@ def ops_room(s: Services, op: Any, issues: list[Any], callouts: list[Any]) -> di
             "illegal": sum(1 for i in issues if i.kind == "illegal"),
             "fatigue": sum(1 for i in issues if i.kind == "fatigue"),
             "certificates": sum(1 for i in issues if i.kind == "certificate"),
+            "plans_waiting": len(waiting),
+            "escalated": len(s.store.docs("escalated")),
         },
         "desks": sorted(desks.values(), key=lambda d: (-d["open"], d["controller"])),
         "departures": [
@@ -200,10 +260,20 @@ def ops_room(s: Services, op: Any, issues: list[Any], callouts: list[Any]) -> di
             for (airline, rank), n in sorted(standby.items())
         ],
         "latest": [
-            {"subject": n.subject, "at": n.at.astimezone(IST).strftime("%d %b %H:%M")}
-            for n in s.outbox.sent("crew-desk")[-6:][::-1]
+            {
+                "subject": n.subject,
+                "at": n.at.astimezone(IST).strftime("%d %b %H:%M"),
+                "tone": tone_of(n.subject),
+            }
+            for n in desk_notices(s)[:6]
         ],
     }
+
+
+def desk_notices(s: Services) -> list[Any]:
+    """The desk's and the supervisor's notices, newest first."""
+    found = s.outbox.sent(DESK) + s.outbox.sent(SUPERVISOR)
+    return sorted(found, key=lambda n: n.at, reverse=True)
 
 
 def refresh_brief(s: Services, force: bool = False) -> bool:
@@ -272,12 +342,28 @@ def create_app(config: Settings | None = None, services: Services | None = None)
     def me(who: Caller = Depends(caller)) -> dict[str, Any]:
         s = svc()
         op = s.store.operation()
+        demo = next((a for a in DEMO_ACCOUNTS if a.user == who.user), None)
+        owns = desk_of(who.user) if who.role is Role.CONTROLLER else None
+        name = op.state(who.crew_id).name if who.crew_id else (demo.label if demo else who.user)
         return {
             "user": who.user,
+            "name": name.split(",")[0],
             "role": str(who.role),
             "crew_id": who.crew_id,
+            "desk": {"desk_id": owns.desk_id, "name": owns.name} if owns else None,
             "clock": op.now.astimezone(IST).strftime("%a %d %b %Y, %H:%M IST"),
             "tools": [t.name for t in s.toolbox.available(who)],
+            "push": s.push.subscribed(who.user),
+        }
+
+    @app.get("/api/accounts/demo")
+    def demo_accounts() -> dict[str, Any]:
+        """The demo accounts, for the sign-in page. Never their passwords."""
+        return {
+            "accounts": [
+                {"user": a.user, "role": str(a.role), "crew_id": a.crew_id, "label": a.label}
+                for a in DEMO_ACCOUNTS
+            ]
         }
 
     @app.get("/api/version")
@@ -285,9 +371,12 @@ def create_app(config: Settings | None = None, services: Services | None = None)
         """Cheap to call every couple of seconds: screens refresh when a number moves."""
         s = svc()
         callouts = s.store.docs("callout")
+        reports = s.store.docs("report")
         return {
             "roster": s.store.roster_version(),
             "callouts": hash(json.dumps(callouts, sort_keys=True)) % 10**9,
+            "plans": hash(json.dumps(s.store.docs("plan"), sort_keys=True)) % 10**9,
+            "reports": hash(json.dumps(reports, sort_keys=True)) % 10**9,
             "notices": len(s.store.docs("notice")),
         }
 
@@ -301,7 +390,9 @@ def create_app(config: Settings | None = None, services: Services | None = None)
     @app.get("/api/notices")
     def notices(limit: int = 30, who: Caller = Depends(caller)) -> dict[str, Any]:
         s = svc()
-        mine = {"crew-desk"} if who.role is not Role.CREW else {who.crew_id}
+        mine = {DESK, SUPERVISOR} if who.role is not Role.CREW else {who.crew_id}
+        if who.role is Role.REPORTER:
+            mine = {DESK}
         found = [n for n in s.outbox.sent() if n.to in mine]
         return {
             "notices": [
@@ -360,6 +451,61 @@ def create_app(config: Settings | None = None, services: Services | None = None)
         out["kind"], out["status"] = str(result.kind), str(result.status)
         return out
 
+    @app.get("/api/log/{kind}")
+    def activity_log(kind: str, limit: int = 50, who: Caller = Depends(caller)) -> dict:
+        """Who changed what (desk roles), and which questions were refused (admins only)."""
+        if kind not in ("activity", "security"):
+            raise HTTPException(404, "no such log")
+        readers = (
+            {Role.ADMIN, Role.SUPER_ADMIN, Role.AUDITOR}
+            if kind == "security"
+            else {Role.CONTROLLER, Role.APPROVER, Role.AUDITOR, Role.ADMIN, Role.SUPER_ADMIN}
+        )
+        if who.role not in readers:
+            raise HTTPException(403, f"the {who.role} role cannot read the {kind} log")
+        return {"entries": entries(svc().store, kind, min(limit, 200))}
+
+    # -- desktop alerts and roster files --------------------------------------------------
+
+    @app.get("/api/push/key")
+    def push_key(_who: Caller = Depends(caller)) -> dict[str, str]:
+        return {"public_key": svc().push.public_key()}
+
+    @app.post("/api/push/subscribe")
+    def push_subscribe(
+        subscription: dict[str, Any] = Body(...), who: Caller = Depends(caller)
+    ) -> dict[str, bool]:
+        try:
+            svc().push.subscribe(subscription, who.user, str(who.role), who.crew_id)
+        except ValueError as err:
+            raise HTTPException(400, str(err)) from err
+        return {"subscribed": True}
+
+    @app.post("/api/push/unsubscribe")
+    def push_unsubscribe(
+        endpoint: str = Body(..., embed=True), _who: Caller = Depends(caller)
+    ) -> dict[str, bool]:
+        svc().push.unsubscribe(endpoint)
+        return {"subscribed": False}
+
+    @app.post("/api/roster/upload")
+    async def roster_upload(
+        file: UploadFile = File(...),
+        dry_run: bool = Form(True),
+        who: Caller = Depends(caller),
+    ) -> dict[str, Any]:
+        data = await file.read()
+        if len(data) > ROSTER_LIMIT:
+            raise HTTPException(413, "an upload is at most 2 MB")
+        try:
+            content = json.loads(data)
+        except (json.JSONDecodeError, UnicodeDecodeError) as err:
+            raise HTTPException(400, f"not a JSON file: {err}") from err
+        s = svc()
+        return s.toolbox.call(
+            "upload_roster", {"content": content, "dry_run": dry_run}, s.context(who)
+        )
+
     # -- the board ------------------------------------------------------------------------
 
     @app.get("/api/board")
@@ -375,16 +521,60 @@ def create_app(config: Settings | None = None, services: Services | None = None)
             refresh_brief(s)
         op = s.store.operation()
         cached = s.store.get_doc("brief", "current")
-        ctx = s.context(Caller("board", Role.VIEWER))
+        ctx = s.context(Caller("board", Role.AUDITOR))
         issues = scan(op)
         callouts = s.desk.all()
         return {
             "clock": op.now.astimezone(IST).strftime("%a %d %b, %H:%M IST"),
             "brief": cached["brief"] if cached else None,
-            "issues": [{**asdict(i), "day": i.day.isoformat()} for i in issues[:12]],
+            "issues": [
+                {
+                    **asdict(i),
+                    "day": i.day.isoformat(),
+                    "severity": str(grade.level),
+                    "severity_reasons": list(grade.reasons),
+                }
+                for i, grade in sorted(
+                    ((i, for_issue(op, i)) for i in issues), key=lambda p: p[1].level.rank
+                )[:12]
+            ],
             "callouts": s.toolbox.call("callout_status", {}, ctx).get("callouts", []),
             "changes": s.toolbox.call("roster_changes", {"limit": 5}, ctx).get("changes", []),
+            "disruptions": s.toolbox.call("disruptions", {"limit": 8}, ctx).get("disruptions", []),
+            "desk_load": s.reports.load(),
             **ops_room(s, op, issues, callouts),
+        }
+
+    @app.get("/api/speaker")
+    def speaker() -> dict[str, Any]:
+        """The ops-room speaker's feed: the desk's notices, newest first, each with how it
+        should sound. Read-only and public like the board; it never spends model credits."""
+        s = svc()
+        op = s.store.operation()
+        waiting = s.desk.plans.waiting() if s.desk.plans is not None else []
+        return {
+            "clock": op.now.astimezone(IST).strftime("%a %d %b, %H:%M IST"),
+            "waiting": {
+                "plans": len(waiting),
+                "decisions": sum(1 for c in s.desk.all() if str(c.status) == "needs_decision"),
+                "resolutions": sum(1 for r in s.reports.all() if r.status is ReportStatus.RESOLVED),
+                "disruptions": sum(
+                    1
+                    for r in s.reports.all()
+                    if r.status in (ReportStatus.OPEN, ReportStatus.IN_PROGRESS)
+                ),
+            },
+            "items": [
+                {
+                    "id": f"{n.ref}:{n.at.isoformat()}:{n.subject}",
+                    "at": n.at.astimezone(IST).strftime("%H:%M"),
+                    "to": n.to,
+                    "tone": tone_of(n.subject),
+                    "subject": n.subject,
+                    "body": n.body,
+                }
+                for n in desk_notices(s)[:25]
+            ],
         }
 
     @app.get("/api/card/{key:path}")
@@ -405,15 +595,8 @@ def create_app(config: Settings | None = None, services: Services | None = None)
     # -- the pages ------------------------------------------------------------------------
 
     if WEB.is_dir():
-        app.mount("/static", StaticFiles(directory=WEB), name="static")
-
-        @app.get("/")
-        def console() -> FileResponse:
-            return FileResponse(WEB / "index.html")
-
-        @app.get("/board")
-        def board_page() -> FileResponse:
-            return FileResponse(WEB / "board.html")
+        # The console is a static export: each page is a folder with an index.html.
+        app.mount("/", StaticFiles(directory=WEB, html=True), name="console")
 
     return app
 

@@ -14,6 +14,7 @@ from crewops.domain import (
     Certificate,
     Crew,
     DutyHistory,
+    Gate,
     Leg,
     Rates,
     Rule,
@@ -31,6 +32,7 @@ FILES = {
     "legs": Leg,
     "trips": Trip,
     "rules": Rule,
+    "gates": Gate,
 }
 
 

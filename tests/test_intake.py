@@ -1,6 +1,7 @@
 import io
 import json
 import random
+from datetime import timedelta
 
 import httpx
 import pytest
@@ -303,6 +304,33 @@ def test_a_departures_board_turns_delays_into_crew_checks(op):
     }
     assert "KF502 gate change: no crew impact" in result.message
     assert "Not ours: 6E123" in result.message
+
+
+def test_a_gate_change_on_a_board_is_checked_against_who_holds_the_gate(op):
+    leg = min(
+        (leg for leg in op.legs.values() if leg.flight_no == "SY201" and leg.off_block > op.now),
+        key=lambda leg: leg.off_block,
+    )
+    other = next(
+        x
+        for x in op.legs.values()
+        if x.origin == "HYD" and x.off_block == leg.off_block + timedelta(minutes=15)
+    )
+    notice = board(
+        {
+            "flight_no": "SY201",
+            "status": "gate_change",
+            "new_time": "",
+            "delay_minutes": 0,
+            "new_gate": f"Gate {other.gate}",
+        }
+    )
+    result = read_photo(op, Kind.DISRUPTION, SHARP, "image/jpeg", Reader(notice))
+    assert f"held by {other.flight_no}" in result.message
+    assert result.proposal == {
+        "tool": "gate_change",
+        "arguments": {"leg_id": leg.leg_id, "gate": other.gate},
+    }
 
 
 def test_a_new_departure_time_is_turned_into_minutes_late(op):

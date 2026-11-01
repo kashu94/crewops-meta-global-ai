@@ -163,7 +163,10 @@ def main() -> None:
     print("\nCrewOps is live.")
     print(f"  Console: {out['ConsoleUrl']}")
     print(f"  Board:   {out['BoardUrl']}")
-    print("  Demo accounts: m.iyer, s.reddy (controllers), ops.board (viewer),")
+    print(f"  Speaker: {out['ConsoleUrl'].rstrip('/')}/speaker")
+    print("  Demo accounts: m.iyer, s.reddy, d.rao (controllers, desks 1-3), a.nair (approver),")
+    print("                 ops.hyd (reporter), v.shah (auditor), k.menon (admin),")
+    print("                 r.kapoor (super admin), ops.speaker (speaker),")
     print("                 anjali (crew C-1157), pooja.f (crew C-1167)")
     print(f"  Password: {env['CREWOPS_DEMO_PASSWORD']}")
     if values.get("CREWOPS_ALERT_EMAIL"):

@@ -3,7 +3,8 @@ import json
 import pytest
 from conftest import SEED_DIR
 
-from crewops.agent import TOOLS, Caller, Context, Role, ToolBox
+from crewops.agent import Caller, Context, Role, ToolBox
+from crewops.agent.desk_tools import ALL_TOOLS
 from crewops.domain import Rank
 from crewops.engine.cover import find_cover
 from crewops.seed import read_meta
@@ -13,7 +14,7 @@ LAPSED = "C-1111"  # medical lapses 2026-11-05; planted in the demo data
 TRIP = "T-1018"
 
 CONTROLLER = Caller("m.iyer", Role.CONTROLLER)
-VIEWER = Caller("ops.board", Role.VIEWER)
+VIEWER = Caller("ops.board", Role.AUDITOR)
 
 
 @pytest.fixture
@@ -36,16 +37,54 @@ def call(box, store, name, caller=CONTROLLER, **args):
 
 def test_each_role_sees_only_its_tools(box):
     names = {role: {t.name for t in box.available(Caller("u", role, "C-1111"))} for role in Role}
-    assert names[Role.CONTROLLER] == {t.name for t in TOOLS}
-    writes = {
+    admin_only = {
+        "set_rule_limit",
+        "revoke_report",
+        "team_accounts",
+        "create_account",
+        "set_account",
+        "reset_password",
+        "alert_addresses",
+        "add_alert_address",
+        "remove_alert_address",
+        "upload_roster",
+    }
+    approvals = {"confirm_resolution", "return_resolution", "reassign_disruption"}
+    assert names[Role.CONTROLLER] == {t.name for t in ALL_TOOLS} - admin_only - approvals
+    controller_writes = {
         "assign_crew",
         "start_callout",
         "answer_callout",
-        "decide_callout",
         "report_unavailable",
         "clear_unavailable",
+        "submit_report_plan",
+        "close_disruption",
     }
-    assert names[Role.VIEWER] == names[Role.CONTROLLER] - writes
+    assert names[Role.APPROVER] == names[Role.CONTROLLER] - controller_writes | approvals
+    assert names[Role.AUDITOR] == names[Role.APPROVER] - approvals - {
+        "decide_callout",
+        "review_plan",
+        "report_disruption",
+    }
+    assert names[Role.ADMIN] == names[Role.AUDITOR] | admin_only | {
+        "report_disruption",
+        "reassign_disruption",
+    }
+    assert names[Role.SUPER_ADMIN] == names[Role.ADMIN]
+    assert names[Role.SPEAKER] == {"my_queue"}
+    assert names[Role.REPORTER] == {
+        "search_crew",
+        "find_trips",
+        "trip_details",
+        "gate_status",
+        "report_unavailable",
+        "clear_unavailable",
+        "report_disruption",
+        "my_reports",
+        "show_disruption",
+        "contacts",
+        "my_queue",
+    }
     assert names[Role.CREW] == {
         "find_trips",
         "trip_details",
@@ -54,6 +93,12 @@ def test_each_role_sees_only_its_tools(box):
         "callout_status",
         "answer_callout",
         "report_unavailable",
+        "clear_unavailable",
+        "report_disruption",
+        "my_reports",
+        "show_disruption",
+        "crew_risk",
+        "my_queue",
     }
 
 
@@ -84,7 +129,7 @@ def test_bad_calls_come_back_as_errors_the_model_can_read(box, mem):
     assert "not valid JSON" in box.call("trip_details", "{trip", ctx)["error"]
     assert "trip_id" in box.call("trip_details", '{"trip_id": "1018"}', ctx)["error"]
     assert "T-9999" in box.call("trip_details", '{"trip_id": "T-9999"}', ctx)["error"]
-    assert "viewer role cannot use assign_crew" in box.call("assign_crew", "{}", ctx)["error"]
+    assert "auditor role cannot use assign_crew" in box.call("assign_crew", "{}", ctx)["error"]
 
 
 def test_search_finds_crew_by_name_or_id(box, mem):
@@ -188,9 +233,11 @@ def test_assigning_someone_the_engine_rules_out_is_refused(box, mem):
     assert mem.changes() == []
 
 
-def test_a_delay_names_who_it_pushes_over_a_limit(box, mem):
+def test_a_delay_is_not_blamed_for_who_is_illegal_anyway(box, mem):
     result = call(box, mem, "delay_impact", trip_id=TRIP, hours=3)
-    assert [b["crew_id"] for b in result["crew_over_a_limit"]] == [LAPSED]
+    # The lapsed medical makes LAPSED illegal on time; the delay is not its cause.
+    assert result["crew_illegal_even_on_time"] == [LAPSED]
+    assert LAPSED not in [b["crew_id"] for b in result["crew_over_a_limit"]]
     assert result["delay_cost_inr"] > 0
 
 
@@ -245,10 +292,12 @@ def test_a_callout_runs_through_the_tools_and_never_cancels_by_itself(box, mem):
     decide = {"callout_id": callout_id, "action": "propose_cancel"}
     assert box.call("decide_callout", decide, ctx())["status"] == "awaiting_approval"
     same = box.call("decide_callout", {**decide, "action": "approve"}, ctx())
-    assert "different controller" in same["error"]
-    other = Caller("s.reddy", Role.CONTROLLER)
-    done = box.call("decide_callout", {**decide, "action": "approve"}, ctx(other))
-    assert done["status"] == "closed" and done["proposal"]["approved_by"] == "s.reddy"
+    assert "only an approver" in same["error"]
+    approver = Caller("a.nair", Role.APPROVER)
+    refused = box.call("decide_callout", decide, ctx(approver))
+    assert "a controller proposes" in refused["error"]
+    done = box.call("decide_callout", {**decide, "action": "approve"}, ctx(approver))
+    assert done["status"] == "closed" and done["proposal"]["approved_by"] == "a.nair"
 
 
 def test_an_accepted_callout_fills_the_seat(box, mem):

@@ -94,7 +94,7 @@ def test_when_everyone_declines_nothing_is_cancelled_and_the_desk_decides(desk, 
     assert [o["way"] for o in callout.options] == ["cancel"]
     assert mem.changes() == [] and mem.trip(TRIP)[1] == 1  # the trip is untouched
     notice = outbox.sent(DESK)[-1]
-    assert "Nothing has been cancelled" in notice.body and "second controller" in notice.body
+    assert "Nothing has been cancelled" in notice.body and "approver" in notice.body
 
 
 def test_cancelling_needs_two_different_controllers(desk, mem):
@@ -106,7 +106,7 @@ def test_cancelling_needs_two_different_controllers(desk, mem):
         desk.propose(callout.callout_id, "one_short", by="m.iyer")
     desk.propose(callout.callout_id, "cancel", by="m.iyer")
     assert callout.status is Status.AWAITING_APPROVAL
-    with pytest.raises(CalloutError, match="different controller"):
+    with pytest.raises(CalloutError, match="someone else"):
         desk.approve(callout.callout_id, by="m.iyer")
 
     desk.reject(callout.callout_id, by="s.reddy")

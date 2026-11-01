@@ -7,10 +7,21 @@ and rupee in an answer can be traced back to a tool result.
 
 Roles:
 
-* ``viewer`` reads the operation: an ops board, a duty manager.
-* ``controller`` also changes the roster, and only to crew the engine offers as legal cover.
-* ``crew`` reads their own record and the trips they fly, nothing about anyone else, and
-  answers callouts offered to them.
+* ``crew`` read their own record and the trips they fly, nothing about anyone else, answer
+  callouts offered to them and report themselves unavailable.
+* ``reporter`` (a station duty manager) sees the operation's flights and files disruption
+  reports, and follows the ones they filed.
+* ``controller`` owns a desk: works the disruptions assigned to it, finds cover, runs
+  callouts and proposes roster changes, only to crew the engine offers as legal cover.
+* ``approver`` is the second pair of eyes: approves, rejects or sends back each change, and
+  signs off a controller's resolution.
+* ``auditor`` reads everything, the activity and security logs included, and changes nothing.
+* ``admin`` looks after the team and the system: accounts, passwords, alert addresses, roster
+  uploads, planned leave, reports filed in error, and duty limits, stricter than the
+  regulator's only.
+* ``super_admin`` does what an admin does, manages the admins, and may relax a duty limit
+  back towards the regulator's figure, never past it.
+* ``speaker`` is the ops-room speaker, a device: it hears what is waiting and nothing else.
 """
 
 from __future__ import annotations
@@ -18,9 +29,9 @@ from __future__ import annotations
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import UTC, date, datetime, time, timedelta
 from enum import StrEnum
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -28,10 +39,23 @@ from crewops.domain import Rank, Seat, Trip, Unavailability
 from crewops.engine import Finding, NotFound, Operation, assess
 from crewops.engine.clock import IST, window
 from crewops.engine.cover import Choice, TripStarted, arrangements, find_cover
+from crewops.engine.disruption import Disruption, aircraft_out, station_closure
 from crewops.engine.fatigue import fatigue_flags
+from crewops.engine.gates import (
+    GatePlan,
+    check_gate,
+    departures,
+    gate_closure,
+    gates_at,
+    late_departure,
+)
 from crewops.engine.impact import absence_gaps, delay_impact, joint_cover, with_unavailable
+from crewops.engine.risk import crew_risk, risk_json
+from crewops.engine.severity import for_issue
 from crewops.engine.watch import scan
-from crewops.ops.callout import Callout, CalloutDesk, CalloutError
+from crewops.ops.callout import Callout, CalloutDesk, CalloutError, Status
+from crewops.ops.governance import LimitError, limits, log, set_limit
+from crewops.ops.plans import Plan, PlanDesk, PlanError
 from crewops.store.roster import RosterChange, StaleTrip
 
 CREW_ID = r"^C-\d{4}$"
@@ -39,9 +63,14 @@ TRIP_ID = r"^T-\d{4}$"
 
 
 class Role(StrEnum):
-    VIEWER = "viewer"
-    CONTROLLER = "controller"
     CREW = "crew"
+    REPORTER = "reporter"
+    CONTROLLER = "controller"
+    APPROVER = "approver"
+    AUDITOR = "auditor"
+    ADMIN = "admin"
+    SUPER_ADMIN = "super_admin"
+    SPEAKER = "speaker"
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,7 +99,15 @@ class Roster(Protocol):
     ) -> int: ...
     def changes(self, trip_id: str | None = None) -> list[RosterChange]: ...
     def mark_unavailable(
-        self, crew_id: str, first_day: date, last_day: date, reason: str, by: str
+        self,
+        crew_id: str,
+        first_day: date,
+        last_day: date,
+        reason: str,
+        by: str,
+        at: datetime | None = None,
+        kind: str = "other",
+        since: datetime | None = None,
     ) -> Unavailability: ...
     def clear_unavailable(self, report_id: str) -> Unavailability: ...
     def unavailability(self, crew_id: str | None = None) -> list[Unavailability]: ...
@@ -83,6 +120,12 @@ class Context:
     now: datetime | None = None
     """The operation's clock; ``None`` uses the time the demo data was taken."""
     desk: CalloutDesk | None = None
+    reports: Any = None
+    """The disruption reports (``crewops.ops.reports.ReportDesk``), where there are any."""
+    accounts: Any = None
+    """Team accounts (``crewops.ops.accounts``), for admins."""
+    alerts: Any = None
+    """Alert addresses (``crewops.ops.alerts``), for admins."""
 
     def operation(self) -> Operation:
         return self.store.operation(self.now)
@@ -100,6 +143,11 @@ class Context:
         if self.desk is None:
             raise ToolError("callouts are not available here")
         return self.desk
+
+    def plans(self) -> PlanDesk:
+        if self.desk is None or self.desk.plans is None:
+            raise ToolError("plans are not available here")
+        return self.desk.plans
 
 
 class ToolError(Exception):
@@ -149,9 +197,12 @@ def _choice(c: Choice) -> dict[str, Any]:
     return out
 
 
-def _cover_choice(op: Operation, trip_id: str, c: Choice) -> dict[str, Any]:
+def _cover_choice(
+    op: Operation, trip_id: str, c: Choice, reports: list[Unavailability] | None = None
+) -> dict[str, Any]:
     out = _choice(c)
     if c.crew_id:
+        out["risk"] = risk_json(crew_risk(op, c.crew_id, reports or ()))
         if fatigue := _fatigue(op, c.crew_id, trip_id):
             out["fatigue"] = fatigue
         if todo := arrangements(op, trip_id, c):
@@ -173,9 +224,40 @@ def _unavailability(u: Unavailability) -> dict[str, Any]:
         "from": u.first_day.isoformat(),
         "to": u.last_day.isoformat(),
         "reason": u.reason,
+        "kind": u.kind,
+        **({"since": _when(u.since)} if u.since else {}),
         "reported_by": u.reported_by,
         "reported_at": _when(u.reported_at),
     }
+
+
+def _plan(p: Plan) -> dict[str, Any]:
+    out: dict[str, Any] = {
+        "plan_id": p.plan_id,
+        "status": str(p.status),
+        "trip_id": p.trip_id,
+        "seat": str(p.rank),
+        "replacing": p.replacing,
+        "crew_id": p.crew_id,
+        "name": p.name,
+        "summary": p.summary,
+        "cost_inr": p.cost,
+        "trip_version": p.trip_version,
+        "submitted_by": p.submitted_by,
+        "submitted_at": _when(p.submitted_at),
+        "source": p.source,
+        **({"report_id": p.source} if p.source.startswith("R-") else {}),
+    }
+    if p.note:
+        out["note_from_submitter"] = p.note
+    if p.decided_by:
+        out["decided_by"] = p.decided_by
+        out["decided_at"] = _when(p.decided_at) if p.decided_at else None
+    if p.decision_note:
+        out["decision_note"] = p.decision_note
+    if p.to_arrange:
+        out["to_arrange"] = list(p.to_arrange)
+    return out
 
 
 def _callout(c: Callout) -> dict[str, Any]:
@@ -198,6 +280,9 @@ def _callout(c: Callout) -> dict[str, Any]:
     if c.current is not None:
         out["waiting_for"] = c.current.crew_id
         out["answer_by"] = _when(c.current.expires_at)
+    if c.plan_id:
+        out["plan_id"] = c.plan_id
+        out["waiting_for_approval"] = c.status is Status.ACCEPTED
     if c.filled_by:
         out["filled_by"] = c.filled_by
     if c.to_arrange:
@@ -206,9 +291,7 @@ def _callout(c: Callout) -> dict[str, Any]:
         out["reason"] = c.reason
     if c.options:
         out["desk_options"] = c.options
-        out["note"] = (
-            "Nothing has been cancelled. Cancelling or flying short needs two controllers."
-        )
+        out["note"] = "Nothing has been cancelled. Cancelling or flying short needs an approver."
     if c.proposal is not None:
         out["proposal"] = {
             "way": c.proposal.way,
@@ -365,7 +448,9 @@ def crew_profile(ctx: Context, args: CrewProfile) -> dict[str, Any]:
         "duty_limit_7_days": book.duty_hours,
         "block_hours_last_28_days": round(crew.block_between(block_from, block_to), 2),
         "block_limit_28_days": book.block_hours,
-        "rest_until": _when(crew.rest_until) if crew.rest_until else None,
+        "rest_until": (
+            _when(crew.rest_until) if crew.rest_until and crew.rest_until > op.now else None
+        ),
         "upcoming_duties": [
             {"trip_id": d.trip_id, "day": d.day.isoformat(), "report": _when(d.report)}
             for d in crew.rostered()
@@ -375,6 +460,7 @@ def crew_profile(ctx: Context, args: CrewProfile) -> dict[str, Any]:
         "standby_days": sorted(
             {day.isoformat() for s in op.standby.get(crew.crew_id, ()) for day in s.dates}
         ),
+        "risk": risk_json(crew_risk(op, crew.crew_id, ctx.store.unavailability())),
     }
 
 
@@ -444,7 +530,9 @@ def find_cover_tool(ctx: Context, args: FindCover) -> dict[str, Any]:
     return {
         "trip_id": cover.trip_id,
         "seat": str(cover.seat),
-        "choices": [_cover_choice(op, args.trip_id, c) for c in choices],
+        "choices": [
+            _cover_choice(op, args.trip_id, c, ctx.store.unavailability()) for c in choices
+        ],
         "more_choices": len(cover.choices) - len(choices),
         "considered": cover.considered,
         "funnel": [
@@ -452,6 +540,11 @@ def find_cover_tool(ctx: Context, args: FindCover) -> dict[str, Any]:
             for s in cover.funnel
         ],
         "facts": cover.facts,
+        "picks": {
+            aim: {"crew_id": c.crew_id, "summary": c.summary, "cost_inr": c.cost}
+            | ({"departure_late_hours": c.slip_hours} if c.slip_hours else {})
+            for aim, c in cover.picks().items()
+        },
         **({"why_not": explained} if explained else {}),
         **({"withdrawn": _withdrawn(ctx, cover.withdrawn)} if cover.withdrawn else {}),
     }
@@ -535,6 +628,11 @@ def delay_impact_tool(ctx: Context, args: DelayImpactArgs) -> dict[str, Any]:
             for b in impact.breaches
         ],
         "crew_still_legal": list(impact.still_legal),
+        **(
+            {"crew_illegal_even_on_time": list(impact.already_illegal)}
+            if impact.already_illegal
+            else {}
+        ),
         "passengers": impact.passengers,
         "delay_cost_inr": impact.delay_cost,
     }
@@ -570,9 +668,25 @@ class AssignCrew(BaseModel):
     with_crew_id: str = Field(pattern=CREW_ID, description="Who takes the seat")
     expected_version: int = Field(ge=1, description="The trip version from trip_details")
     reason: str = Field(min_length=3, max_length=200)
+    report_id: str | None = Field(
+        None, pattern=r"^R-[0-9a-f]{6}$", description="The disruption report this work is for"
+    )
+
+
+def _report_work(ctx: Context, report_id: str | None) -> None:
+    """Work for a report is done by its desk's controller only."""
+    if report_id is None:
+        return
+    if ctx.reports is None:
+        raise ToolError("disruption reports are not available here")
+    try:
+        ctx.reports.check_mine(report_id, ctx.caller.user)
+    except ValueError as err:
+        raise ToolError(str(err)) from err
 
 
 def assign_crew(ctx: Context, args: AssignCrew) -> dict[str, Any]:
+    _report_work(ctx, args.report_id)
     trip, _ = ctx.store.trip(args.trip_id)
     seat = next((s for s in trip.crew if s.crew_id == args.replace_crew_id), None)
     if seat is None:
@@ -589,6 +703,26 @@ def assign_crew(ctx: Context, args: AssignCrew) -> dict[str, Any]:
         excluded = cover.why_not(args.with_crew_id)
         why = "; ".join(excluded.reasons) if excluded else "not someone who can take this seat"
         raise ToolError(f"{args.with_crew_id} is not legal cover for this seat: {why}")
+    plans = ctx.desk.plans if ctx.desk is not None else None
+    if plans is not None:
+        _, version = ctx.store.trip(args.trip_id)
+        if version != args.expected_version:
+            raise ToolError(
+                f"{args.trip_id} is at version {version}, not {args.expected_version}. Someone "
+                "changed the trip; call trip_details and decide again."
+            )
+        try:
+            plan = plans.submit(
+                args.trip_id, args.replace_crew_id, args.with_crew_id, ctx.caller.user, args.reason
+            )
+        except PlanError as err:
+            raise ToolError(str(err)) from err
+        if args.report_id:
+            ctx.reports.link(args.report_id, ctx.caller.user, plan_id=plan.plan_id)
+        return {
+            **_plan(plan),
+            "note": "Submitted, not yet applied: an approver must approve it.",
+        }
     crew = [
         Seat(crew_id=args.with_crew_id, rank=s.rank) if s.crew_id == args.replace_crew_id else s
         for s in trip.crew
@@ -618,10 +752,15 @@ class OpenIssues(BaseModel):
 
 
 def open_issues(ctx: Context, args: OpenIssues) -> dict[str, Any]:
-    issues = scan(ctx.operation(), horizon_days=args.days)
+    op = ctx.operation()
+    graded = [(i, for_issue(op, i)) for i in scan(op, horizon_days=args.days)]
+    graded.sort(key=lambda pair: pair[1].level.rank)  # stable: the watch's order within a level
     return {
         "issues": [
             {
+                "issue_id": i.issue_id,
+                "severity": str(s.level),
+                "severity_reasons": list(s.reasons),
                 "kind": i.kind,
                 "crew_id": i.crew_id,
                 "name": i.name,
@@ -632,18 +771,22 @@ def open_issues(ctx: Context, args: OpenIssues) -> dict[str, Any]:
                 **({"suggested_cover": i.suggestion} if i.suggestion else {}),
                 **({"suggested_cost_inr": i.suggestion_cost} if i.suggestion_cost else {}),
             }
-            for i in issues[: args.limit]
+            for i, s in graded[: args.limit]
         ],
-        "total": len(issues),
+        "total": len(graded),
     }
 
 
 class StartCallout(BaseModel):
     trip_id: str = Field(pattern=TRIP_ID)
     replace_crew_id: str = Field(pattern=CREW_ID, description="Who leaves the trip")
+    report_id: str | None = Field(
+        None, pattern=r"^R-[0-9a-f]{6}$", description="The disruption report this work is for"
+    )
 
 
 def start_callout(ctx: Context, args: StartCallout) -> dict[str, Any]:
+    _report_work(ctx, args.report_id)
     trip, _ = ctx.store.trip(args.trip_id)
     seat = next((s for s in trip.crew if s.crew_id == args.replace_crew_id), None)
     if seat is None:
@@ -654,6 +797,8 @@ def start_callout(ctx: Context, args: StartCallout) -> dict[str, Any]:
         )
     except CalloutError as err:
         raise ToolError(str(err)) from err
+    if args.report_id:
+        ctx.reports.link(args.report_id, ctx.caller.user, callout_id=callout.callout_id)
     return _callout(callout)
 
 
@@ -698,6 +843,11 @@ class DecideCallout(BaseModel):
 
 def decide_callout(ctx: Context, args: DecideCallout) -> dict[str, Any]:
     desk, by = ctx.callouts(), ctx.caller.user
+    proposing = args.action.startswith("propose")
+    if proposing and ctx.caller.role is not Role.CONTROLLER:
+        raise Forbidden("a controller proposes; an approver decides")
+    if not proposing and ctx.caller.role is not Role.APPROVER:
+        raise Forbidden("only an approver can approve or reject a proposal")
     try:
         match args.action:
             case "propose_cancel":
@@ -717,6 +867,15 @@ class ReportUnavailable(BaseModel):
     first_day: date
     last_day: date
     reason: str = Field(min_length=2, max_length=200, description="Such as 'sick' or 'family'")
+    kind: Literal["sick", "fatigue", "personal", "other"] = Field(
+        "other", description="sick, fatigue, personal or other"
+    )
+    since: str | None = Field(
+        None,
+        pattern=r"^([01]\d|2[0-3]):[0-5]\d$",
+        description="IST time (HH:MM) they fell ill on first_day; duties ending earlier are "
+        "still flown",
+    )
     crew_id: str | None = Field(
         None, pattern=CREW_ID, description="For a controller reporting someone else"
     )
@@ -728,13 +887,27 @@ def report_unavailable(ctx: Context, args: ReportUnavailable) -> dict[str, Any]:
         raise ToolError("say who cannot fly with crew_id")
     if args.last_day < args.first_day:
         raise ToolError("last_day is before first_day")
+    since = None
+    if args.since:
+        hour, minute = map(int, args.since.split(":"))
+        since = datetime.combine(args.first_day, time(hour, minute), IST).astimezone(UTC)
     report = ctx.store.mark_unavailable(
-        crew_id, args.first_day, args.last_day, args.reason, ctx.caller.user
+        crew_id,
+        args.first_day,
+        args.last_day,
+        args.reason,
+        ctx.caller.user,
+        kind=args.kind,
+        since=since,
     )
     op = ctx.operation()
     days = set(report.days())
     affected = sorted(
-        {d.trip_id for d in op.state(crew_id).rostered() if d.day in days and d.report > op.now}
+        {
+            d.trip_id
+            for d in op.state(crew_id).rostered()
+            if d.day in days and d.report > op.now and (since is None or d.release > since)
+        }
     )
     moved = ctx.desk.withdraw(crew_id) if ctx.desk is not None else []
     return {
@@ -750,6 +923,10 @@ class ClearUnavailable(BaseModel):
 
 
 def clear_unavailable(ctx: Context, args: ClearUnavailable) -> dict[str, Any]:
+    if ctx.caller.role is Role.CREW:
+        mine = {u.report_id for u in ctx.store.unavailability(ctx.caller.crew_id)}
+        if args.report_id not in mine:
+            raise Forbidden("crew members can only withdraw their own reports")
     report = ctx.store.clear_unavailable(args.report_id)
     return {**_unavailability(report), "crew_id": report.crew_id, "cleared": True}
 
@@ -786,8 +963,276 @@ def _untitled(node: Any) -> Any:
     return node
 
 
-READERS = frozenset({Role.VIEWER, Role.CONTROLLER})
-EVERYONE = frozenset(Role)
+class PlanStatusArgs(BaseModel):
+    plan_id: str | None = Field(None, pattern=r"^PL-[0-9a-f]{8}$")
+    waiting_only: bool = Field(True, description="Only plans still waiting for a decision")
+
+
+def plan_status(ctx: Context, args: PlanStatusArgs) -> dict[str, Any]:
+    plans = ctx.plans()
+    if args.plan_id:
+        return _plan(plans.get(args.plan_id))
+    found = plans.waiting() if args.waiting_only else plans.all()[:20]
+    return {"plans": [_plan(p) for p in found]}
+
+
+class ReviewPlan(BaseModel):
+    plan_id: str = Field(pattern=r"^PL-[0-9a-f]{8}$")
+    action: Literal["approve", "reject", "send_back", "withdraw"]
+    note: str = Field("", max_length=300, description="Required to reject or send back")
+
+
+def review_plan(ctx: Context, args: ReviewPlan) -> dict[str, Any]:
+    plans, by = ctx.plans(), ctx.caller.user
+    if args.action == "withdraw" and ctx.caller.role is not Role.CONTROLLER:
+        raise Forbidden("only the controller who submitted a plan can withdraw it")
+    if args.action != "withdraw" and ctx.caller.role is not Role.APPROVER:
+        raise Forbidden("only an approver can approve, reject or send back a plan")
+    try:
+        match args.action:
+            case "approve":
+                plan = plans.approve(args.plan_id, by)
+            case "reject":
+                plan = plans.reject(args.plan_id, by, args.note)
+            case "send_back":
+                plan = plans.send_back(args.plan_id, by, args.note)
+            case _:
+                plan = plans.withdraw(args.plan_id, by)
+    except PlanError as err:
+        raise ToolError(str(err)) from err
+    return _plan(plan)
+
+
+def _ist(moment: datetime) -> datetime:
+    """Times without a zone are India time, as a controller says them."""
+    return moment.replace(tzinfo=IST) if moment.tzinfo is None else moment
+
+
+def _delays(impact) -> dict[str, Any]:
+    return {
+        "trip_id": impact.trip_id,
+        "day": impact.day.isoformat(),
+        "delay_hours": impact.hours,
+        "crew_over_a_limit": [
+            {"crew_id": b.crew_id, "name": b.name, "rules": list(b.rule_ids)}
+            for b in impact.breaches
+        ],
+        **(
+            {"crew_illegal_even_on_time": list(impact.already_illegal)}
+            if impact.already_illegal
+            else {}
+        ),
+        "passengers": impact.passengers,
+        "delay_cost_inr": impact.delay_cost,
+    }
+
+
+def _gate_plan(plan: GatePlan) -> dict[str, Any]:
+    return {
+        "station": plan.station,
+        "what": plan.what,
+        "moves": [
+            {
+                "flight": m.flight_no,
+                "leg_id": m.leg_id,
+                **({"trip_id": m.trip_id} if m.trip_id else {}),
+                "from_gate": m.from_gate,
+                "to_gate": m.to_gate,
+                "to": str(m.to_kind),
+                "boarding_from": _when(m.boarding_from),
+                "departs": _when(m.departs),
+                "passengers": m.booked,
+                "delay_minutes": m.delay_minutes,
+                **({"other_free_gates": list(m.alternatives)} if m.alternatives else {}),
+            }
+            for m in plan.moves
+        ],
+        "flights_moved": len(plan.moves),
+        "passengers_moved": plan.passengers,
+        "crew_impact": [_delays(i) for i in plan.crew],
+    }
+
+
+class GateStatus(BaseModel):
+    station: str = Field("HYD", pattern=r"^[A-Z]{3}$")
+    day: date = Field(description="The UTC date, YYYY-MM-DD")
+
+
+def gate_status(ctx: Context, args: GateStatus) -> dict[str, Any]:
+    op = ctx.operation()
+    kinds = gates_at(op, args.station)
+    start = datetime.combine(args.day, time(0), UTC)
+    slots = departures(op, args.station, start, start + timedelta(days=1))
+    return {
+        "station": args.station,
+        "gates": [{"gate": g, "kind": str(k)} for g, k in kinds.items()],
+        "departures": [
+            {
+                "flight": s.leg.flight_no,
+                "leg_id": s.leg.leg_id,
+                "to": s.leg.destination,
+                "gate": s.gate,
+                "boarding_from": _when(s.start),
+                "departs": _when(s.end),
+                "passengers": s.leg.booked,
+            }
+            for s in slots
+        ],
+    }
+
+
+class GateClosure(BaseModel):
+    station: str = Field("HYD", pattern=r"^[A-Z]{3}$")
+    gates: list[str] = Field(min_length=1, max_length=8, description="The gates that close")
+    start: datetime = Field(description="When it closes; without a zone, India time")
+    end: datetime = Field(description="When it reopens; without a zone, India time")
+
+
+def gate_closure_tool(ctx: Context, args: GateClosure) -> dict[str, Any]:
+    plan = gate_closure(ctx.operation(), args.station, args.gates, _ist(args.start), _ist(args.end))
+    return _gate_plan(plan)
+
+
+class LateAtGate(BaseModel):
+    leg_id: str = Field(description="Flight and date, such as SY201-2026-11-05")
+    minutes: int = Field(gt=0, le=600, description="How late it leaves")
+
+
+def late_at_gate(ctx: Context, args: LateAtGate) -> dict[str, Any]:
+    return _gate_plan(late_departure(ctx.operation(), args.leg_id, args.minutes))
+
+
+class GateChange(BaseModel):
+    leg_id: str = Field(description="Flight and date, such as SY201-2026-11-05")
+    gate: str = Field(min_length=1, max_length=8, description="The gate it should move to")
+
+
+def gate_change(ctx: Context, args: GateChange) -> dict[str, Any]:
+    c = check_gate(ctx.operation(), args.leg_id, args.gate)
+    out: dict[str, Any] = {
+        "flight": c.flight_no,
+        "leg_id": c.leg_id,
+        "station": c.station,
+        "current_gate": c.current,
+        "wanted_gate": c.wanted,
+        "free": c.free,
+    }
+    if c.clashes:
+        out["held_by"] = list(c.clashes)
+    if c.alternatives:
+        out["free_gates"] = list(c.alternatives)
+    return out
+
+
+def _disruption(d: Disruption) -> dict[str, Any]:
+    return {
+        "what": d.what,
+        "flights_held": [
+            {
+                "flight": f.flight_no,
+                "leg_id": f.leg_id,
+                "route": f.route,
+                "planned": _when(f.planned),
+                "leaves": _when(f.leaves),
+                "late_minutes": f.minutes,
+                "passengers": f.booked,
+            }
+            for f in d.flights
+        ],
+        "passengers": d.passengers,
+        "trips": [_delays(t) for t in d.trips],
+        "crew_over_a_limit": d.crew_over_limits,
+    }
+
+
+class StationClosure(BaseModel):
+    station: str = Field(pattern=r"^[A-Z]{3}$")
+    start: datetime = Field(description="When it closes; without a zone, India time")
+    end: datetime = Field(description="When it reopens; without a zone, India time")
+
+
+def station_closure_tool(ctx: Context, args: StationClosure) -> dict[str, Any]:
+    try:
+        d = station_closure(ctx.operation(), args.station, _ist(args.start), _ist(args.end))
+    except ValueError as err:
+        raise ToolError(str(err)) from err
+    return _disruption(d)
+
+
+class AircraftOut(BaseModel):
+    tail: str = Field(pattern=r"^VT-[A-Z]{3}$")
+    start: datetime = Field(description="When it went out of service; without a zone, India time")
+    back: datetime = Field(description="When it is expected back; without a zone, India time")
+
+
+def aircraft_out_tool(ctx: Context, args: AircraftOut) -> dict[str, Any]:
+    try:
+        d = aircraft_out(ctx.operation(), args.tail, _ist(args.start), _ist(args.back))
+    except ValueError as err:
+        raise ToolError(str(err)) from err
+    return _disruption(d)
+
+
+class RuleLimits(BaseModel):
+    rule_id: str | None = Field(None, pattern=r"^FDTL-\d{2}$", description="Only this rule")
+
+
+def rule_limits(ctx: Context, args: RuleLimits) -> dict[str, Any]:
+    return {
+        "limits": [
+            {
+                "rule": x.rule_id,
+                "title": x.title,
+                "param": x.param,
+                "value": x.value,
+                "regulator": x.regulator,
+                "stricter_is": x.stricter,
+                "tightened": x.tightened,
+                "may_relax": ctx.caller.role is Role.SUPER_ADMIN,
+            }
+            for x in limits(ctx.store)
+            if args.rule_id in (None, x.rule_id)
+        ]
+    }
+
+
+class SetRuleLimit(BaseModel):
+    rule_id: str = Field(pattern=r"^FDTL-\d{2}$")
+    param: str
+    value: float = Field(gt=0)
+    reason: str = Field(min_length=5, max_length=300)
+
+
+def set_rule_limit(ctx: Context, args: SetRuleLimit) -> dict[str, Any]:
+    try:
+        limit, rule = set_limit(
+            ctx.store,
+            args.rule_id,
+            args.param,
+            args.value,
+            ctx.caller.user,
+            args.reason,
+            may_relax=ctx.caller.role is Role.SUPER_ADMIN,
+            role=str(ctx.caller.role),
+        )
+    except LimitError as err:
+        raise ToolError(str(err)) from err
+    return {
+        "rule": limit.rule_id,
+        "param": limit.param,
+        "value": limit.value,
+        "regulator": limit.regulator,
+        "params_now": rule.params,
+    }
+
+
+READERS = frozenset({Role.CONTROLLER, Role.APPROVER, Role.AUDITOR, Role.ADMIN, Role.SUPER_ADMIN})
+"""Who reads the whole operation: the desk, its approvers, auditors and admins."""
+OPS = READERS | {Role.REPORTER}
+"""Readers and station duty managers: flights, gates and who is who."""
+EVERYONE = frozenset(Role) - {Role.SPEAKER}
+"""Every person; the ops-room speaker is a device and only hears what is waiting."""
+ADMINS = frozenset({Role.ADMIN, Role.SUPER_ADMIN})
 
 TOOLS = (
     Tool(
@@ -795,7 +1240,7 @@ TOOLS = (
         "Find crew by part of their name or by crew id. Use it to turn a name into a crew id.",
         SearchCrew,
         search_crew,
-        READERS,
+        OPS,
     ),
     Tool(
         "find_trips",
@@ -817,7 +1262,7 @@ TOOLS = (
         "rest and upcoming duties.",
         CrewProfile,
         crew_profile,
-        EVERYONE,
+        READERS | {Role.CREW},
     ),
     Tool(
         "check_legality",
@@ -825,7 +1270,7 @@ TOOLS = (
         "late departure. Returns every rule's verdict and the numbers behind it.",
         CheckLegality,
         check_legality,
-        EVERYONE,
+        READERS | {Role.CREW},
     ),
     Tool(
         "find_cover",
@@ -859,8 +1304,9 @@ TOOLS = (
     ),
     Tool(
         "assign_crew",
-        "Replace one crew member on a trip. Only succeeds for someone find_cover offers as "
-        "legal, and only if the trip is still at expected_version.",
+        "Propose replacing one crew member on a trip. Only for someone find_cover offers as "
+        "legal, and only if the trip is still at expected_version. An approver "
+        "must approve it with review_plan before the roster changes.",
         AssignCrew,
         assign_crew,
         frozenset({Role.CONTROLLER}),
@@ -872,15 +1318,16 @@ TOOLS = (
         "are never offered as cover for those dates, and any callout offer to them moves on.",
         ReportUnavailable,
         report_unavailable,
-        frozenset({Role.CONTROLLER, Role.CREW}),
+        frozenset({Role.CONTROLLER, Role.REPORTER, Role.CREW}),
         writes=True,
     ),
     Tool(
         "clear_unavailable",
-        "Remove an unavailability report, for someone who can fly again.",
+        "Remove an unavailability report, for someone who can fly again. Crew may withdraw "
+        "their own.",
         ClearUnavailable,
         clear_unavailable,
-        frozenset({Role.CONTROLLER}),
+        frozenset({Role.CONTROLLER, Role.REPORTER, Role.CREW}),
         writes=True,
     ),
     Tool(
@@ -906,7 +1353,7 @@ TOOLS = (
         "crew, the offers waiting for them.",
         CalloutStatus,
         callout_status,
-        EVERYONE,
+        READERS | {Role.CREW},
     ),
     Tool(
         "answer_callout",
@@ -920,17 +1367,102 @@ TOOLS = (
     Tool(
         "decide_callout",
         "When nobody accepted: propose cancelling or flying one short, or approve or reject "
-        "another controller's proposal. Two different controllers are always needed.",
+        "a proposal (approvers only). A controller proposes; an approver decides.",
         DecideCallout,
         decide_callout,
-        frozenset({Role.CONTROLLER}),
+        frozenset({Role.CONTROLLER, Role.APPROVER}),
+        writes=True,
+    ),
+    Tool(
+        "plan_status",
+        "Roster changes waiting for an approver, or one plan by id: who proposed what, "
+        "and what was decided.",
+        PlanStatusArgs,
+        plan_status,
+        READERS,
+    ),
+    Tool(
+        "review_plan",
+        "Decide a plan a controller submitted (approvers): approve (the rules are checked again "
+        "first), reject or send back with a note. The submitter may withdraw their own.",
+        ReviewPlan,
+        review_plan,
+        frozenset({Role.CONTROLLER, Role.APPROVER}),
+        writes=True,
+    ),
+    Tool(
+        "gate_status",
+        "The gates and stands at a station and which departure holds which gate on a day.",
+        GateStatus,
+        gate_status,
+        OPS,
+    ),
+    Tool(
+        "gate_closure",
+        "Gates close for a while: where each departure holding one moves (a free gate, then "
+        "the emergency gate, then a remote stand by bus, which adds 15 minutes) and what any "
+        "delay does to crew duty.",
+        GateClosure,
+        gate_closure_tool,
+        READERS,
+    ),
+    Tool(
+        "late_at_gate",
+        "A flight leaves late and keeps its gate: which next departures at that gate must "
+        "move, where to, and what any delay does to crew duty.",
+        LateAtGate,
+        late_at_gate,
+        READERS,
+    ),
+    Tool(
+        "gate_change",
+        "Check moving one departure to another gate: is it free for the boarding window, "
+        "who holds it if not, and which gates are free.",
+        GateChange,
+        gate_change,
+        READERS,
+    ),
+    Tool(
+        "station_closure",
+        "A station closes for a while (weather, runway): every flight held, how late each "
+        "leaves, and which crew a delay pushes over a limit.",
+        StationClosure,
+        station_closure_tool,
+        READERS,
+    ),
+    Tool(
+        "aircraft_out_of_service",
+        "An aircraft is out of service until a time: the flights it holds back that day and "
+        "which crew the delay pushes over a limit.",
+        AircraftOut,
+        aircraft_out_tool,
+        READERS,
+    ),
+    Tool(
+        "rule_limits",
+        "The duty limits an admin can make stricter, their values now and the regulator's.",
+        RuleLimits,
+        rule_limits,
+        READERS,
+    ),
+    Tool(
+        "set_rule_limit",
+        "Make one duty limit stricter than the regulator's, or return it to the regulator's "
+        "figure; never less strict. Needs a reason; logged.",
+        SetRuleLimit,
+        set_rule_limit,
+        ADMINS,
         writes=True,
     ),
 )
 
 
 class ToolBox:
-    def __init__(self, tools: tuple[Tool, ...] = TOOLS) -> None:
+    def __init__(self, tools: tuple[Tool, ...] | None = None) -> None:
+        if tools is None:
+            from crewops.agent.desk_tools import ALL_TOOLS
+
+            tools = ALL_TOOLS
         self.tools = {t.name: t for t in tools}
 
     def available(self, caller: Caller) -> list[Tool]:
@@ -957,8 +1489,18 @@ class ToolBox:
             )
             return {"error": f"invalid arguments: {problems}"}
         try:
-            return tool.run(ctx, args)
+            result = tool.run(ctx, args)
         except (NotFound, CalloutError) as err:
             return {"error": str(err)}
         except ToolError as err:
             return {"error": str(err)}
+        if tool.writes and tool.name != "set_rule_limit" and hasattr(ctx.store, "put_doc"):
+            log(
+                ctx.store,
+                "activity",
+                by=ctx.caller.user,
+                role=str(ctx.caller.role),
+                action=name,
+                detail=json.dumps(args.model_dump(mode="json"), ensure_ascii=False)[:300],
+            )
+        return result

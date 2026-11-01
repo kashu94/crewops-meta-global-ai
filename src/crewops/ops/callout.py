@@ -5,12 +5,17 @@ if they decline, or do not answer in time, it offers it to the next. Before ever
 again when someone accepts, the cover is worked out afresh, so nobody is offered or given a
 seat they stopped being legal for in the meantime.
 
+With ``four_eyes`` (as the console and the agent run it), an accepted offer does not change
+the roster by itself either: it becomes a plan that an approver approves, and the seat
+is filled when they do (see ``crewops.ops.plans``). If the plan is rejected or has gone stale,
+the next legal crew member is asked.
+
 **A callout never cancels a flight or flies it short on its own.** When nobody is left to
 ask, it stops and hands the decision to the crew desk with the remaining options and their
-costs. Cancelling or flying one short then needs two controllers: one proposes, a different
-one approves. Until then the trip stays as it is.
+costs. Cancelling or flying one short then needs two people: a controller proposes, an
+approver decides. Until then the trip stays as it is.
 
-    OFFERED --accept--> FILLED
+    OFFERED --accept--> FILLED   (with four eyes: --accept--> ACCEPTED --approved--> FILLED)
        |  decline / no answer: next legal crew member
        v
     NEEDS_DECISION --propose (controller A)--> AWAITING_APPROVAL --approve (controller B)--> CLOSED
@@ -32,6 +37,7 @@ from crewops.domain import Rank, Seat, Trip
 from crewops.engine.cover import Choice, TripStarted, arrangements, find_cover
 from crewops.engine.operation import NotFound, Operation
 from crewops.ops.notify import DESK, Notice, Outbox
+from crewops.ops.plans import Plan, PlanDesk, PlanError, PlanStatus
 from crewops.store.roster import StaleTrip
 
 RESPOND_WITHIN = timedelta(minutes=20)
@@ -40,6 +46,8 @@ NO_CREW_WAYS = ("one_short", "cancel")
 
 class Status(StrEnum):
     OFFERED = "offered"
+    ACCEPTED = "accepted"
+    """Someone accepted; the plan waits for an approver."""
     FILLED = "filled"
     NEEDS_DECISION = "needs_decision"
     AWAITING_APPROVAL = "awaiting_approval"
@@ -59,7 +67,8 @@ class Offer:
     offered_at: datetime
     expires_at: datetime
     answer: str | None = None
-    """``accepted``, ``declined``, ``no answer``, ``unavailable`` or ``no longer legal``."""
+    """``accepted``, ``declined``, ``no answer``, ``unavailable``, ``no longer legal`` or
+    ``not approved``."""
     answered_at: datetime | None = None
 
 
@@ -94,6 +103,8 @@ class Callout:
     """The trip's version after the seat was filled."""
     to_arrange: tuple[str, ...] = ()
     """What the desk must still book or retime for the person who accepted."""
+    plan_id: str | None = None
+    """With four eyes: the plan an accepted offer is waiting on."""
 
     @property
     def current(self) -> Offer | None:
@@ -142,6 +153,7 @@ class CalloutDesk:
         respond_within: timedelta = RESPOND_WITHIN,
         operation_clock: Callable[[], datetime | None] = lambda: None,
         docs: Docs | None = None,
+        four_eyes: bool = False,
     ) -> None:
         self.store = store
         self.outbox = outbox
@@ -152,6 +164,17 @@ class CalloutDesk:
         self.docs = docs
         self._lock = threading.RLock()
         self._callouts: dict[str, Callout] = {}
+        self.plans: PlanDesk | None = None
+        if four_eyes:
+            self.plans = PlanDesk(
+                store,
+                outbox,
+                clock,
+                operation_clock,
+                docs,
+                lock=self._lock,
+                on_decided=self._plan_decided,
+            )
 
     def _sync(self) -> None:
         if self.docs is not None:
@@ -202,6 +225,7 @@ class CalloutDesk:
                     vacated_by,
                 ) and c.status in (
                     Status.OFFERED,
+                    Status.ACCEPTED,
                     Status.NEEDS_DECISION,
                     Status.AWAITING_APPROVAL,
                 ):
@@ -240,6 +264,10 @@ class CalloutDesk:
             c.current.crew_id
             for c in self._callouts.values()
             if c.callout_id != callout.callout_id and c.current is not None
+        } | {
+            c.offers[-1].crew_id
+            for c in self._callouts.values()
+            if c.callout_id != callout.callout_id and c.status is Status.ACCEPTED
         }
         crewed = [c for c in cover.choices if c.crew_id and c.crew_id not in asked | busy]
         if not crewed:
@@ -288,7 +316,7 @@ class CalloutDesk:
                     f"Nobody is left to call out for {callout.trip_id} ({why}). Nothing has been "
                     "cancelled. A controller must decide"
                     + (f": {listed}." if listed else ".")
-                    + " A cancellation or flying short needs a second controller to approve."
+                    + " A cancellation or flying short needs an approver."
                 ),
                 at=self.clock(),
                 ref=callout.callout_id,
@@ -344,6 +372,9 @@ class CalloutDesk:
                 callout.status = Status.CLOSED
                 callout.reason = f"{callout.vacated_by} is no longer on {callout.trip_id}"
                 return
+            if self.plans is not None:
+                self._submit(callout, offer, now)
+                return
             crew = [
                 Seat(crew_id=offer.crew_id, rank=s.rank) if s.crew_id == callout.vacated_by else s
                 for s in trip.crew
@@ -377,6 +408,44 @@ class CalloutDesk:
             return
         self._answer(offer, "no longer legal", now)
         self._offer_next(callout)
+
+    def _submit(self, callout: Callout, offer: Offer, now: datetime) -> None:
+        """Four eyes: the accepted offer becomes a plan for an approver to decide."""
+        assert self.plans is not None
+        try:
+            plan = self.plans.submit(
+                callout.trip_id,
+                callout.vacated_by,
+                offer.crew_id,
+                by=callout.opened_by,
+                note=f"{offer.name} accepted callout {callout.callout_id}",
+                source=callout.callout_id,
+            )
+        except PlanError as err:
+            raise CalloutError(str(err)) from err
+        self._answer(offer, "accepted", now)
+        callout.status = Status.ACCEPTED
+        callout.plan_id = plan.plan_id
+        callout.to_arrange = plan.to_arrange
+
+    def _plan_decided(self, plan: Plan) -> None:
+        """An approver decided a plan a callout made: fill the seat, or ask the next."""
+        self._sync()
+        callout = self._callouts.get(plan.source)
+        if callout is None or callout.plan_id != plan.plan_id:
+            return
+        if plan.status is PlanStatus.APPROVED:
+            callout.status = Status.FILLED
+            callout.filled_by = plan.crew_id
+            callout.version = plan.version
+        else:
+            offer = callout.offers[-1]
+            self._answer(offer, "not approved", self.clock())
+            callout.reason = f"{plan.plan_id} {plan.status}: {plan.decision_note}".rstrip(": ")
+            callout.plan_id = None
+            callout.to_arrange = ()
+            self._offer_next(callout)
+        self._save(callout)
 
     def withdraw(self, crew_id: str) -> list[Callout]:
         """Pull open offers from someone who just reported they cannot fly that trip.
@@ -449,7 +518,7 @@ class CalloutDesk:
                     to=DESK,
                     subject=f"Approval needed: {option['summary']}",
                     body=f"{by} proposes: {option['summary']} for {callout.trip_id}. "
-                    "A second controller must approve before anything happens.",
+                    "An approver must agree before anything happens.",
                     at=self.clock(),
                     ref=callout.callout_id,
                 )
@@ -465,7 +534,7 @@ class CalloutDesk:
             if callout.status is not Status.AWAITING_APPROVAL or proposal is None:
                 raise CalloutError(f"{callout_id} has nothing waiting for approval")
             if by == proposal.proposed_by:
-                raise CalloutError("a proposal must be approved by a different controller")
+                raise CalloutError("a proposal must be approved by someone else")
             proposal.approved_by = by
             proposal.approved_at = self.clock()
             callout.status = Status.CLOSED

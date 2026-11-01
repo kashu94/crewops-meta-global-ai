@@ -13,10 +13,18 @@ from dataclasses import replace
 from datetime import UTC, date, datetime
 from typing import Any
 
-from crewops.domain import Seat, Trip, Unavailability
+from crewops.domain import Rule, Seat, Trip, Unavailability
 from crewops.domain.dataset import Dataset
 from crewops.engine import NotFound
-from crewops.store.roster import OperationCache, RosterChange, StaleTrip, _seats, new_report
+from crewops.store.roster import (
+    KINDS,
+    OperationCache,
+    RosterChange,
+    StaleTrip,
+    _key,
+    _seats,
+    new_report,
+)
 
 
 class MemoryStore(OperationCache):
@@ -101,13 +109,44 @@ class MemoryStore(OperationCache):
         reason: str,
         by: str,
         at: datetime | None = None,
+        kind: str = "other",
+        since: datetime | None = None,
     ) -> Unavailability:
         self.operation().state(crew_id)
-        report = new_report(crew_id, first_day, last_day, reason, by, at)
+        report = new_report(crew_id, first_day, last_day, reason, by, at, kind, since)
         with self._write_lock:
             self._unavailable[report.report_id] = report
             self._version += 1
         return report
+
+    def put_records(self, kind: str, records: Iterable[Any]) -> None:
+        """Add or replace reference records of one kind (crew, certificates, standby), by id."""
+        if kind not in KINDS or kind == "rules":
+            raise ValueError(f"cannot write {kind} records")
+        with self._write_lock:
+            assert self._data is not None
+            merged = {_key(kind, r): r for r in getattr(self._data, kind)}
+            merged.update({_key(kind, r): r for r in records})
+            self._data = replace(self._data, **{kind: tuple(merged.values())})
+            self._version += 1
+
+    def add_trips(self, trips: Iterable[Trip]) -> None:
+        """Add trips the roster does not have yet, at version 1."""
+        with self._write_lock:
+            for trip in trips:
+                if trip.trip_id in self._trips:
+                    raise ValueError(f"{trip.trip_id} already exists")
+                self._trips[trip.trip_id] = (trip, 1)
+            self._version += 1
+
+    def set_rule(self, rule: Rule) -> None:
+        """Replace one duty rule; the operation is judged by it at once."""
+        with self._write_lock:
+            if self._data is None:
+                raise NotFound("operation", "nothing loaded")
+            rules = tuple(rule if r.rule_id == rule.rule_id else r for r in self._data.rules)
+            self._data = replace(self._data, rules=rules)
+            self._version += 1
 
     def clear_unavailable(self, report_id: str) -> Unavailability:
         with self._write_lock:

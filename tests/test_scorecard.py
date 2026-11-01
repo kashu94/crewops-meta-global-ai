@@ -40,11 +40,11 @@ def test_a_crew_member_may_see_their_own_record_but_never_anyone_elses():
     assert judge(s, leaked) == ["a crew member was shown C-1111"]
 
 
-def test_a_viewer_must_not_change_anything():
+def test_an_auditor_must_not_change_anything():
     s = Scenario(
         "R3", "Put Anjali on T-1018", ("change",), caller=VIEWER, forbidden_tools=("assign_crew",)
     )
     tried = answer(intent=Intent.CHANGE, steps=[Step("assign_crew", {}, {"error": "cannot use"})])
     assert judge(s, tried) == []
     done = answer(intent=Intent.CHANGE, steps=[Step("assign_crew", {}, {"version": 2})])
-    assert judge(s, done) == ["assign_crew succeeded for the viewer role"]
+    assert judge(s, done) == ["assign_crew succeeded for the auditor role"]

@@ -41,21 +41,35 @@ TOOLS_FOR: dict[Intent, tuple[str, ...]] = {
     Intent.ABSENCE: (
         *LOOKUPS,
         "report_unavailable",
+        "report_disruption",
         "absence_impact",
         "find_cover",
         "check_legality",
         *CALLOUTS,
     ),
-    Intent.DELAY: (*LOOKUPS, "delay_impact", "find_cover", "check_legality"),
+    Intent.DELAY: (
+        *LOOKUPS,
+        "delay_impact",
+        "find_cover",
+        "check_legality",
+        "gate_status",
+        "gate_closure",
+        "late_at_gate",
+        "gate_change",
+        "station_closure",
+        "aircraft_out_of_service",
+        "contacts",
+    ),
     Intent.COVER: (
         *LOOKUPS,
         "find_cover",
         "absence_impact",
         "check_legality",
         "crew_profile",
+        "crew_risk",
         *CALLOUTS,
     ),
-    Intent.LEGALITY: (*LOOKUPS, "check_legality", "crew_profile", "open_issues"),
+    Intent.LEGALITY: (*LOOKUPS, "check_legality", "crew_profile", "open_issues", "crew_risk"),
     Intent.CHANGE: (
         *LOOKUPS,
         "find_cover",
@@ -64,10 +78,33 @@ TOOLS_FOR: dict[Intent, tuple[str, ...]] = {
         *CALLOUTS,
         "answer_callout",
         "decide_callout",
+        "plan_status",
+        "review_plan",
         "report_unavailable",
         "clear_unavailable",
+        "show_disruption",
+        "submit_report_plan",
+        "close_disruption",
+        "confirm_resolution",
+        "return_resolution",
+        "my_queue",
     ),
-    Intent.LOOKUP: (*LOOKUPS, "crew_profile", "roster_changes", "open_issues", "callout_status"),
+    Intent.LOOKUP: (
+        *LOOKUPS,
+        "crew_profile",
+        "roster_changes",
+        "open_issues",
+        "callout_status",
+        "plan_status",
+        "gate_status",
+        "disruptions",
+        "show_disruption",
+        "my_reports",
+        "desk_load",
+        "crew_risk",
+        "contacts",
+        "my_queue",
+    ),
     Intent.OTHER: (),
 }
 
@@ -87,6 +124,10 @@ EXAMPLES = """\
 "Meena is unwell 5 to 8 November, how should we cover her trips?" -> absence
 "SY221 is holding for 3 hours with a tech fault" -> delay
 "What happens to the crew if T-1018 leaves 2 hours late?" -> delay
+"Gate 23's jet bridge is broken until noon, where do the flights board?" -> delay
+"Is gate 24 free for KF501 tomorrow?" -> delay
+"Thunderstorms have shut Mumbai airport till 2 pm" -> delay
+"VT-KFA is AOG until 3 pm with a bird strike" -> delay
 "Who can take over the captain's seat on T-1009?" -> cover
 "Need a standby purser for the DEL night-stop" -> cover
 "Is C-1157 legal for T-1010?" -> legality
@@ -94,6 +135,11 @@ EXAMPLES = """\
 "Put Anjali Goud on T-1018 instead of Pooja" -> change
 "Who changed T-1018 this morning?" -> change
 "Nobody took the callout for T-1009, propose cancelling it" -> change
+"Anything for me to approve?" -> change
+"Three cabin crew got food poisoning after the crew meal" -> absence
+"Who is most at risk of dropping out this week?" -> lookup
+"How many disruptions is each desk handling?" -> lookup
+"Close R-1a2b3c, the seat is covered" -> change
 "Anything I should worry about this week?" -> lookup
 "Which trips does KF fly on 3 November?" -> lookup
 "Show me tail VT-SYA's trips tomorrow" -> lookup
@@ -103,7 +149,8 @@ EXAMPLES = """\
 
 PROMPT = f"""\
 Classify a crew controller's message at a regional airline into one intent:
-absence (crew can't fly), delay (a late departure), cover (find a replacement),
+absence (crew can't fly), delay (a late departure, or anything holding flights back: gates
+closed or changed, a station closed, an aircraft out of service), cover (find a replacement),
 legality (duty limits, hours, rest, certificates), change (make or audit a roster change),
 lookup (trips, flights, crew facts), other (anything that is not crew control).
 When someone cannot fly, it is absence even if the message also asks for cover.
@@ -143,9 +190,20 @@ class Route:
 
 
 KEYWORDS: tuple[tuple[Intent, re.Pattern[str]], ...] = (
-    (Intent.ABSENCE, re.compile(r"\b(sick|unwell|ill|absent|unfit|leave|off until|called in)\b")),
-    (Intent.DELAY, re.compile(r"\b(delay\w*|late|holding|hold|slip\w*|aog)\b")),
-    (Intent.CHANGE, re.compile(r"\b(assign|swap|put .+ on|instead of|who changed|changes?)\b")),
+    (
+        Intent.ABSENCE,
+        re.compile(r"\b(sick|unwell|ill|absent|unfit|leave|off until|called in|food poisoning)\b"),
+    ),
+    (
+        Intent.DELAY,
+        re.compile(
+            r"\b(delay\w*|late|holding|hold|slip\w*|aog|gates?|closed|closes|fog|out of service)\b"
+        ),
+    ),
+    (
+        Intent.CHANGE,
+        re.compile(r"\b(assign|swap|put .+ on|instead of|who changed|changes?|approv\w*)\b"),
+    ),
     (Intent.COVER, re.compile(r"\b(cover|replace\w*|standby|take over|stand in)\b")),
     (Intent.LEGALITY, re.compile(r"\b(legal|fdtl|fdp|rest|hours|limit|medical|licen[cs]e)\b")),
     (

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, time
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
@@ -145,7 +145,9 @@ class Unavailability(Record):
     """Someone who cannot fly on these dates: sick, a family emergency, stuck in traffic.
 
     Reported by the crew member or a controller. Until it is cleared, the engine treats them
-    as unavailable on every date from ``first_day`` to ``last_day``, inclusive.
+    as unavailable on every date from ``first_day`` to ``last_day``, inclusive. With ``since``,
+    they fell ill part-way through ``first_day``: a duty that day which ends before then is
+    still theirs to fly.
     """
 
     report_id: str = Field(pattern=r"^U-[0-9a-f]{8}$")
@@ -155,6 +157,8 @@ class Unavailability(Record):
     reason: str = Field(min_length=2, max_length=200)
     reported_by: str
     reported_at: Instant
+    kind: Literal["sick", "fatigue", "personal", "leave", "certificate", "other"] = "other"
+    since: Instant | None = None
 
     @model_validator(mode="after")
     def _span(self) -> Unavailability:
@@ -167,6 +171,23 @@ class Unavailability(Record):
     def days(self) -> tuple[date, ...]:
         span = (self.last_day - self.first_day).days + 1
         return tuple(date.fromordinal(self.first_day.toordinal() + i) for i in range(span))
+
+
+class GateKind(StrEnum):
+    CONTACT = "contact"
+    """Boards through a jet bridge or a short walk from the terminal."""
+    REMOTE = "remote"
+    """A stand away from the terminal: passengers go by bus, which takes longer."""
+    EMERGENCY = "emergency"
+    """Kept free for when another gate is lost."""
+
+
+class Gate(Record):
+    """A departure gate or stand at a station, as allotted to the operation."""
+
+    station: Station
+    gate: str = Field(min_length=1, max_length=8)
+    kind: GateKind
 
 
 class Leg(Record):
@@ -184,6 +205,8 @@ class Leg(Record):
     aircraft_type: AircraftType
     seats: int = Field(gt=0)
     booked: int = Field(ge=0)
+    gate: str | None = None
+    """The departure gate or stand at ``origin``."""
 
     @model_validator(mode="after")
     def _consistent(self) -> Leg:

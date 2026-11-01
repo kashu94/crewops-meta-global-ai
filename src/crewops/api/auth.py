@@ -6,8 +6,8 @@ Two modes, set by ``CREWOPS_AUTH``:
   ``X-Demo-Crew-Id`` headers. For running on a laptop; never deployed.
 * ``cognito``: the caller signs in to the Cognito user pool and sends the ID token as a
   bearer token. The token's signature, issuer, audience and expiry are checked here, and the
-  role comes from the user's group (``controller``, ``viewer`` or ``crew``) and their crew id
-  from the ``custom:crew_id`` attribute.
+  role comes from the user's group (one of the eight roles in ``ROLE_ORDER``) and
+  their crew id from the ``custom:crew_id`` attribute.
 """
 
 from __future__ import annotations
@@ -20,7 +20,17 @@ from fastapi import HTTPException, Request
 from crewops.agent.tools import Caller, Role
 from crewops.settings import Settings
 
-ROLE_ORDER = (Role.CONTROLLER, Role.VIEWER, Role.CREW)
+ROLE_ORDER = (
+    Role.SUPER_ADMIN,
+    Role.ADMIN,
+    Role.APPROVER,
+    Role.CONTROLLER,
+    Role.AUDITOR,
+    Role.REPORTER,
+    Role.CREW,
+    Role.SPEAKER,
+)
+"""Someone in several groups acts with the first of their roles here."""
 
 
 @lru_cache(maxsize=4)

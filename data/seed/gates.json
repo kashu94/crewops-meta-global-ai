@@ -1,0 +1,222 @@
+[
+ {
+  "station": "BLR",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "BLR",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "BLR",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "BLR",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "BOM",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "BOM",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "BOM",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "BOM",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "DEL",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "DEL",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "DEL",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "DEL",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "GOI",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "GOI",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "GOI",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "GOI",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "HYD",
+  "gate": "21",
+  "kind": "contact"
+ },
+ {
+  "station": "HYD",
+  "gate": "22",
+  "kind": "contact"
+ },
+ {
+  "station": "HYD",
+  "gate": "23",
+  "kind": "contact"
+ },
+ {
+  "station": "HYD",
+  "gate": "24",
+  "kind": "contact"
+ },
+ {
+  "station": "HYD",
+  "gate": "25",
+  "kind": "contact"
+ },
+ {
+  "station": "HYD",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "HYD",
+  "gate": "R2",
+  "kind": "remote"
+ },
+ {
+  "station": "HYD",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "MAA",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "MAA",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "MAA",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "MAA",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "RJA",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "RJA",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "RJA",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "RJA",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "TIR",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "TIR",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "TIR",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "TIR",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "VGA",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "VGA",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "VGA",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "VGA",
+  "gate": "E1",
+  "kind": "emergency"
+ },
+ {
+  "station": "VTZ",
+  "gate": "1",
+  "kind": "contact"
+ },
+ {
+  "station": "VTZ",
+  "gate": "2",
+  "kind": "contact"
+ },
+ {
+  "station": "VTZ",
+  "gate": "R1",
+  "kind": "remote"
+ },
+ {
+  "station": "VTZ",
+  "gate": "E1",
+  "kind": "emergency"
+ }
+]

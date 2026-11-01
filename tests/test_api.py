@@ -31,7 +31,7 @@ BASE = {
     "CREWOPS_BUCKET": "",
 }
 CONTROLLER = {"X-Demo-User": "m.iyer", "X-Demo-Role": "controller"}
-VIEWER = {"X-Demo-User": "board", "X-Demo-Role": "viewer"}
+VIEWER = {"X-Demo-User": "board", "X-Demo-Role": "auditor"}
 ANJALI = {"X-Demo-User": "anjali", "X-Demo-Role": "crew", "X-Demo-Crew-Id": "C-1157"}
 
 
@@ -76,12 +76,20 @@ def client(services):
     return TestClient(create_app(services.config, services))
 
 
-def test_public_endpoints_and_pages(client):
+def test_public_endpoints_and_pages(services, tmp_path, monkeypatch):
+    # The console is a static export: a folder per page, each with its index.html.
+    (tmp_path / "speaker").mkdir()
+    (tmp_path / "index.html").write_text("<title>CrewOps Console</title>")
+    (tmp_path / "speaker" / "index.html").write_text("<title>Ops-room speaker</title>")
+    monkeypatch.setattr(api_module, "WEB", tmp_path)
+    client = TestClient(create_app(services.config, services))
     assert client.get("/api/health").json() == {"status": "ok"}
     assert client.get("/api/config").json()["auth"] == "demo"
     assert "CrewOps Console" in client.get("/").text
-    assert "CrewOps Board (Meta)" in client.get("/board").text
-    assert client.get("/static/app.js").status_code == 200
+    assert "speaker" in client.get("/speaker/").text
+    accounts = client.get("/api/accounts/demo").json()["accounts"]
+    assert len({a["role"] for a in accounts}) == 8
+    assert not any("password" in a for a in accounts)
 
 
 def test_me_reports_the_identity_role_and_the_operation_clock(client):
@@ -242,3 +250,50 @@ def test_tokens_are_checked_for_signature_audience_and_issuer():
     assert crew.crew_id == "C-1157"
     with pytest.raises(HTTPException):
         caller_from_claims({**claims, "cognito:groups": []})
+
+
+def test_the_speaker_feed_is_public_and_says_how_each_notice_sounds(client):
+    client.post(
+        "/api/tools/start_callout",
+        json={"trip_id": "T-1018", "replace_crew_id": "C-1111"},
+        headers=CONTROLLER,
+    )
+    feed = client.get("/api/speaker").json()
+    assert feed["waiting"] == {"plans": 0, "decisions": 0, "resolutions": 0, "disruptions": 0}
+
+
+def test_an_approval_needs_an_approver_through_the_api(client):
+    trip = client.post("/api/tools/trip_details", json={"trip_id": "T-1018"}, headers=CONTROLLER)
+    version = trip.json()["version"]
+    plan = client.post(
+        "/api/tools/assign_crew",
+        json={
+            "trip_id": "T-1018",
+            "replace_crew_id": "C-1111",
+            "with_crew_id": "C-1157",
+            "expected_version": version,
+            "reason": "medical lapses",
+        },
+        headers=CONTROLLER,
+    ).json()
+    assert plan["status"] == "submitted"
+    feed = client.get("/api/speaker").json()
+    assert feed["waiting"]["plans"] == 1
+    assert feed["items"][0]["tone"] == "pending"
+    reddy = {"X-Demo-User": "s.reddy", "X-Demo-Role": "controller"}
+    review = {"plan_id": plan["plan_id"], "action": "approve"}
+    refused = client.post("/api/tools/review_plan", json=review, headers=reddy).json()
+    assert "only an approver" in refused["error"]
+    nair = {"X-Demo-User": "a.nair", "X-Demo-Role": "approver"}
+    done = client.post("/api/tools/review_plan", json=review, headers=nair).json()
+    assert done["status"] == "approved"
+    log = client.get("/api/log/activity", headers=CONTROLLER).json()["entries"]
+    assert [e["action"] for e in log[:2]] == ["review_plan", "assign_crew"]
+
+
+def test_only_an_admin_reads_the_security_log(client):
+    assert client.get("/api/log/security", headers=CONTROLLER).status_code == 403
+    crew = {"X-Demo-User": "anjali", "X-Demo-Role": "crew", "X-Demo-Crew-Id": "C-1157"}
+    assert client.get("/api/log/activity", headers=crew).status_code == 403
+    admin = {"X-Demo-User": "k.menon", "X-Demo-Role": "admin"}
+    assert client.get("/api/log/security", headers=admin).json() == {"entries": []}

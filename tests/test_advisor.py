@@ -83,6 +83,7 @@ def test_the_route_limits_the_tools_and_sets_the_effort(mem, seed):
         "find_trips",
         "trip_details",
         "report_unavailable",
+        "report_disruption",
         "absence_impact",
         "find_cover",
         "check_legality",
@@ -101,7 +102,7 @@ def test_tools_outside_the_route_or_the_role_are_refused(mem, seed):
     assert "not available" in answer.steps[0].result["error"]
     assert mem.changes() == []
 
-    viewer = Caller("board", Role.VIEWER)
+    viewer = Caller("board", Role.AUDITOR)
     planner = Script("ok")
     advisor(mem, seed, planner, Intent.CHANGE).ask("Swap them", viewer)
     assert "assign_crew" not in {t["function"]["name"] for t in planner.requests[0]["tools"]}

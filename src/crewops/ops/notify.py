@@ -17,12 +17,14 @@ from typing import Any, Protocol
 
 DESK = "crew-desk"
 """Address of the controllers on duty."""
+SUPERVISOR = "duty-supervisor"
+"""Address of the duty supervisor, who hears about what the desk has left untouched."""
 
 
 @dataclass(frozen=True, slots=True)
 class Notice:
     to: str
-    """A crew id, or ``DESK``."""
+    """A crew id, ``DESK``, ``SUPERVISOR`` or a team (``team:gate_control``)."""
     subject: str
     body: str
     at: datetime
@@ -66,17 +68,36 @@ class StoreOutbox:
         return [n for n in found if to is None or n.to == to]
 
 
+TEAM = "team:"
+"""Prefix of an operational team's address, such as ``team:gate_control``."""
+
+
+def alert_group(to: str) -> str | None:
+    """The alert group a notice to ``to`` is emailed to, if any: crew are told in the app."""
+    if to == DESK:
+        return "desk"
+    if to == SUPERVISOR:
+        return "supervisor"
+    return to.removeprefix(TEAM) if to.startswith(TEAM) else None
+
+
 class EmailingOutbox:
-    """Keeps every notice like ``inner`` does, and emails the crew desk's through SNS."""
+    """Keeps every notice like ``inner`` does, and emails the desk's, the supervisor's and
+    the teams' through SNS. Each message names its group, so the topic delivers it only to
+    the addresses subscribed to that group (``crewops.ops.alerts``)."""
 
     def __init__(self, inner: Any, sns: Any, topic_arn: str) -> None:
         self.inner, self.sns, self.topic_arn = inner, sns, topic_arn
 
     def send(self, notice: Notice) -> None:
         self.inner.send(notice)
-        if notice.to == DESK:
+        group = alert_group(notice.to)
+        if group is not None:
             self.sns.publish(
-                TopicArn=self.topic_arn, Subject=notice.subject[:100], Message=notice.body
+                TopicArn=self.topic_arn,
+                Subject=notice.subject[:100],
+                Message=notice.body,
+                MessageAttributes={"group": {"DataType": "String", "StringValue": group}},
             )
 
     def sent(self, to: str | None = None) -> list[Notice]:

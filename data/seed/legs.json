@@ -10,7 +10,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 130
+  "booked": 130,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-10-30",
@@ -23,7 +24,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 120
+  "booked": 120,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-10-30",
@@ -36,7 +38,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 147
+  "booked": 147,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-10-30",
@@ -49,7 +52,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 144
+  "booked": 144,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-10-31",
@@ -62,7 +66,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 142
+  "booked": 142,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-10-31",
@@ -75,7 +80,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 146
+  "booked": 146,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-10-31",
@@ -88,7 +94,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 140
+  "booked": 140,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-10-31",
@@ -101,7 +108,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 170
+  "booked": 170,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-01",
@@ -114,7 +122,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 167
+  "booked": 167,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-01",
@@ -127,7 +136,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 172
+  "booked": 172,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-01",
@@ -140,7 +150,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 166
+  "booked": 166,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-01",
@@ -153,7 +164,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 131
+  "booked": 131,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-02",
@@ -166,7 +178,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 169
+  "booked": 169,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-02",
@@ -179,7 +192,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 173
+  "booked": 173,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-02",
@@ -192,7 +206,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 171
+  "booked": 171,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-02",
@@ -205,7 +220,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 135
+  "booked": 135,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-03",
@@ -218,7 +234,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 130
+  "booked": 130,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-03",
@@ -231,7 +248,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 117
+  "booked": 117,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-03",
@@ -244,7 +262,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 171
+  "booked": 171,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-03",
@@ -257,7 +276,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 145
+  "booked": 145,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-04",
@@ -270,7 +290,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 153
+  "booked": 153,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-04",
@@ -283,7 +304,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 168
+  "booked": 168,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-04",
@@ -296,7 +318,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 136
+  "booked": 136,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-04",
@@ -309,7 +332,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 141
+  "booked": 141,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-05",
@@ -322,7 +346,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 101
+  "booked": 101,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-05",
@@ -335,7 +360,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 119
+  "booked": 119,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-05",
@@ -348,7 +374,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 117
+  "booked": 117,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-05",
@@ -361,7 +388,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 158
+  "booked": 158,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-06",
@@ -374,7 +402,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 165
+  "booked": 165,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-06",
@@ -387,7 +416,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 143
+  "booked": 143,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-06",
@@ -400,7 +430,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 123
+  "booked": 123,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-06",
@@ -413,7 +444,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 101
+  "booked": 101,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-07",
@@ -426,7 +458,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 106
+  "booked": 106,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-07",
@@ -439,7 +472,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 104
+  "booked": 104,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-07",
@@ -452,7 +486,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 174
+  "booked": 174,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-07",
@@ -465,7 +500,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 152
+  "booked": 152,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-08",
@@ -478,7 +514,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 159
+  "booked": 159,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-08",
@@ -491,7 +528,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 128
+  "booked": 128,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-08",
@@ -504,7 +542,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 134
+  "booked": 134,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-08",
@@ -517,7 +556,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 152
+  "booked": 152,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-09",
@@ -530,7 +570,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 171
+  "booked": 171,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-09",
@@ -543,7 +584,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 165
+  "booked": 165,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-09",
@@ -556,7 +598,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 138
+  "booked": 138,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-09",
@@ -569,7 +612,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 114
+  "booked": 114,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-10",
@@ -582,7 +626,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 129
+  "booked": 129,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-10",
@@ -595,7 +640,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 144
+  "booked": 144,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-10",
@@ -608,7 +654,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 161
+  "booked": 161,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-10",
@@ -621,7 +668,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 175
+  "booked": 175,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-11",
@@ -634,7 +682,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 145
+  "booked": 145,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-11",
@@ -647,7 +696,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 135
+  "booked": 135,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-11",
@@ -660,7 +710,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 174
+  "booked": 174,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-11",
@@ -673,7 +724,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 171
+  "booked": 171,
+  "gate": "1"
  },
  {
   "leg_id": "SY201-2026-11-12",
@@ -686,7 +738,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 169
+  "booked": 169,
+  "gate": "21"
  },
  {
   "leg_id": "SY202-2026-11-12",
@@ -699,7 +752,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 128
+  "booked": 128,
+  "gate": "1"
  },
  {
   "leg_id": "SY203-2026-11-12",
@@ -712,7 +766,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 145
+  "booked": 145,
+  "gate": "21"
  },
  {
   "leg_id": "SY204-2026-11-12",
@@ -725,7 +780,8 @@
   "tail": "VT-SYA",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 173
+  "booked": 173,
+  "gate": "1"
  },
  {
   "leg_id": "SY221-2026-10-30",
@@ -738,7 +794,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 116
+  "booked": 116,
+  "gate": "24"
  },
  {
   "leg_id": "SY222-2026-10-30",
@@ -751,7 +808,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 106
+  "booked": 106,
+  "gate": "1"
  },
  {
   "leg_id": "SY223-2026-10-30",
@@ -764,7 +822,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 106
+  "booked": 106,
+  "gate": "21"
  },
  {
   "leg_id": "SY224-2026-10-31",
@@ -777,7 +836,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 118
+  "booked": 118,
+  "gate": "1"
  },
  {
   "leg_id": "SY225-2026-10-31",
@@ -790,7 +850,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 106
+  "booked": 106,
+  "gate": "23"
  },
  {
   "leg_id": "SY226-2026-10-31",
@@ -803,7 +864,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 128
+  "booked": 128,
+  "gate": "1"
  },
  {
   "leg_id": "SY221-2026-11-01",
@@ -816,7 +878,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 123
+  "booked": 123,
+  "gate": "24"
  },
  {
   "leg_id": "SY222-2026-11-01",
@@ -829,7 +892,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 127
+  "booked": 127,
+  "gate": "1"
  },
  {
   "leg_id": "SY223-2026-11-01",
@@ -842,7 +906,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 155
+  "booked": 155,
+  "gate": "21"
  },
  {
   "leg_id": "SY224-2026-11-02",
@@ -855,7 +920,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 145
+  "booked": 145,
+  "gate": "1"
  },
  {
   "leg_id": "SY225-2026-11-02",
@@ -868,7 +934,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 153
+  "booked": 153,
+  "gate": "23"
  },
  {
   "leg_id": "SY226-2026-11-02",
@@ -881,7 +948,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 135
+  "booked": 135,
+  "gate": "1"
  },
  {
   "leg_id": "SY221-2026-11-03",
@@ -894,7 +962,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 100
+  "booked": 100,
+  "gate": "24"
  },
  {
   "leg_id": "SY222-2026-11-03",
@@ -907,7 +976,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 171
+  "booked": 171,
+  "gate": "1"
  },
  {
   "leg_id": "SY223-2026-11-03",
@@ -920,7 +990,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 144
+  "booked": 144,
+  "gate": "21"
  },
  {
   "leg_id": "SY224-2026-11-04",
@@ -933,7 +1004,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 166
+  "booked": 166,
+  "gate": "1"
  },
  {
   "leg_id": "SY225-2026-11-04",
@@ -946,7 +1018,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 120
+  "booked": 120,
+  "gate": "23"
  },
  {
   "leg_id": "SY226-2026-11-04",
@@ -959,7 +1032,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 159
+  "booked": 159,
+  "gate": "1"
  },
  {
   "leg_id": "SY221-2026-11-05",
@@ -972,7 +1046,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 116
+  "booked": 116,
+  "gate": "24"
  },
  {
   "leg_id": "SY222-2026-11-05",
@@ -985,7 +1060,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 169
+  "booked": 169,
+  "gate": "1"
  },
  {
   "leg_id": "SY223-2026-11-05",
@@ -998,7 +1074,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 112
+  "booked": 112,
+  "gate": "21"
  },
  {
   "leg_id": "SY224-2026-11-06",
@@ -1011,7 +1088,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 108
+  "booked": 108,
+  "gate": "1"
  },
  {
   "leg_id": "SY225-2026-11-06",
@@ -1024,7 +1102,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 130
+  "booked": 130,
+  "gate": "23"
  },
  {
   "leg_id": "SY226-2026-11-06",
@@ -1037,7 +1116,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 113
+  "booked": 113,
+  "gate": "1"
  },
  {
   "leg_id": "SY221-2026-11-07",
@@ -1050,7 +1130,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 125
+  "booked": 125,
+  "gate": "24"
  },
  {
   "leg_id": "SY222-2026-11-07",
@@ -1063,7 +1144,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 107
+  "booked": 107,
+  "gate": "1"
  },
  {
   "leg_id": "SY223-2026-11-07",
@@ -1076,7 +1158,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 107
+  "booked": 107,
+  "gate": "21"
  },
  {
   "leg_id": "SY224-2026-11-08",
@@ -1089,7 +1172,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 122
+  "booked": 122,
+  "gate": "1"
  },
  {
   "leg_id": "SY225-2026-11-08",
@@ -1102,7 +1186,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 108
+  "booked": 108,
+  "gate": "23"
  },
  {
   "leg_id": "SY226-2026-11-08",
@@ -1115,7 +1200,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 103
+  "booked": 103,
+  "gate": "1"
  },
  {
   "leg_id": "SY221-2026-11-09",
@@ -1128,7 +1214,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 149
+  "booked": 149,
+  "gate": "24"
  },
  {
   "leg_id": "SY222-2026-11-09",
@@ -1141,7 +1228,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 120
+  "booked": 120,
+  "gate": "1"
  },
  {
   "leg_id": "SY223-2026-11-09",
@@ -1154,7 +1242,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 114
+  "booked": 114,
+  "gate": "21"
  },
  {
   "leg_id": "SY224-2026-11-10",
@@ -1167,7 +1256,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 99
+  "booked": 99,
+  "gate": "1"
  },
  {
   "leg_id": "SY225-2026-11-10",
@@ -1180,7 +1270,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 109
+  "booked": 109,
+  "gate": "23"
  },
  {
   "leg_id": "SY226-2026-11-10",
@@ -1193,7 +1284,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 162
+  "booked": 162,
+  "gate": "1"
  },
  {
   "leg_id": "SY221-2026-11-11",
@@ -1206,7 +1298,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 162
+  "booked": 162,
+  "gate": "24"
  },
  {
   "leg_id": "SY222-2026-11-11",
@@ -1219,7 +1312,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 127
+  "booked": 127,
+  "gate": "1"
  },
  {
   "leg_id": "SY223-2026-11-11",
@@ -1232,7 +1326,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 103
+  "booked": 103,
+  "gate": "21"
  },
  {
   "leg_id": "SY224-2026-11-12",
@@ -1245,7 +1340,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 101
+  "booked": 101,
+  "gate": "1"
  },
  {
   "leg_id": "SY225-2026-11-12",
@@ -1258,7 +1354,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 165
+  "booked": 165,
+  "gate": "23"
  },
  {
   "leg_id": "SY226-2026-11-12",
@@ -1271,7 +1368,8 @@
   "tail": "VT-SYB",
   "aircraft_type": "A320",
   "seats": 180,
-  "booked": 127
+  "booked": 127,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-10-30",
@@ -1284,7 +1382,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 60
+  "booked": 60,
+  "gate": "25"
  },
  {
   "leg_id": "SY242-2026-10-30",
@@ -1297,7 +1396,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 56
+  "booked": 56,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-10-30",
@@ -1310,7 +1410,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 46
+  "booked": 46,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-10-30",
@@ -1323,7 +1424,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 53
+  "booked": 53,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-10-31",
@@ -1336,7 +1438,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 47
+  "booked": 47,
+  "gate": "24"
  },
  {
   "leg_id": "SY242-2026-10-31",
@@ -1349,7 +1452,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 40
+  "booked": 40,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-10-31",
@@ -1362,7 +1466,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 41
+  "booked": 41,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-10-31",
@@ -1375,7 +1480,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 43
+  "booked": 43,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-01",
@@ -1388,7 +1494,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 48
+  "booked": 48,
+  "gate": "25"
  },
  {
   "leg_id": "SY242-2026-11-01",
@@ -1401,7 +1508,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 68
+  "booked": 68,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-01",
@@ -1414,7 +1522,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 50
+  "booked": 50,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-01",
@@ -1427,7 +1536,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 52
+  "booked": 52,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-02",
@@ -1440,7 +1550,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 53
+  "booked": 53,
+  "gate": "24"
  },
  {
   "leg_id": "SY242-2026-11-02",
@@ -1453,7 +1564,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 63
+  "booked": 63,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-02",
@@ -1466,7 +1578,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 61
+  "booked": 61,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-02",
@@ -1479,7 +1592,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 40
+  "booked": 40,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-03",
@@ -1492,7 +1606,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 45
+  "booked": 45,
+  "gate": "25"
  },
  {
   "leg_id": "SY242-2026-11-03",
@@ -1505,7 +1620,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 50
+  "booked": 50,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-03",
@@ -1518,7 +1634,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 50
+  "booked": 50,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-03",
@@ -1531,7 +1648,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 51
+  "booked": 51,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-04",
@@ -1544,7 +1662,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 49
+  "booked": 49,
+  "gate": "24"
  },
  {
   "leg_id": "SY242-2026-11-04",
@@ -1557,7 +1676,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 54
+  "booked": 54,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-04",
@@ -1570,7 +1690,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 65
+  "booked": 65,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-04",
@@ -1583,7 +1704,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 48
+  "booked": 48,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-05",
@@ -1596,7 +1718,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 58
+  "booked": 58,
+  "gate": "25"
  },
  {
   "leg_id": "SY242-2026-11-05",
@@ -1609,7 +1732,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 63
+  "booked": 63,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-05",
@@ -1622,7 +1746,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 43
+  "booked": 43,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-05",
@@ -1635,7 +1760,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 65
+  "booked": 65,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-06",
@@ -1648,7 +1774,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 60
+  "booked": 60,
+  "gate": "24"
  },
  {
   "leg_id": "SY242-2026-11-06",
@@ -1661,7 +1788,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 50
+  "booked": 50,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-06",
@@ -1674,7 +1802,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 61
+  "booked": 61,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-06",
@@ -1687,7 +1816,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 63
+  "booked": 63,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-07",
@@ -1700,7 +1830,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 68
+  "booked": 68,
+  "gate": "25"
  },
  {
   "leg_id": "SY242-2026-11-07",
@@ -1713,7 +1844,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 50
+  "booked": 50,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-07",
@@ -1726,7 +1858,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 53
+  "booked": 53,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-07",
@@ -1739,7 +1872,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 59
+  "booked": 59,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-08",
@@ -1752,7 +1886,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 51
+  "booked": 51,
+  "gate": "24"
  },
  {
   "leg_id": "SY242-2026-11-08",
@@ -1765,7 +1900,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 62
+  "booked": 62,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-08",
@@ -1778,7 +1914,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 49
+  "booked": 49,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-08",
@@ -1791,7 +1928,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 51
+  "booked": 51,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-09",
@@ -1804,7 +1942,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 66
+  "booked": 66,
+  "gate": "25"
  },
  {
   "leg_id": "SY242-2026-11-09",
@@ -1817,7 +1956,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 49
+  "booked": 49,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-09",
@@ -1830,7 +1970,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 54
+  "booked": 54,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-09",
@@ -1843,7 +1984,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 43
+  "booked": 43,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-10",
@@ -1856,7 +1998,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 53
+  "booked": 53,
+  "gate": "24"
  },
  {
   "leg_id": "SY242-2026-11-10",
@@ -1869,7 +2012,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 66
+  "booked": 66,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-10",
@@ -1882,7 +2026,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 59
+  "booked": 59,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-10",
@@ -1895,7 +2040,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 66
+  "booked": 66,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-11",
@@ -1908,7 +2054,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 59
+  "booked": 59,
+  "gate": "25"
  },
  {
   "leg_id": "SY242-2026-11-11",
@@ -1921,7 +2068,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 55
+  "booked": 55,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-11",
@@ -1934,7 +2082,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 59
+  "booked": 59,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-11",
@@ -1947,7 +2096,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 67
+  "booked": 67,
+  "gate": "1"
  },
  {
   "leg_id": "SY241-2026-11-12",
@@ -1960,7 +2110,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 64
+  "booked": 64,
+  "gate": "24"
  },
  {
   "leg_id": "SY242-2026-11-12",
@@ -1973,7 +2124,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 62
+  "booked": 62,
+  "gate": "1"
  },
  {
   "leg_id": "SY243-2026-11-12",
@@ -1986,7 +2138,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 66
+  "booked": 66,
+  "gate": "21"
  },
  {
   "leg_id": "SY244-2026-11-12",
@@ -1999,7 +2152,8 @@
   "tail": "VT-SYT",
   "aircraft_type": "ATR72",
   "seats": 72,
-  "booked": 69
+  "booked": 69,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-10-30",
@@ -2012,7 +2166,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 152
+  "booked": 152,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-10-30",
@@ -2025,7 +2180,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 163
+  "booked": 163,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-10-30",
@@ -2038,7 +2194,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 175
+  "booked": 175,
+  "gate": "22"
  },
  {
   "leg_id": "KF504-2026-10-30",
@@ -2051,7 +2208,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 113
+  "booked": 113,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-10-31",
@@ -2064,7 +2222,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 169
+  "booked": 169,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-10-31",
@@ -2077,7 +2236,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 154
+  "booked": 154,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-10-31",
@@ -2090,7 +2250,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 106
+  "booked": 106,
+  "gate": "21"
  },
  {
   "leg_id": "KF504-2026-10-31",
@@ -2103,7 +2264,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 171
+  "booked": 171,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-01",
@@ -2116,7 +2278,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 142
+  "booked": 142,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-01",
@@ -2129,7 +2292,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 156
+  "booked": 156,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-01",
@@ -2142,7 +2306,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 141
+  "booked": 141,
+  "gate": "22"
  },
  {
   "leg_id": "KF504-2026-11-01",
@@ -2155,7 +2320,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 110
+  "booked": 110,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-02",
@@ -2168,7 +2334,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 157
+  "booked": 157,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-02",
@@ -2181,7 +2348,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 112
+  "booked": 112,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-02",
@@ -2194,7 +2362,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 143
+  "booked": 143,
+  "gate": "21"
  },
  {
   "leg_id": "KF504-2026-11-02",
@@ -2207,7 +2376,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 110
+  "booked": 110,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-03",
@@ -2220,7 +2390,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 112
+  "booked": 112,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-03",
@@ -2233,7 +2404,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 176
+  "booked": 176,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-03",
@@ -2246,7 +2418,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 133
+  "booked": 133,
+  "gate": "22"
  },
  {
   "leg_id": "KF504-2026-11-03",
@@ -2259,7 +2432,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 172
+  "booked": 172,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-04",
@@ -2272,7 +2446,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 106
+  "booked": 106,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-04",
@@ -2285,7 +2460,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 166
+  "booked": 166,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-04",
@@ -2298,7 +2474,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 141
+  "booked": 141,
+  "gate": "21"
  },
  {
   "leg_id": "KF504-2026-11-04",
@@ -2311,7 +2488,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 148
+  "booked": 148,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-05",
@@ -2324,7 +2502,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 144
+  "booked": 144,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-05",
@@ -2337,7 +2516,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 176
+  "booked": 176,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-05",
@@ -2350,7 +2530,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 153
+  "booked": 153,
+  "gate": "22"
  },
  {
   "leg_id": "KF504-2026-11-05",
@@ -2363,7 +2544,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 172
+  "booked": 172,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-06",
@@ -2376,7 +2558,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 108
+  "booked": 108,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-06",
@@ -2389,7 +2572,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 158
+  "booked": 158,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-06",
@@ -2402,7 +2586,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 147
+  "booked": 147,
+  "gate": "21"
  },
  {
   "leg_id": "KF504-2026-11-06",
@@ -2415,7 +2600,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 180
+  "booked": 180,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-07",
@@ -2428,7 +2614,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 116
+  "booked": 116,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-07",
@@ -2441,7 +2628,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 117
+  "booked": 117,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-07",
@@ -2454,7 +2642,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 180
+  "booked": 180,
+  "gate": "22"
  },
  {
   "leg_id": "KF504-2026-11-07",
@@ -2467,7 +2656,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 121
+  "booked": 121,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-08",
@@ -2480,7 +2670,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 131
+  "booked": 131,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-08",
@@ -2493,7 +2684,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 163
+  "booked": 163,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-08",
@@ -2506,7 +2698,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 120
+  "booked": 120,
+  "gate": "21"
  },
  {
   "leg_id": "KF504-2026-11-08",
@@ -2519,7 +2712,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 103
+  "booked": 103,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-09",
@@ -2532,7 +2726,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 180
+  "booked": 180,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-09",
@@ -2545,7 +2740,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 108
+  "booked": 108,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-09",
@@ -2558,7 +2754,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 127
+  "booked": 127,
+  "gate": "22"
  },
  {
   "leg_id": "KF504-2026-11-09",
@@ -2571,7 +2768,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 166
+  "booked": 166,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-10",
@@ -2584,7 +2782,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 149
+  "booked": 149,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-10",
@@ -2597,7 +2796,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 105
+  "booked": 105,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-10",
@@ -2610,7 +2810,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 141
+  "booked": 141,
+  "gate": "21"
  },
  {
   "leg_id": "KF504-2026-11-10",
@@ -2623,7 +2824,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 153
+  "booked": 153,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-11",
@@ -2636,7 +2838,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 106
+  "booked": 106,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-11",
@@ -2649,7 +2852,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 128
+  "booked": 128,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-11",
@@ -2662,7 +2866,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 158
+  "booked": 158,
+  "gate": "22"
  },
  {
   "leg_id": "KF504-2026-11-11",
@@ -2675,7 +2880,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 129
+  "booked": 129,
+  "gate": "1"
  },
  {
   "leg_id": "KF501-2026-11-12",
@@ -2688,7 +2894,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 176
+  "booked": 176,
+  "gate": "23"
  },
  {
   "leg_id": "KF502-2026-11-12",
@@ -2701,7 +2908,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 130
+  "booked": 130,
+  "gate": "1"
  },
  {
   "leg_id": "KF503-2026-11-12",
@@ -2714,7 +2922,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 136
+  "booked": 136,
+  "gate": "21"
  },
  {
   "leg_id": "KF504-2026-11-12",
@@ -2727,7 +2936,8 @@
   "tail": "VT-KFA",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 154
+  "booked": 154,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-10-30",
@@ -2740,7 +2950,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 151
+  "booked": 151,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-10-30",
@@ -2753,7 +2964,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 166
+  "booked": 166,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-10-31",
@@ -2766,7 +2978,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 170
+  "booked": 170,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-10-31",
@@ -2779,7 +2992,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 175
+  "booked": 175,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-01",
@@ -2792,7 +3006,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 107
+  "booked": 107,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-01",
@@ -2805,7 +3020,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 107
+  "booked": 107,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-02",
@@ -2818,7 +3034,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 126
+  "booked": 126,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-02",
@@ -2831,7 +3048,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 156
+  "booked": 156,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-03",
@@ -2844,7 +3062,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 124
+  "booked": 124,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-03",
@@ -2857,7 +3076,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 150
+  "booked": 150,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-04",
@@ -2870,7 +3090,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 120
+  "booked": 120,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-04",
@@ -2883,7 +3104,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 133
+  "booked": 133,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-05",
@@ -2896,7 +3118,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 180
+  "booked": 180,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-05",
@@ -2909,7 +3132,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 135
+  "booked": 135,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-06",
@@ -2922,7 +3146,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 163
+  "booked": 163,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-06",
@@ -2935,7 +3160,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 158
+  "booked": 158,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-07",
@@ -2948,7 +3174,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 147
+  "booked": 147,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-07",
@@ -2961,7 +3188,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 176
+  "booked": 176,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-08",
@@ -2974,7 +3202,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 174
+  "booked": 174,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-08",
@@ -2987,7 +3216,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 168
+  "booked": 168,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-09",
@@ -3000,7 +3230,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 137
+  "booked": 137,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-09",
@@ -3013,7 +3244,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 134
+  "booked": 134,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-10",
@@ -3026,7 +3258,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 133
+  "booked": 133,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-10",
@@ -3039,7 +3272,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 140
+  "booked": 140,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-11",
@@ -3052,7 +3286,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 104
+  "booked": 104,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-11",
@@ -3065,7 +3300,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 137
+  "booked": 137,
+  "gate": "1"
  },
  {
   "leg_id": "KF521-2026-11-12",
@@ -3078,7 +3314,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 161
+  "booked": 161,
+  "gate": "21"
  },
  {
   "leg_id": "KF522-2026-11-12",
@@ -3091,7 +3328,8 @@
   "tail": "VT-KFB",
   "aircraft_type": "A320",
   "seats": 186,
-  "booked": 141
+  "booked": 141,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-10-30",
@@ -3104,7 +3342,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 61
+  "booked": 61,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-10-30",
@@ -3117,7 +3356,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 54
+  "booked": 54,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-10-30",
@@ -3130,7 +3370,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 54
+  "booked": 54,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-10-30",
@@ -3143,7 +3384,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 56
+  "booked": 56,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-10-31",
@@ -3156,7 +3398,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 42
+  "booked": 42,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-10-31",
@@ -3169,7 +3412,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 51
+  "booked": 51,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-10-31",
@@ -3182,7 +3426,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 55
+  "booked": 55,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-10-31",
@@ -3195,7 +3440,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 64
+  "booked": 64,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-01",
@@ -3208,7 +3454,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-01",
@@ -3221,7 +3468,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 62
+  "booked": 62,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-01",
@@ -3234,7 +3482,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 68
+  "booked": 68,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-01",
@@ -3247,7 +3496,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 58
+  "booked": 58,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-02",
@@ -3260,7 +3510,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 65
+  "booked": 65,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-02",
@@ -3273,7 +3524,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 40
+  "booked": 40,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-02",
@@ -3286,7 +3538,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 66
+  "booked": 66,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-02",
@@ -3299,7 +3552,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 48
+  "booked": 48,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-03",
@@ -3312,7 +3566,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-03",
@@ -3325,7 +3580,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 43
+  "booked": 43,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-03",
@@ -3338,7 +3594,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-03",
@@ -3351,7 +3608,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-04",
@@ -3364,7 +3622,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 46
+  "booked": 46,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-04",
@@ -3377,7 +3636,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 64
+  "booked": 64,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-04",
@@ -3390,7 +3650,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 43
+  "booked": 43,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-04",
@@ -3403,7 +3664,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 39
+  "booked": 39,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-05",
@@ -3416,7 +3678,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 65
+  "booked": 65,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-05",
@@ -3429,7 +3692,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 39
+  "booked": 39,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-05",
@@ -3442,7 +3706,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 50
+  "booked": 50,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-05",
@@ -3455,7 +3720,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 47
+  "booked": 47,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-06",
@@ -3468,7 +3734,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 63
+  "booked": 63,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-06",
@@ -3481,7 +3748,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 62
+  "booked": 62,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-06",
@@ -3494,7 +3762,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 66
+  "booked": 66,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-06",
@@ -3507,7 +3776,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 66
+  "booked": 66,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-07",
@@ -3520,7 +3790,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 60
+  "booked": 60,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-07",
@@ -3533,7 +3804,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 40
+  "booked": 40,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-07",
@@ -3546,7 +3818,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 55
+  "booked": 55,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-07",
@@ -3559,7 +3832,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-08",
@@ -3572,7 +3846,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 50
+  "booked": 50,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-08",
@@ -3585,7 +3860,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 40
+  "booked": 40,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-08",
@@ -3598,7 +3874,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 65
+  "booked": 65,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-08",
@@ -3611,7 +3888,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 55
+  "booked": 55,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-09",
@@ -3624,7 +3902,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 46
+  "booked": 46,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-09",
@@ -3637,7 +3916,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 64
+  "booked": 64,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-09",
@@ -3650,7 +3930,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 65
+  "booked": 65,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-09",
@@ -3663,7 +3944,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 41
+  "booked": 41,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-10",
@@ -3676,7 +3958,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 57
+  "booked": 57,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-10",
@@ -3689,7 +3972,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 67
+  "booked": 67,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-10",
@@ -3702,7 +3986,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 61
+  "booked": 61,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-10",
@@ -3715,7 +4000,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 58
+  "booked": 58,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-11",
@@ -3728,7 +4014,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 66
+  "booked": 66,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-11",
@@ -3741,7 +4028,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 42
+  "booked": 42,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-11",
@@ -3754,7 +4042,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 52
+  "booked": 52,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-11",
@@ -3767,7 +4056,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 55
+  "booked": 55,
+  "gate": "1"
  },
  {
   "leg_id": "GL701-2026-11-12",
@@ -3780,7 +4070,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 57
+  "booked": 57,
+  "gate": "22"
  },
  {
   "leg_id": "GL702-2026-11-12",
@@ -3793,7 +4084,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 50
+  "booked": 50,
+  "gate": "1"
  },
  {
   "leg_id": "GL703-2026-11-12",
@@ -3806,7 +4098,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 45
+  "booked": 45,
+  "gate": "22"
  },
  {
   "leg_id": "GL704-2026-11-12",
@@ -3819,7 +4112,8 @@
   "tail": "VT-GLT",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 50
+  "booked": 50,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-10-30",
@@ -3832,7 +4126,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 55
+  "booked": 55,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-10-30",
@@ -3845,7 +4140,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 43
+  "booked": 43,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-10-30",
@@ -3858,7 +4154,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-10-30",
@@ -3871,7 +4168,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-10-31",
@@ -3884,7 +4182,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 67
+  "booked": 67,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-10-31",
@@ -3897,7 +4196,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-10-31",
@@ -3910,7 +4210,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 47
+  "booked": 47,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-10-31",
@@ -3923,7 +4224,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 45
+  "booked": 45,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-01",
@@ -3936,7 +4238,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 53
+  "booked": 53,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-01",
@@ -3949,7 +4252,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 43
+  "booked": 43,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-01",
@@ -3962,7 +4266,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 66
+  "booked": 66,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-01",
@@ -3975,7 +4280,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-02",
@@ -3988,7 +4294,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 61
+  "booked": 61,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-02",
@@ -4001,7 +4308,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 47
+  "booked": 47,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-02",
@@ -4014,7 +4322,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 45
+  "booked": 45,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-02",
@@ -4027,7 +4336,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 58
+  "booked": 58,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-03",
@@ -4040,7 +4350,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 57
+  "booked": 57,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-03",
@@ -4053,7 +4364,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-03",
@@ -4066,7 +4378,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 52
+  "booked": 52,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-03",
@@ -4079,7 +4392,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 42
+  "booked": 42,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-04",
@@ -4092,7 +4406,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 60
+  "booked": 60,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-04",
@@ -4105,7 +4420,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-04",
@@ -4118,7 +4434,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 61
+  "booked": 61,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-04",
@@ -4131,7 +4448,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 60
+  "booked": 60,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-05",
@@ -4144,7 +4462,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 64
+  "booked": 64,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-05",
@@ -4157,7 +4476,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-05",
@@ -4170,7 +4490,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 64
+  "booked": 64,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-05",
@@ -4183,7 +4504,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 52
+  "booked": 52,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-06",
@@ -4196,7 +4518,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 40
+  "booked": 40,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-06",
@@ -4209,7 +4532,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 54
+  "booked": 54,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-06",
@@ -4222,7 +4546,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 60
+  "booked": 60,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-06",
@@ -4235,7 +4560,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 65
+  "booked": 65,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-07",
@@ -4248,7 +4574,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-07",
@@ -4261,7 +4588,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 63
+  "booked": 63,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-07",
@@ -4274,7 +4602,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 48
+  "booked": 48,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-07",
@@ -4287,7 +4616,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-08",
@@ -4300,7 +4630,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 58
+  "booked": 58,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-08",
@@ -4313,7 +4644,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 50
+  "booked": 50,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-08",
@@ -4326,7 +4658,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 41
+  "booked": 41,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-08",
@@ -4339,7 +4672,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 39
+  "booked": 39,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-09",
@@ -4352,7 +4686,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 66
+  "booked": 66,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-09",
@@ -4365,7 +4700,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 41
+  "booked": 41,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-09",
@@ -4378,7 +4714,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 50
+  "booked": 50,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-09",
@@ -4391,7 +4728,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 65
+  "booked": 65,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-10",
@@ -4404,7 +4742,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 58
+  "booked": 58,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-10",
@@ -4417,7 +4756,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 42
+  "booked": 42,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-10",
@@ -4430,7 +4770,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 60
+  "booked": 60,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-10",
@@ -4443,7 +4784,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 53
+  "booked": 53,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-11",
@@ -4456,7 +4798,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 59
+  "booked": 59,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-11",
@@ -4469,7 +4812,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 44
+  "booked": 44,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-11",
@@ -4482,7 +4826,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 62
+  "booked": 62,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-11",
@@ -4495,7 +4840,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 39
+  "booked": 39,
+  "gate": "1"
  },
  {
   "leg_id": "GL721-2026-11-12",
@@ -4508,7 +4854,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 41
+  "booked": 41,
+  "gate": "22"
  },
  {
   "leg_id": "GL722-2026-11-12",
@@ -4521,7 +4868,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 56
+  "booked": 56,
+  "gate": "1"
  },
  {
   "leg_id": "GL723-2026-11-12",
@@ -4534,7 +4882,8 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 52
+  "booked": 52,
+  "gate": "21"
  },
  {
   "leg_id": "GL724-2026-11-12",
@@ -4547,6 +4896,7 @@
   "tail": "VT-GLU",
   "aircraft_type": "ATR72",
   "seats": 70,
-  "booked": 45
+  "booked": 45,
+  "gate": "1"
  }
 ]

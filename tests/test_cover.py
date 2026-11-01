@@ -176,3 +176,21 @@ def test_a_late_departure_that_breaks_a_colleagues_rest_rules_the_choice_out():
     assert (excluded.stage, excluded.rule_ids) == ("keeps the crew legal", ("FDTL-05",))
     assert excluded.reasons[0].startswith("departing 0h50m late: Crew C-1002 (C-1002) would fail")
     assert cover.funnel[-1].stage == "keeps the crew legal" and cover.funnel[-1].dropped == 1
+
+
+def test_each_aim_has_its_own_pick():
+    cover = find_cover(base_ops().build(), "T-0001", Rank.CAPTAIN, vacated_by="C-1001")
+    picks = {aim: c.crew_id for aim, c in cover.picks().items()}
+    # The standby is cheapest; calling the day-off captain keeps the standby free.
+    assert picks == {"cheapest": "C-2001", "least_delay": "C-2001", "keeps_standby": "C-2002"}
+
+
+def test_least_delay_prefers_whoever_holds_the_departure_least():
+    ops = Ops().person("C-1001").person("C-4001", base="BOM").person("C-2001", minutes=90)
+    ops.leg(DAY, "BOM", "HYD", at(DAY, 0, 30), 1.5, tail="VT-KFA", flight_no="KF900")
+    ops.day_trip("T-0001", crew=[("C-1001", Rank.CAPTAIN)])
+    op = ops.build(as_of=datetime(2026, 11, 3, 0, 0, tzinfo=UTC))
+    cover = find_cover(op, "T-0001", Rank.CAPTAIN)
+    late = {c.crew_id: c.slip_hours for c in cover.choices if c.crew_id}
+    assert late["C-4001"] > late["C-2001"] > 0
+    assert cover.picks()["least_delay"].crew_id == "C-2001"

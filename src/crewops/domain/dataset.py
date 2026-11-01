@@ -10,6 +10,7 @@ from crewops.domain.records import (
     Certificate,
     Crew,
     DutyHistory,
+    Gate,
     Leg,
     Rates,
     Rule,
@@ -31,3 +32,4 @@ class Dataset:
     rates: Rates
     as_of: datetime
     """The moment the duty histories were taken. Nothing before it can be re-crewed."""
+    gates: tuple[Gate, ...] = ()

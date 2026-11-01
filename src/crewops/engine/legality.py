@@ -144,9 +144,10 @@ def assess(
             failed(RATING, f"employed by {theirs}; {trip_id} is a {flies} trip", day=days[0].day)
         )
 
-    on_dates = {d.day for d in days}
     for when, report_id in op.unavailable.get(crew_id, ()):
-        if when in on_dates:
+        since = op.unavailable_since.get(report_id)
+        # Taken ill part-way through a day: duties that end before then are still flown.
+        if any(d.day == when and (since is None or d.release > since) for d in days):
             findings.append(failed(RATING, f"{UNAVAILABLE} ({report_id})", day=when))
             break
 

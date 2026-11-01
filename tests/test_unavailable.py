@@ -1,11 +1,12 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from conftest import SEED_DIR
 
 from crewops.agent import Caller, Context, Role, ToolBox
 from crewops.domain import Rank
-from crewops.engine import NotFound
+from crewops.engine import NotFound, assess
+from crewops.engine.clock import IST
 from crewops.engine.cover import find_cover
 from crewops.engine.watch import scan
 from crewops.ops import DESK, CalloutDesk, MemoryOutbox
@@ -137,11 +138,31 @@ def test_a_controller_must_say_who_and_reports_their_own_trips(mem):
     assert "crew_id" in box.call("report_unavailable", args, ctx)["error"]
     done = box.call("report_unavailable", {**args, "crew_id": SICK}, ctx)
     assert done["own_trips_now_short"] == ["T-1009", "T-1010", "T-1018"]
-    assert (
-        "cannot use"
-        in box.call(
-            "clear_unavailable",
-            {"report_id": done["report_id"]},
-            Context(mem, Caller("pooja", Role.CREW, SICK)),
-        )["error"]
+    someone_else = Context(mem, Caller("anjali", Role.CREW, FIRST))
+    refused = box.call("clear_unavailable", {"report_id": done["report_id"]}, someone_else)
+    assert "only withdraw their own" in refused["error"]
+    own = Context(mem, Caller("pooja", Role.CREW, SICK))
+    assert box.call("clear_unavailable", {"report_id": done["report_id"]}, own)["cleared"]
+
+
+def out_sick(store, crew_id, trip_id):
+    findings = assess(store.operation(), crew_id, trip_id).blockers
+    return [f for f in findings if f.detail.startswith("reported unavailable")]
+
+
+def test_taken_ill_part_way_through_a_day_still_flies_what_ends_before(mem):
+    day = next(d for d in mem.operation().days_of(TRIP) if d.day == NOV5)
+    box, ctx = ToolBox(), Context(mem, CONTROLLER)
+    after = (day.release + timedelta(minutes=30)).astimezone(IST).strftime("%H:%M")
+    args = {"first_day": "2026-11-05", "last_day": "2026-11-05", "reason": "fever"}
+    late = box.call(
+        "report_unavailable", {**args, "crew_id": SICK, "kind": "sick", "since": after}, ctx
     )
+    assert late["kind"] == "sick" and late["own_trips_now_short"] == []
+    assert not out_sick(mem, SICK, TRIP)
+    box.call("clear_unavailable", {"report_id": late["report_id"]}, ctx)
+
+    before = (day.release - timedelta(hours=1)).astimezone(IST).strftime("%H:%M")
+    early = box.call("report_unavailable", {**args, "crew_id": SICK, "since": before}, ctx)
+    assert early["own_trips_now_short"] == [TRIP]
+    assert out_sick(mem, SICK, TRIP)

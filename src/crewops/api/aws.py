@@ -2,7 +2,8 @@
 
 ``handler`` serves the API, the console and the board through a function URL. ``scheduled``
 runs every few minutes: it moves offers nobody answered to the next crew member, emails the
-crew desk once about each new problem the watch finds, and keeps the board's brief fresh.
+crew desk once about each new problem the watch finds, escalates to the duty supervisor what
+the desk has left untouched, and keeps the board's brief fresh.
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ from mangum import Mangum
 from crewops.api.app import Services, create_app, refresh_brief
 from crewops.engine.watch import scan
 from crewops.ops import DESK, Notice
+from crewops.ops.alerts import AlertAddresses
+from crewops.ops.escalation import escalate
 from crewops.ops.notify import EmailingOutbox
 from crewops.settings import settings
 
@@ -24,8 +27,9 @@ def services() -> Services:
     config = settings()
     s = Services(config)
     if config.alert_topic_arn:
-        s.outbox = EmailingOutbox(s.outbox, boto3.client("sns"), config.alert_topic_arn)
-        s.desk.outbox = s.outbox
+        sns = boto3.client("sns")
+        s.set_outbox(EmailingOutbox(s.outbox, sns, config.alert_topic_arn))
+        s.alerts = AlertAddresses(s.store, sns, config.alert_topic_arn)
     return s
 
 
@@ -52,9 +56,17 @@ def scheduled(_event: dict[str, Any] | None = None, _context: Any = None) -> dic
                 ref=issue.issue_id,
             )
         )
-        s.store.put_doc("alerted", issue.issue_id, {"issue_id": issue.issue_id})
+        s.store.put_doc(
+            "alerted", issue.issue_id, {"issue_id": issue.issue_id, "at": now.isoformat()}
+        )
+    escalated = escalate(s.store, s.desk, s.outbox, now, reports=s.reports)
     try:
         briefed = refresh_brief(s)
     except Exception:  # a model outage must not stop the alerts above
         briefed = False
-    return {"offers_moved": len(moved), "alerts": len(new), "brief": int(briefed)}
+    return {
+        "offers_moved": len(moved),
+        "alerts": len(new),
+        "escalated": len(escalated),
+        "brief": int(briefed),
+    }

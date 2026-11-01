@@ -24,6 +24,7 @@ from crewops.domain import (
     Certificate,
     Crew,
     DutyHistory,
+    Gate,
     Leg,
     Rates,
     Rule,
@@ -44,7 +45,14 @@ UNAVAILABLE = "UNAVAIL"
 
 
 def new_report(
-    crew_id: str, first_day: date, last_day: date, reason: str, by: str, at: datetime | None
+    crew_id: str,
+    first_day: date,
+    last_day: date,
+    reason: str,
+    by: str,
+    at: datetime | None,
+    kind: str = "other",
+    since: datetime | None = None,
 ) -> Unavailability:
     return Unavailability(
         report_id=f"U-{uuid.uuid4().hex[:8]}",
@@ -54,6 +62,8 @@ def new_report(
         reason=reason,
         reported_by=by,
         reported_at=(at or datetime.now(UTC)),
+        kind=kind,
+        since=since,
     )
 
 
@@ -85,6 +95,8 @@ def _key(kind: str, record: BaseModel) -> str:
             return record.leg_id
         case "rules":
             return record.rule_id
+        case "gates":
+            return f"{record.station}:{record.gate}"
     raise ValueError(f"unknown record kind {kind!r}")
 
 
@@ -96,6 +108,7 @@ KINDS: dict[str, type[BaseModel]] = {
     "standby": Standby,
     "legs": Leg,
     "rules": Rule,
+    "gates": Gate,
 }
 
 
@@ -166,9 +179,16 @@ class OperationCache:
             if self._cached is None or self._cached[0] != version:
                 op = build_operation(self.dataset())
                 out: dict[str, list[tuple[date, str]]] = {}
+                since: dict[str, datetime] = {}
                 for u in self.unavailability():
                     out.setdefault(u.crew_id, []).extend((d, u.report_id) for d in u.days())
-                op = replace(op, unavailable={k: tuple(v) for k, v in out.items()})
+                    if u.since is not None:
+                        since[u.report_id] = u.since
+                op = replace(
+                    op,
+                    unavailable={k: tuple(v) for k, v in out.items()},
+                    unavailable_since=since,
+                )
                 self._cached = (version, op)
             op = self._cached[1]
         if now is not None and now > op.now:
@@ -382,15 +402,48 @@ class Store(OperationCache):
         reason: str,
         by: str,
         at: datetime | None = None,
+        kind: str = "other",
+        since: datetime | None = None,
     ) -> Unavailability:
         """Record that ``crew_id`` cannot fly on these dates. The operation changes at once."""
         self.operation().state(crew_id)
-        report = new_report(crew_id, first_day, last_day, reason, by, at)
+        report = new_report(crew_id, first_day, last_day, reason, by, at, kind, since)
         item = _item(UNAVAILABLE, report.report_id, body=_json(report.model_dump(mode="json")))
         self.dynamodb.transact_write_items(
             TransactItems=[{"Put": {"TableName": self.table, "Item": item}}, self._bump()]
         )
         return report
+
+    def put_records(self, kind: str, records: Iterable[BaseModel]) -> None:
+        """Add or replace reference records of one kind (crew, certificates, standby), by id."""
+        if kind not in KINDS or kind == "rules":
+            raise ValueError(f"cannot write {kind} records")
+        items = [
+            _item(f"REC#{kind}", _key(kind, r), body=_json(r.model_dump(mode="json")))
+            for r in records
+        ]
+        self._write([{"PutRequest": {"Item": item}} for item in items])
+        self.dynamodb.transact_write_items(TransactItems=[self._bump()])
+
+    def add_trips(self, trips: Iterable[Trip]) -> None:
+        """Add trips the roster does not have yet, at version 1."""
+        trips = list(trips)
+        for trip in trips:
+            if self._get(TRIP, trip.trip_id) is not None:
+                raise ValueError(f"{trip.trip_id} already exists")
+        items = [
+            _item(TRIP, t.trip_id, version=_n(1), body=_json(t.model_dump(mode="json")))
+            for t in trips
+        ]
+        self._write([{"PutRequest": {"Item": item}} for item in items])
+        self.dynamodb.transact_write_items(TransactItems=[self._bump()])
+
+    def set_rule(self, rule: Rule) -> None:
+        """Replace one duty rule; the operation is judged by it at once."""
+        item = _item("REC#rules", rule.rule_id, body=_json(rule.model_dump(mode="json")))
+        self.dynamodb.transact_write_items(
+            TransactItems=[{"Put": {"TableName": self.table, "Item": item}}, self._bump()]
+        )
 
     def clear_unavailable(self, report_id: str) -> Unavailability:
         found = self._get(UNAVAILABLE, report_id)

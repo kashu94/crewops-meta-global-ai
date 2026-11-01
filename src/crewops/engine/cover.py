@@ -145,6 +145,25 @@ class Cover:
     def why_not(self, crew_id: str) -> Excluded | None:
         return next((e for e in self.excluded if e.crew_id == crew_id), None)
 
+    def picks(self) -> dict[str, Choice]:
+        """The best crew choice by each of the desk's three aims.
+
+        ``cheapest`` is the first choice. ``least_delay`` leaves soonest, then cheapest.
+        ``keeps_standby`` is the cheapest choice that does not use a standby, so standby stays
+        free for the next problem; it is missing when every crew choice is a standby.
+        """
+        crewed = [c for c in self.choices if c.crew_id]
+        if not crewed:
+            return {}
+        out = {
+            "cheapest": crewed[0],
+            "least_delay": min(crewed, key=lambda c: (c.slip_hours, c.cost, c.position)),
+        }
+        keeps = next((c for c in crewed if c.way is not Way.STANDBY), None)
+        if keeps is not None:
+            out["keeps_standby"] = keeps
+        return out
+
 
 def _stage_of(a: Assessment) -> tuple[str, tuple[str, ...], tuple[str, ...]]:
     blockers = a.blockers
