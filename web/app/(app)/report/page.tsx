@@ -14,15 +14,26 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
+import { Combo } from "@/components/combo";
 import { CrewPicker, type CrewPick } from "@/components/crew-picker";
-import { EvidenceField, PHOTO } from "@/components/photo-intake";
+import { EvidenceField, PHOTO, type PhotoState } from "@/components/photo-intake";
 import { useSession } from "@/components/session";
 import { Button, Chips, cx, Input, Notice, PageHeader, Panel, Select, Spinner, TextArea } from "@/components/ui";
 import { message, tool } from "@/lib/api";
 import { addDays, workDay } from "@/lib/clock";
+import { short } from "@/lib/format";
 import type { Report } from "@/lib/types";
+import { useLoad } from "@/lib/use-load";
+
+type Catalog = {
+  trips: { trip_id: string; airline: string; tail: string; route: string; reports: string; days: string[] }[];
+  flights: { leg_id: string; flight_no: string; trip_id: string | null; from: string; to: string; departs: string; gate: string | null }[];
+  tails: { tail: string; airline: string; type: string }[];
+  stations: string[];
+  gates: Record<string, string[]>;
+};
 
 type Kind =
   | "crew_unavailable"
@@ -66,11 +77,24 @@ export default function ReportPage() {
   const kinds = allowed(me.role);
   const wanted = params.get("kind") as Kind | null;
   const [kind, setKind] = useState<Kind>(wanted && kinds.includes(wanted) ? wanted : kinds[0]);
-  const [crew, setCrew] = useState<CrewPick[]>([]);
+  const prefillCrew = params.get("crew");
+  const [crew, setCrew] = useState<CrewPick[]>(prefillCrew ? [{ crew_id: prefillCrew, name: params.get("name") ?? prefillCrew }] : []);
+  const [trip, setTrip] = useState(params.get("trip") ?? "");
+  const [tail, setTail] = useState(params.get("tail") ?? "");
+  const [leg, setLeg] = useState(params.get("leg") ?? "");
+  const [station, setStation] = useState(params.get("station") ?? "HYD");
+  const [gates, setGates] = useState<string[]>([]);
+  const [newGate, setNewGate] = useState("");
+  const { data: cat } = useLoad(() => tool<Catalog>("catalog"));
+  const from = params.get("from");
   const [reason, setReason] = useState("sick");
   const [busy, setBusy] = useState(false);
-  const [evidence, setEvidence] = useState<string | null>(null);
-  const tailRef = useRef<HTMLInputElement>(null);
+  const [photo, setPhoto] = useState<PhotoState>({ status: "none", evidenceId: null });
+  const [severity, setSeverity] = useState("");
+  const [description, setDescription] = useState("");
+  const evidence = photo.evidenceId;
+  const photoBlocks = photo.status === "checking" || photo.status === "refused" || (PHOTO[kind]?.required === true && !evidence);
+
   const [error, setError] = useState<string | null>(null);
   const today = workDay(me.clock);
   const def = KINDS.find((k) => k.id === kind)!;
@@ -88,14 +112,39 @@ export default function ReportPage() {
       if (f[k]) args[k] = k === "trip_id" || k === "tail" || k === "station" ? f[k].toUpperCase() : f[k];
     }
     if (f.hours) args.hours = Number(f.hours);
-    if (f.gates) args.gates = f.gates.split(",").map((g) => g.trim()).filter(Boolean);
+    if (kind === "flight_delay") {
+      if (!trip) return setError("Choose the trip that leaves late.");
+      args.trip_id = trip;
+    }
+    if (kind === "aircraft_technical") {
+      if (!tail) return setError("Choose the aircraft.");
+      args.tail = tail;
+    }
+    if (kind === "station_disruption" || kind === "gate_closure") args.station = station;
+    if (kind === "gate_closure") {
+      if (!gates.length) return setError("Choose at least one gate.");
+      args.gates = gates;
+    }
+    if (kind === "gate_change") {
+      if (!leg || !newGate) return setError("Choose the flight and its new gate.");
+      args.leg_id = leg;
+      args.gate = newGate;
+    }
+    if (photo.status === "refused") return setError("The photo was not accepted. Add the right photo, or remove it.");
     if (evidence) args.evidence_ids = [evidence];
     else if (PHOTO[kind]?.required) return setError("Add a photo of the fault: an aircraft fault is filed with one.");
+    if (severity) args.severity = severity;
+    if (description.trim()) args.note = description.trim();
     setBusy(true);
     setError(null);
     try {
       const r = await tool<Report>("report_disruption", args);
-      flash(`${r.report_id} filed${r.desk ? ` and sent to ${r.desk.name} (${r.desk.controller})` : ""}.`);
+      const more = (r as Report & { also_filed?: { report_id: string }[] }).also_filed ?? [];
+      flash(
+        more.length
+          ? `Crew on different flights are separate disruptions: filed ${[r.report_id, ...more.map((m) => m.report_id)].join(", ")}.`
+          : `${r.report_id} filed${r.desk ? ` and sent to ${r.desk.name} (${r.desk.controller})` : ""}.`,
+      );
       bump();
       router.push(`/disruptions/view/?id=${encodeURIComponent(r.report_id)}`);
     } catch (err) {
@@ -130,7 +179,9 @@ export default function ReportPage() {
                 onClick={() => {
                   setKind(k.id);
                   setError(null);
-                  setEvidence(null);
+                  setPhoto({ status: "none", evidenceId: null });
+                  setSeverity("");
+                  setDescription("");
                 }}
                 className={cx(
                   "flex items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
@@ -158,8 +209,8 @@ export default function ReportPage() {
               {kind === "crew_unavailable" && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Input label="From" type="date" name="first_day" defaultValue={today} required />
-                    <Input label="Until" type="date" name="last_day" defaultValue={addDays(today, 3)} required />
+                    <Input label="From" type="date" name="first_day" defaultValue={from ?? today} required />
+                    <Input label="Until" type="date" name="last_day" defaultValue={addDays(from ?? today, 1)} required />
                   </div>
                   <Chips
                     label="Reason"
@@ -204,22 +255,36 @@ export default function ReportPage() {
               )}
               {kind === "flight_delay" && (
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <Input label="Trip" name="trip_id" defaultValue="T-1018" pattern="[Tt]-\d{4}" required />
+                  <Combo
+                    label="Trip"
+                    value={trip}
+                    onChange={setTrip}
+                    required
+                    placeholder="Trip, flight route or aircraft"
+                    options={(cat?.trips ?? []).map((t) => ({ value: t.trip_id, label: `${t.trip_id} · ${t.route}`, hint: `${t.tail} · ${short(t.reports)}`, search: `${t.airline} ${t.tail}` }))}
+                  />
                   <Input label="Hours late" type="number" step="0.25" min="0.25" max="24" name="hours" defaultValue="3" required />
-                  <Input label="Day (multi-day trips)" type="date" name="day" />
+                  <Input label="Day (multi-day trips)" type="date" name="day" defaultValue={params.get("day") ?? undefined} />
                 </div>
               )}
               {kind === "aircraft_technical" && (
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <Input ref={tailRef} label="Aircraft" name="tail" defaultValue="VT-SYB" pattern="[Vv][Tt]-[A-Za-z]{3}" required />
-                  <Input label="Out of service from (IST)" type="datetime-local" name="start" defaultValue={`${today}T06:00`} required />
-                  <Input label="Back (IST)" type="datetime-local" name="end" defaultValue={`${today}T11:00`} required />
+                  <Combo
+                    label="Aircraft"
+                    value={tail}
+                    onChange={setTail}
+                    required
+                    placeholder="Registration or airline"
+                    options={(cat?.tails ?? []).map((t) => ({ value: t.tail, label: t.tail, hint: `${t.airline} · ${t.type}` }))}
+                  />
+                  <Input label="Out of service from (IST)" type="datetime-local" name="start" defaultValue={`${params.get("day") ?? today}T06:00`} required />
+                  <Input label="Back (IST)" type="datetime-local" name="end" defaultValue={`${params.get("day") ?? today}T11:00`} required />
                 </div>
               )}
               {kind === "station_disruption" && (
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <Select label="Station" name="station" defaultValue="HYD">
-                    {STATIONS.map((s) => (
+                  <Select label="Station" value={station} onChange={(e) => setStation(e.target.value)}>
+                    {(cat?.stations ?? STATIONS).map((s) => (
                       <option key={s}>{s}</option>
                     ))}
                   </Select>
@@ -230,12 +295,37 @@ export default function ReportPage() {
               {kind === "gate_closure" && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Select label="Station" name="station" defaultValue="HYD">
-                      {STATIONS.map((s) => (
+                    <Select
+                      label="Station"
+                      value={station}
+                      onChange={(e) => {
+                        setStation(e.target.value);
+                        setGates([]);
+                      }}
+                    >
+                      {(cat?.stations ?? STATIONS).map((s) => (
                         <option key={s}>{s}</option>
                       ))}
                     </Select>
-                    <Input label="Gates (comma separated)" name="gates" defaultValue="21, 22" required />
+                    <div className="flex flex-col gap-1 text-[13px]">
+                      <span className="font-medium">Gates closed</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(cat?.gates[station] ?? []).map((g) => (
+                          <button
+                            key={g}
+                            type="button"
+                            aria-pressed={gates.includes(g)}
+                            onClick={() => setGates((x) => (x.includes(g) ? x.filter((y) => y !== g) : [...x, g]))}
+                            className={cx(
+                              "min-w-10 rounded-md border px-2.5 py-1.5 font-mono text-[13px] transition-colors",
+                              gates.includes(g) ? "border-critical bg-critical-soft text-critical-ink" : "border-control bg-surface hover:bg-sunken",
+                            )}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input label="Closes (IST)" type="datetime-local" name="start" defaultValue={`${today}T06:00`} required />
@@ -245,15 +335,63 @@ export default function ReportPage() {
               )}
               {kind === "gate_change" && (
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Input label="Flight and date" name="leg_id" defaultValue={`SY201-${today}`} required hint="Such as SY201-2026-11-05" />
-                  <Input label="New gate" name="gate" defaultValue="22" required />
+                  <Combo
+                    label="Flight"
+                    value={leg}
+                    onChange={(v) => {
+                      setLeg(v);
+                      setNewGate("");
+                    }}
+                    required
+                    placeholder="Flight number, station or day"
+                    options={(cat?.flights ?? []).map((l) => ({ value: l.leg_id, label: `${l.flight_no} ${l.from}–${l.to}`, hint: `${short(l.departs)}${l.gate ? ` · gate ${l.gate}` : ""}`, search: l.leg_id }))}
+                  />
+                  <Combo
+                    label="New gate"
+                    value={newGate}
+                    onChange={setNewGate}
+                    required
+                    placeholder="Gate"
+                    options={(cat?.gates[cat?.flights.find((l) => l.leg_id === leg)?.from ?? "HYD"] ?? [])
+                      .filter((g) => g !== cat?.flights.find((l) => l.leg_id === leg)?.gate)
+                      .map((g) => ({ value: g, label: `Gate ${g}` }))}
+                  />
                 </div>
               )}
-              {PHOTO[kind] && <EvidenceField key={`photo-${kind}`} reportKind={kind} tail={() => tailRef.current?.value ?? ""} onChange={setEvidence} />}
-              <TextArea label="Note for the desk (optional)" name="note" rows={2} maxLength={500} placeholder="Anything the controller should know" />
+              {PHOTO[kind] && (
+                <EvidenceField
+                  key={`photo-${kind}`}
+                  reportKind={kind}
+                  tail={() => tail}
+                  onChange={(p) => {
+                    setPhoto(p);
+                    const s = p.result?.suggestion;
+                    if (p.status === "kept" && s) {
+                      setSeverity(s.severity);
+                      if (s.description) setDescription(s.description);
+                    }
+                  }}
+                />
+              )}
+              <div className="grid gap-4 sm:grid-cols-[12rem_1fr]">
+                <Select label="Severity" value={severity} onChange={(e) => setSeverity(e.target.value)} hint="Raises the worked-out severity, never lowers it">
+                  <option value="">Work it out</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </Select>
+                <TextArea
+                  label="Description"
+                  rows={3}
+                  maxLength={500}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What happened, in a sentence or two. Filled from the photo when you add one."
+                />
+              </div>
               {error && <Notice tone="error">{error}</Notice>}
               <div>
-                <Button type="submit" disabled={busy || !can("report_disruption") || (PHOTO[kind]?.required === true && !evidence)}>
+                <Button type="submit" disabled={busy || !can("report_disruption") || photoBlocks}>
                   {busy ? <Spinner /> : <Send size={15} />} File the report
                 </Button>
               </div>

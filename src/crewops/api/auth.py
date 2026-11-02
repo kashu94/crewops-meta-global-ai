@@ -76,7 +76,7 @@ def caller_from(request: Request, config: Settings) -> Caller:
         role = request.headers.get("x-demo-role", Role.CONTROLLER.value)
         try:
             return Caller(
-                request.headers.get("x-demo-user", "m.iyer"),
+                request.headers.get("x-demo-user", "ananya.iyer"),
                 Role(role),
                 request.headers.get("x-demo-crew-id") or None,
             )

@@ -1,15 +1,17 @@
 "use client";
 
-import { ArrowRight, ChevronDown, Mic, RotateCcw, Send, Square, Workflow } from "lucide-react";
+import { ArrowRight, ChevronDown, Mic, Pause, Play, RotateCcw, Send, Square, Workflow } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { useSession } from "@/components/session";
 import { Button, control, cx, Mono, Notice, PageHeader, Panel, Pill, Spinner, Table } from "@/components/ui";
-import { api, message } from "@/lib/api";
+import { api, message, saved } from "@/lib/api";
 import { opDay } from "@/lib/clock";
 import { plural } from "@/lib/format";
 import type { Answer } from "@/lib/types";
-import { LANGUAGES, Recorder, say, transcribe } from "@/lib/voice";
+import { ANY_LANGUAGE, hasVoice, langOf, Recorder, say, transcribe } from "@/lib/voice";
+
+const ALOUD = "crewops.assistant.aloud";
 
 /** "8 November", a number of days into the demo roster. */
 function onDay(first: string, n: number) {
@@ -20,7 +22,7 @@ function onDay(first: string, n: number) {
 
 // The demo's trips sit at the same days into its roster, whichever day it starts.
 const deskSuggestions = (first: string) => [
-  `Pooja Chowdary is unwell from ${onDay(first, 6)} to ${onDay(first, 9)}. How should we cover it?`,
+  `A. Nair is unwell from ${onDay(first, 6)} to ${onDay(first, 9)}. How should we cover it?`,
   "Anything I should worry about in the next few days?",
   `Gates 21 and 22 at Hyderabad are closed 6 to 9 am on ${onDay(first, 3)}. What happens?`,
   `VT-SYB is out of service until 11 am on ${onDay(first, 6)}.`,
@@ -140,8 +142,26 @@ export default function AssistantPage() {
   const [conversation, setConversation] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
-  const [lang, setLang] = useState("English");
-  const [aloud, setAloud] = useState(false);
+  const [aloud, setAloudState] = useState(() => saved.get(ALOUD) !== "off");
+  /** Which answer is being read aloud, and whether it is paused. */
+  const [voice, setVoice] = useState<{ turn: number; paused: boolean } | null>(null);
+  const setAloud = (on: boolean) => {
+    setAloudState(on);
+    saved.set(ALOUD, on ? "on" : "off");
+    if (!on) stopVoice();
+  };
+  function stopVoice() {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) speechSynthesis.cancel();
+    setVoice(null);
+  }
+  function readAloud(turn: number, text: string) {
+    stopVoice();
+    const lang = langOf(text);
+    if (lang !== "en-IN")
+      hasVoice(lang).then((ok) => !ok && setMicNote(`This browser has no ${lang === "te-IN" ? "Telugu" : "Hindi"} voice installed, so the answer is shown but not read.`));
+    setVoice({ turn, paused: false });
+    say(text).then(() => setVoice((v) => (v && v.turn === turn ? null : v)));
+  }
   const [mic, setMic] = useState<"idle" | "listening" | "working">("idle");
   const [micNote, setMicNote] = useState("");
   const [shown, setShown] = useState<number | null>(null);
@@ -151,6 +171,7 @@ export default function AssistantPage() {
 
   async function ask(q: string) {
     if (!q.trim() || busy) return;
+    stopVoice();
     setBusy(true);
     setQuestion("");
     const index = turns.length;
@@ -160,10 +181,7 @@ export default function AssistantPage() {
       const a = await api<Answer>("/api/ask", { method: "POST", json: { question: q, conversation_id: conversation } });
       setConversation(a.conversation_id);
       setTurns((t) => t.map((x, i) => (i === index ? { ...x, a } : x)));
-      if (aloud) {
-        speechSynthesis.cancel();
-        say(a.text, lang);
-      }
+      if (aloud && !a.blocked) readAloud(index, a.text);
       bump();
     } catch (err) {
       setTurns((t) => t.map((x, i) => (i === index ? { ...x, error: message(err) } : x)));
@@ -187,7 +205,7 @@ export default function AssistantPage() {
     setMic("working");
     setMicNote("Transcribing…");
     try {
-      const t = await transcribe(await recorder.current.stop(), lang);
+      const t = await transcribe(await recorder.current.stop(), ANY_LANGUAGE);
       setMicNote(t.text ? `Heard (${t.seconds}s)` : "Nothing was heard. Try again a little closer.");
       if (t.text) ask(t.text);
     } catch (err) {
@@ -208,6 +226,7 @@ export default function AssistantPage() {
           <Button
             tone="secondary"
             onClick={() => {
+              stopVoice();
               setConversation(null);
               setTurns([]);
               setShown(null);
@@ -234,6 +253,30 @@ export default function AssistantPage() {
                 {t.a ? (
                   <button onClick={() => setShown(i)} className={cx("max-w-[92%] self-start rounded-xl rounded-bl-sm border bg-surface px-3.5 py-2.5 text-left text-sm", shown === i ? "border-accent" : "border-line")}>
                     <p className="whitespace-pre-wrap leading-relaxed">{t.a.text}</p>
+                    {voice?.turn === i && (
+                      <span className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <span className="voice-bar-sm flex h-4 items-end gap-0.5" aria-hidden>
+                          {[0, 1, 2].map((b) => (
+                            <i key={b} className={cx("w-0.5 rounded-full bg-accent", voice.paused ? "h-1.5" : "voice-bar h-4")} style={{ animationDelay: `${b * 0.12}s` }} />
+                          ))}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          tone="secondary"
+                          onClick={() => {
+                            if (voice.paused) speechSynthesis.resume();
+                            else speechSynthesis.pause();
+                            setVoice({ turn: i, paused: !voice.paused });
+                          }}
+                        >
+                          {voice.paused ? <Play size={13} /> : <Pause size={13} />} {voice.paused ? "Resume" : "Pause"}
+                        </Button>
+                        <Button type="button" size="sm" tone="ghost" onClick={stopVoice}>
+                          <Square size={12} /> Stop
+                        </Button>
+                      </span>
+                    )}
                     <span className="mt-2 flex flex-wrap gap-1.5">
                       {t.a.blocked && <Pill tone="critical">refused: {t.a.blocked}</Pill>}
                       {t.a.route && <Pill>{t.a.route.intent}</Pill>}
@@ -278,15 +321,8 @@ export default function AssistantPage() {
               <Button type="button" tone={mic === "listening" ? "danger" : "secondary"} onClick={toggleMic} disabled={mic === "working"}>
                 {mic === "listening" ? <Square size={14} /> : <Mic size={14} />} {mic === "listening" ? "Stop" : "Speak"}
               </Button>
-              <select aria-label="Spoken language" value={lang} onChange={(e) => setLang(e.target.value)} className={cx(control.replace("w-full", ""), "w-32")}>
-                {LANGUAGES.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
               <label className="flex items-center gap-1.5 text-[13px] text-muted">
-                <input type="checkbox" checked={aloud} onChange={(e) => setAloud(e.target.checked)} /> Read answers aloud
+                <input type="checkbox" checked={aloud} onChange={(e) => setAloud(e.target.checked)} /> Read answers aloud, in the language of the answer
               </label>
               {micNote && <span className="text-xs text-muted">{micNote}</span>}
             </div>

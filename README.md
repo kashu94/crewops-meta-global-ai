@@ -148,6 +148,13 @@ back with the engine's analysis: for absences, every seat left empty and the che
 fill **all of them together**, never using one person twice and never one absent crew member
 for another's seat.
 
+The station files reports (crew file their own sickness, admins book planned leave); crew
+control works them and approvers decide. Crew out on the same flight are one disruption,
+covered together; crew on different flights become separate disruptions, each sent to the
+least busy desk. A seat is offered only to its own rank first: a right-seat qualified captain
+for a first officer's seat, or a command-qualified first officer for a captain's, is offered
+only when fewer than three of the seat's own rank are legal, and after them.
+
     OPEN --plan or callout--> IN_PROGRESS --controller closes--> RESOLVED --approver--> CLOSED
                                     ^                                |
                                     '-------- approver returns ------'
@@ -274,7 +281,7 @@ uv run python -m crewops.models.check
 
 ## Tools and roles
 
-The models never touch the data directly. They call fifty typed tools (`crewops.agent`),
+The models never touch the data directly. They call fifty-two typed tools (`crewops.agent`),
 each a thin wrapper over the rules engine or the database:
 
 | Tool | Returns |
@@ -294,7 +301,7 @@ each a thin wrapper over the rules engine or the database:
 | `open_issues` | What the watch finds in the coming days |
 | `start_callout` | Starts asking crew for a seat, cheapest legal first |
 | `callout_status` | Who was asked, who answered what; for crew, offers waiting for them |
-| `answer_callout` | Accept or decline (crew, or a controller recording a phone answer) |
+| `answer_callout` | Accept or decline, with a remark (crew, or a controller recording a phone answer) |
 | `decide_callout` | A controller proposes cancelling or flying short; an approver decides |
 | `report_unavailable`, `clear_unavailable` | Record who cannot fly (kind, dates, from what time), or withdraw it |
 | `gate_status` | Gates and stands at a station, and who holds which on a day |
@@ -310,6 +317,9 @@ each a thin wrapper over the rules engine or the database:
 | `crew_risk` | Crew most at risk of dropping out, with what drives each score |
 | `contacts` | The operational teams, their jobs and who is on duty where |
 | `my_queue` | What is waiting for the caller now |
+| `about_me` | Who the caller is, what their role does and may not do, and what waits for them |
+| `operations` | A week of flights for the station: who flies each and who is out (when, never why) |
+| `catalog` | Every trip, flight, aircraft, station and gate from today, for forms to pick from |
 | `team_accounts`, `create_account`, `set_account`, `reset_password` | Team accounts and passwords (admins) |
 | `alert_addresses`, `add_alert_address`, `remove_alert_address` | Who hears which group's alerts by email (admins) |
 | `upload_roster` | Roster records from a file, checked whole first; dry run or apply (admins) |
@@ -336,7 +346,7 @@ The same tools, with the same roles, for any MCP client:
 
 ```bash
 uv run python -m crewops.mcp_server                                    # read-only
-uv run python -m crewops.mcp_server --role controller --user m.iyer
+uv run python -m crewops.mcp_server --role controller --user ananya.iyer
 ```
 
 For a desktop client, add it to the client's MCP configuration:
@@ -377,8 +387,8 @@ Conversations keep their last six turns and the people and trips discussed, so a
 such as "can Anjali do T-1010 as well?" needs no repetition. Try it:
 
 ```bash
-uv run python -m crewops.agent.chat --user m.iyer
-uv run python -m crewops.agent.chat --ask "Pooja Chowdary is unwell from 5 to 8 November"
+uv run python -m crewops.agent.chat --user ananya.iyer
+uv run python -m crewops.agent.chat --ask "A. Nair is unwell from 5 to 8 November"
 ```
 
 In the chat, `/issues` shows what the watch finds and `/outbox` the messages sent to crew
@@ -465,9 +475,11 @@ Hosting (app `crewops-meta-<stage>-console`, a static Next.js export built and u
 deploy script), DynamoDB, Lambda behind a function URL (the API, answering browsers from the
 console's address only), a second Lambda every 10 minutes (callout
 deadlines, watch alerts and escalations by email through SNS, the shift brief), S3, and
-Cognito with a group per role and the demo accounts: `m.iyer`, `s.reddy` and `d.rao`
-(controllers, desks 1 to 3), `a.nair` (approver), `ops.hyd` (reporter), `v.shah` (auditor),
-`k.menon` (admin), `r.kapoor` (super admin), `ops.speaker` (speaker), `anjali` and `pooja.f`
+Cognito with a group per role and the demo accounts: `ananya.iyer`, `rohit.malhotra` and
+`divya.rao` (controllers, desks 1 to 3), `meera.bhatt`, `karan.mehta` and `farah.qureshi`
+(approvers), `imran.sheikh` and `lakshmi.hegde` (station reporters), `nikhil.agarwal`
+(auditor), `priya.desai` (admin), `vikram.saxena` (super admin), `ops.speaker` (speaker), and
+`c1111.nair`, `c1157.reddy`, `c1167.iyer`, `c1191.nair` and `c1460.krishnan`
 (crew). A store seeded from older demo data is reseeded when the data version changes, and on
 the wall clock it is moved to start today, and again a week later. Photos kept with reports go
 to the same S3 bucket and are served only to the desk roles and whoever took them. It is

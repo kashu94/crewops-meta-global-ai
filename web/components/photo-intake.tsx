@@ -14,7 +14,12 @@ export type Intake = {
   confidence?: string | null;
   box?: Box | null;
   evidence_id?: string;
+  suggestion?: { severity: "low" | "medium" | "high"; description: string } | null;
 };
+
+/** Where the photo stands, for the form around it: nothing chosen, being checked, kept, or
+ * not accepted (the form must not be filed with it). */
+export type PhotoState = { status: "none" | "checking" | "kept" | "refused"; evidenceId: string | null; result?: Intake };
 
 /** What each kind of report is backed up by, and whether it must be. */
 export const PHOTO: Record<string, { kind: string; label: string; hint: string; required?: boolean }> = {
@@ -71,7 +76,7 @@ export function EvidenceField({
   reportKind: string;
   /** For a fault: the aircraft named in the form, to check the registration against. */
   tail?: () => string;
-  onChange: (evidenceId: string | null) => void;
+  onChange: (state: PhotoState) => void;
 }) {
   const spec = PHOTO[reportKind];
   const [file, setFile] = useState<File | null>(null);
@@ -85,7 +90,7 @@ export function EvidenceField({
     setFile(f);
     setResult(null);
     setError(null);
-    onChange(null);
+    onChange({ status: "checking", evidenceId: null });
     setBusy(true);
     const form = new FormData();
     form.set("image", f);
@@ -96,9 +101,10 @@ export function EvidenceField({
     try {
       const r = await api<Intake>("/api/intake", { method: "POST", form });
       setResult(r);
-      onChange(r.evidence_id ?? null);
+      onChange(r.evidence_id ? { status: "kept", evidenceId: r.evidence_id, result: r } : { status: "refused", evidenceId: null, result: r });
     } catch (err) {
       setError(message(err));
+      onChange({ status: "refused", evidenceId: null });
     } finally {
       setBusy(false);
     }
@@ -108,7 +114,7 @@ export function EvidenceField({
     setFile(null);
     setResult(null);
     setError(null);
-    onChange(null);
+    onChange({ status: "none", evidenceId: null });
     if (input.current) input.current.value = "";
   }
 
@@ -165,7 +171,12 @@ export function EvidenceField({
                   )}
                 </p>
                 <p className={cx("text-sm leading-relaxed", result.status === "rejected" ? "text-critical-ink" : "text-foreground")}>{result.message}</p>
-                {!result.evidence_id && <p className="text-xs text-muted">This photo is not attached. Take another, or file without one{spec.required ? " (not for a fault)" : ""}.</p>}
+                {!result.evidence_id && (
+                  <p className="text-xs font-medium text-critical-ink">
+                    This photo is not accepted, so the report cannot be filed with it. Add the right photo{spec.required ? "" : ", or remove it"}.
+                  </p>
+                )}
+                {result.suggestion && result.evidence_id && <p className="text-xs text-muted">Severity and description below are filled from the photo: check them and change anything before filing.</p>}
               </>
             )}
             <div className="mt-auto flex flex-wrap gap-2">

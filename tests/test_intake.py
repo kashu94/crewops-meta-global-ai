@@ -78,7 +78,7 @@ def note(**changes):
     base = dict(
         is_medical_note=True,
         readable="clear",
-        patient_name="Pooja Chowdary",
+        patient_name="A. Nair",
         unfit_from="2026-11-05",
         unfit_to="2026-11-08",
         issued_by="Dr Rao",
@@ -184,7 +184,7 @@ def test_a_sick_note_that_is_not_one_or_names_nobody_clear_is_not_acted_on(op):
         read_photo(op, Kind.SICK_NOTE, SHARP, "image/jpeg", Reader(note(readable="unclear"))).status
         is Status.RESHOOT
     )
-    pooja = read_photo(op, Kind.SICK_NOTE, SHARP, "image/jpeg", Reader(note(patient_name="Pooja")))
+    pooja = read_photo(op, Kind.SICK_NOTE, SHARP, "image/jpeg", Reader(note(patient_name="Nair")))
     assert pooja.status is Status.CONFIRM and len(pooja.crew) > 1 and pooja.proposal is None
     nobody = read_photo(
         op, Kind.SICK_NOTE, SHARP, "image/jpeg", Reader(note(patient_name="Zara Quill"))
@@ -198,7 +198,7 @@ def test_swaps_and_certificates_are_checked_against_the_roster(op):
     swap = RosterSwap(
         is_roster_swap=True,
         readable="clear",
-        crew_names=["Anjali Goud", "Pooja Fernandes"],
+        crew_names=["D. Reddy", "R. Iyer"],
         trip_ids=["T-1018"],
         signed_by_both=False,
     )
@@ -211,7 +211,7 @@ def test_swaps_and_certificates_are_checked_against_the_roster(op):
     cert = CertificateForm(
         is_certificate=True,
         readable="clear",
-        holder_name="Pooja Chowdary",
+        holder_name="A. Nair",
         kind="medical",
         expires="2027-11-05",
     )

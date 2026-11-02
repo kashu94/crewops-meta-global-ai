@@ -86,22 +86,77 @@ export async function transcribe(blob: Blob, languages: string): Promise<{ text:
   return api("/api/voice", { method: "POST", form });
 }
 
-export const LANGUAGES = [
-  { value: "English", label: "English" },
-  { value: "Hindi,English", label: "Hindi" },
-  { value: "Telugu,English", label: "Telugu" },
-  { value: "Hindi,Telugu,English", label: "Mixed" },
-];
+/** Every language the assistant understands, as the transcription hint when nobody chose one. */
+export const ANY_LANGUAGE = "English,Hindi,Telugu";
 
-export function say(text: string, languages = "English", rate = 1): Promise<void> {
+/** The language a text is written in, from its script: Telugu, Devanagari (Hindi), or English. */
+export function langOf(text: string): "te-IN" | "hi-IN" | "en-IN" {
+  const telugu = (text.match(/[\u0C00-\u0C7F]/g) ?? []).length;
+  const hindi = (text.match(/[\u0900-\u097F]/g) ?? []).length;
+  if (telugu > 8 && telugu >= hindi) return "te-IN";
+  if (hindi > 8) return "hi-IN";
+  return "en-IN";
+}
+
+function voices(): Promise<SpeechSynthesisVoice[]> {
+  const now = speechSynthesis.getVoices();
+  if (now.length) return Promise.resolve(now);
   return new Promise((done) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return done();
-    const u = new SpeechSynthesisUtterance(speakable(text));
-    const lang = languages.split(",")[0];
-    u.lang = lang === "Hindi" ? "hi-IN" : lang === "Telugu" ? "te-IN" : "en-IN";
-    u.rate = rate;
-    u.onend = () => done();
-    u.onerror = () => done();
-    speechSynthesis.speak(u);
+    const t = setTimeout(() => done(speechSynthesis.getVoices()), 1200);
+    speechSynthesis.addEventListener(
+      "voiceschanged",
+      () => {
+        clearTimeout(t);
+        done(speechSynthesis.getVoices());
+      },
+      { once: true },
+    );
   });
+}
+
+/** A voice that speaks the language natively: never an English voice reading Hindi or Telugu.
+ * Prefers the higher quality network voices browsers offer (Google, Microsoft "Online"). */
+async function voiceFor(lang: string): Promise<SpeechSynthesisVoice | undefined> {
+  const all = await voices();
+  const norm = (v: SpeechSynthesisVoice) => v.lang.replace("_", "-").toLowerCase();
+  const exact = all.filter((v) => norm(v) === lang.toLowerCase());
+  const family = all.filter((v) => norm(v).startsWith(lang.slice(0, 2).toLowerCase()));
+  const pool = exact.length ? exact : family;
+  const good = (v: SpeechSynthesisVoice) => /google|online|natural|neural/i.test(v.name);
+  return pool.find(good) ?? pool[0];
+}
+
+/** Long answers are spoken a sentence at a time: browsers cut a single long utterance short. */
+function pieces(text: string): string[] {
+  return (text.match(/[^.!?।\n]+[.!?।]?/g) ?? [text]).map((p) => p.trim()).filter(Boolean);
+}
+
+/** Speak ``text`` in its own language, found from its script: an English notice always sounds
+ * English, a Telugu answer is read by a Telugu voice. */
+export async function say(text: string, { rate = 1 }: { rate?: number } = {}): Promise<void> {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  const clean = speakable(text);
+  const lang = langOf(clean);
+  const voice = await voiceFor(lang);
+  await new Promise<void>((done) => {
+    const parts = pieces(clean);
+    parts.forEach((part, i) => {
+      const u = new SpeechSynthesisUtterance(part);
+      u.lang = voice?.lang ?? lang;
+      if (voice) u.voice = voice;
+      u.rate = rate;
+      if (i === parts.length - 1) {
+        u.onend = () => done();
+        u.onerror = () => done();
+      }
+      speechSynthesis.speak(u);
+    });
+    if (!parts.length) done();
+  });
+}
+
+/** Whether this browser has a voice for ``lang`` at all (Telugu often needs one installed). */
+export async function hasVoice(lang: string): Promise<boolean> {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
+  return (await voiceFor(lang)) !== undefined;
 }

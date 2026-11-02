@@ -16,7 +16,7 @@ from crewops.store import MemoryStore
 TRIP, SICK = "T-1018", "C-1111"  # T-1018 flies 5-6 Nov
 FIRST, SECOND = "C-1157", "C-1167"  # the two cheapest legal captains for it
 NOV5, NOV6, NOV10 = date(2026, 11, 5), date(2026, 11, 6), date(2026, 11, 10)
-CONTROLLER = Caller("m.iyer", Role.CONTROLLER)
+CONTROLLER = Caller("ananya.iyer", Role.CONTROLLER)
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def mem(seed):
 
 def test_unavailability_is_stored_applied_and_cleared(store):
     before = store.roster_version()
-    report = store.mark_unavailable(FIRST, NOV5, NOV6, "sick", "m.iyer")
+    report = store.mark_unavailable(FIRST, NOV5, NOV6, "sick", "ananya.iyer")
     assert store.roster_version() == before + 1
     assert [u.report_id for u in store.unavailability(FIRST)] == [report.report_id]
     assert store.operation().unavailable[FIRST] == (
@@ -41,11 +41,11 @@ def test_unavailability_is_stored_applied_and_cleared(store):
     with pytest.raises(NotFound):
         store.clear_unavailable(report.report_id)
     with pytest.raises(NotFound):
-        store.mark_unavailable("C-9999", NOV5, NOV6, "sick", "m.iyer")
+        store.mark_unavailable("C-9999", NOV5, NOV6, "sick", "ananya.iyer")
 
 
 def test_an_unavailable_choice_is_withdrawn_not_silently_dropped(mem):
-    mem.mark_unavailable(FIRST, NOV5, NOV6, "sick", "anjali")
+    mem.mark_unavailable(FIRST, NOV5, NOV6, "sick", "c1157.reddy")
     cover = find_cover(mem.operation(), TRIP, Rank.CAPTAIN, SICK)
     assert FIRST not in {c.crew_id for c in cover.choices}
     assert cover.best.crew_id == SECOND
@@ -55,7 +55,7 @@ def test_an_unavailable_choice_is_withdrawn_not_silently_dropped(mem):
 
 
 def test_dates_that_miss_the_trip_change_nothing(mem):
-    mem.mark_unavailable(FIRST, NOV10, NOV10, "family", "anjali")
+    mem.mark_unavailable(FIRST, NOV10, NOV10, "family", "c1157.reddy")
     cover = find_cover(mem.operation(), TRIP, Rank.CAPTAIN, SICK)
     assert cover.best.crew_id == FIRST and cover.withdrawn == ()
 
@@ -63,13 +63,13 @@ def test_dates_that_miss_the_trip_change_nothing(mem):
 def test_an_open_offer_moves_on_the_moment_they_report(mem):
     outbox = MemoryOutbox()
     desk = CalloutDesk(mem, outbox, clock=lambda: datetime(2026, 10, 29, 18, 30, tzinfo=UTC))
-    callout = desk.open(TRIP, Rank.CAPTAIN, SICK, by="m.iyer")
+    callout = desk.open(TRIP, Rank.CAPTAIN, SICK, by="ananya.iyer")
     assert callout.current.crew_id == FIRST
 
-    mem.mark_unavailable(FIRST, NOV10, NOV10, "family", "anjali")
+    mem.mark_unavailable(FIRST, NOV10, NOV10, "family", "c1157.reddy")
     assert desk.withdraw(FIRST) == [] and callout.current.crew_id == FIRST  # other dates
 
-    mem.mark_unavailable(FIRST, NOV5, NOV5, "sick", "anjali")
+    mem.mark_unavailable(FIRST, NOV5, NOV5, "sick", "c1157.reddy")
     assert desk.withdraw(FIRST) == [callout]
     assert [(o.crew_id, o.answer) for o in callout.offers] == [
         (FIRST, "unavailable"),
@@ -80,7 +80,7 @@ def test_an_open_offer_moves_on_the_moment_they_report(mem):
 
 
 def test_the_watch_raises_the_trips_an_unavailable_person_leaves(mem):
-    mem.mark_unavailable("C-1191", NOV5, NOV5, "sick", "m.iyer")
+    mem.mark_unavailable("C-1191", NOV5, NOV5, "sick", "ananya.iyer")
     trips = {d.trip_id for d in mem.operation().state("C-1191").rostered() if d.day == NOV5}
     raised = {i.trip_id for i in scan(mem.operation()) if i.crew_id == "C-1191"}
     assert trips and trips <= raised
@@ -94,7 +94,7 @@ def test_crew_report_for_themselves_and_offers_show_struck_through(mem):
         {"trip_id": TRIP, "replace_crew_id": SICK},
         Context(mem, CONTROLLER, desk=desk),
     )
-    anjali = Caller("anjali", Role.CREW, FIRST)
+    reddy = Caller("c1157.reddy", Role.CREW, FIRST)
     reported = box.call(
         "report_unavailable",
         {
@@ -103,7 +103,7 @@ def test_crew_report_for_themselves_and_offers_show_struck_through(mem):
             "reason": "fever",
             "crew_id": "C-1167",
         },  # a crew member cannot report someone else: ignored
-        Context(mem, anjali, desk=desk),
+        Context(mem, reddy, desk=desk),
     )
     assert reported["crew_id"] == FIRST
     assert reported["callout_offers_withdrawn"] == [opened["callout_id"]]
@@ -115,8 +115,8 @@ def test_crew_report_for_themselves_and_offers_show_struck_through(mem):
     )
     [struck] = cover["withdrawn"]
     assert (struck["crew_id"], struck["withdrawn"]) == (FIRST, True)
-    assert struck["reason"] == "fever (reported by anjali)"
-    profile = box.call("crew_profile", {"crew_id": FIRST}, Context(mem, anjali))
+    assert struck["reason"] == "fever (reported by c1157.reddy)"
+    profile = box.call("crew_profile", {"crew_id": FIRST}, Context(mem, reddy))
     assert profile["unavailable"][0]["reason"] == "fever"
 
     cleared = box.call(
@@ -138,7 +138,7 @@ def test_a_controller_must_say_who_and_reports_their_own_trips(mem):
     assert "crew_id" in box.call("report_unavailable", args, ctx)["error"]
     done = box.call("report_unavailable", {**args, "crew_id": SICK}, ctx)
     assert done["own_trips_now_short"] == ["T-1009", "T-1010", "T-1018"]
-    someone_else = Context(mem, Caller("anjali", Role.CREW, FIRST))
+    someone_else = Context(mem, Caller("c1157.reddy", Role.CREW, FIRST))
     refused = box.call("clear_unavailable", {"report_id": done["report_id"]}, someone_else)
     assert "only withdraw their own" in refused["error"]
     own = Context(mem, Caller("pooja", Role.CREW, SICK))

@@ -25,7 +25,7 @@ def test_documents_round_trip_in_both_stores(store):
 
 def test_a_callout_carries_on_from_another_server(store):
     first = CalloutDesk(store, StoreOutbox(store), clock=lambda: NOW, docs=store)
-    callout = first.open(TRIP, Rank.CAPTAIN, SICK, by="m.iyer")
+    callout = first.open(TRIP, Rank.CAPTAIN, SICK, by="ananya.iyer")
     asked = callout.current.crew_id
 
     second = CalloutDesk(store, StoreOutbox(store), clock=lambda: NOW, docs=store)
@@ -34,7 +34,7 @@ def test_a_callout_carries_on_from_another_server(store):
 
     again = first.get(callout.callout_id)  # the first server reads the change
     assert again.offers[0].answer == "declined" and again.current.crew_id != asked
-    assert first.open(TRIP, Rank.CAPTAIN, SICK, by="m.iyer").callout_id == callout.callout_id
+    assert first.open(TRIP, Rank.CAPTAIN, SICK, by="ananya.iyer").callout_id == callout.callout_id
     assert again.status is Status.OFFERED
 
 
@@ -47,7 +47,7 @@ def test_notices_are_kept_in_order_for_every_server(store):
 
 
 def test_a_follow_up_finds_its_conversation_on_another_server(store, seed):
-    caller = Caller("m.iyer", Role.CONTROLLER)
+    caller = Caller("ananya.iyer", Role.CONTROLLER)
     planner = Script("C-1157 is legal for T-1018.", "Yes, also for T-1010.")
     advisor = Advisor(store, planner, seed.rules, router=FixedRouter(Intent.LEGALITY))
     convo, _ = Conversations(docs=store).ask(advisor, "Is C-1157 legal for T-1018?", caller)
@@ -56,7 +56,7 @@ def test_a_follow_up_finds_its_conversation_on_another_server(store, seed):
     again, _ = elsewhere.ask(advisor, "And for T-1010?", caller, convo.id)
     assert again.id == convo.id
     assert planner.requests[-1]["messages"][2]["content"] == "C-1157 is legal for T-1018."
-    assert elsewhere.get(convo.id, Caller("s.reddy", Role.CONTROLLER)).id != convo.id
+    assert elsewhere.get(convo.id, Caller("rohit.malhotra", Role.CONTROLLER)).id != convo.id
 
 
 def test_desk_notices_are_also_emailed_and_crew_ones_are_not(store):

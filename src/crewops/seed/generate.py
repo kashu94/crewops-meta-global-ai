@@ -53,8 +53,165 @@ START = date(2026, 10, 30)
 DAYS = 14
 AS_OF = datetime(2026, 10, 29, 18, 0, tzinfo=UTC)
 HISTORY_DAYS = 28
+
+# Crew names, an initial and a surname, by rank; a few are fixed so the demo reads the same.
+CREW_NAMES: dict[str, tuple[str, ...]] = {
+    "Captain": (
+        "A. Verma",
+        "K. Sharma",
+        "N. Sen",
+        "G. Gupta",
+        "S. Rao",
+        "R. Kulkarni",
+        "N. Reddy",
+        "H. Naidu",
+        "P. Sen",
+        "S. Kapoor",
+        "S. Kulkarni",
+        "R. Malhotra",
+        "V. Chandra",
+        "L. Verma",
+        "V. Menon",
+        "M. Pillai",
+        "R. Kapoor",
+        "D. Chandra",
+        "N. Chandra",
+        "S. Malhotra",
+        "D. Verma",
+        "P. Reddy",
+        "A. Iyer",
+        "N. Nair",
+        "A. Sharma",
+    ),
+    "First Officer": (
+        "K. Chandra",
+        "H. Pillai",
+        "L. Bose",
+        "S. Menon",
+        "P. Rao",
+        "D. Iyer",
+        "I. Reddy",
+        "N. Joshi",
+        "V. Sharma",
+        "V. Reddy",
+        "I. Kulkarni",
+        "S. Iyer",
+        "R. Naidu",
+        "L. Gupta",
+        "K. Rao",
+        "P. Sharma",
+        "N. Verma",
+        "G. Krishnan",
+        "N. Das",
+        "N. Gupta",
+        "A. Naidu",
+        "R. Sharma",
+        "S. Reddy",
+        "G. Bose",
+        "K. Nair",
+        "R. Menon",
+        "P. Kapoor",
+        "A. Kulkarni",
+    ),
+    "Purser": (
+        "D. Rao",
+        "R. Verma",
+        "A. Gupta",
+        "A. Kapoor",
+        "H. Malhotra",
+        "L. Naidu",
+        "R. Joshi",
+        "P. Chandra",
+        "A. Pillai",
+        "R. Nair",
+        "A. Sen",
+        "L. Sharma",
+        "V. Shetty",
+        "M. Iyer",
+        "M. Naidu",
+        "S. Shetty",
+        "R. Krishnan",
+        "R. Shetty",
+        "P. Joshi",
+        "K. Krishnan",
+        "P. Verma",
+        "S. Chandra",
+        "S. Naidu",
+        "S. Sen",
+        "I. Shetty",
+    ),
+    "Cabin Crew": (
+        "N. Menon",
+        "P. Pillai",
+        "D. Menon",
+        "A. Bose",
+        "L. Kulkarni",
+        "R. Das",
+        "R. Pillai",
+        "A. Malhotra",
+        "M. Menon",
+        "D. Sen",
+        "N. Kulkarni",
+        "K. Joshi",
+        "K. Malhotra",
+        "V. Kulkarni",
+        "M. Reddy",
+        "A. Krishnan",
+        "H. Reddy",
+        "N. Krishnan",
+        "R. Sen",
+        "H. Joshi",
+        "T. Sharma",
+        "V. Gupta",
+        "R. Gupta",
+        "K. Shetty",
+        "V. Malhotra",
+        "A. Reddy",
+        "S. Pillai",
+        "P. Naidu",
+        "D. Malhotra",
+        "S. Sharma",
+        "N. Shetty",
+        "K. Iyer",
+        "K. Bose",
+        "I. Pillai",
+        "A. Das",
+        "P. Menon",
+        "V. Verma",
+        "I. Krishnan",
+        "V. Rao",
+        "P. Iyer",
+        "D. Bose",
+        "P. Malhotra",
+        "K. Naidu",
+        "L. Joshi",
+        "S. Verma",
+        "M. Das",
+        "R. Rao",
+        "P. Shetty",
+        "T. Malhotra",
+        "V. Pillai",
+        "S. Das",
+        "S. Bose",
+        "P. Kulkarni",
+        "R. Bose",
+        "P. Gupta",
+        "K. Kapoor",
+        "V. Nair",
+        "S. Joshi",
+        "V. Naidu",
+    ),
+}
+NAMED: dict[str, str] = {
+    "C-1111": "A. Nair",
+    "C-1157": "D. Reddy",
+    "C-1167": "R. Iyer",
+    "C-1191": "S. Nair",
+    "C-1341": "H. Chandra",
+    "C-1460": "S. Krishnan",
+}
 HUB = "HYD"
-DATA_VERSION = 4
+DATA_VERSION = 5
 """Raised whenever the generated data changes shape, so a deployed store reloads it."""
 
 HUB_GATES = (("21", "22", "23", "24", "25"), ("R1", "R2"), ("E1",))
@@ -475,6 +632,14 @@ class Generator:
         crew_id, kind, days = max(lapses, key=lambda x: x[2])
         self._set_expiry(crew_id, kind, START + timedelta(days=days))
 
+    def name_crew(self) -> None:
+        """Name everyone from ``CREW_NAMES`` by rank, in crew id order. The names drawn while
+        making them are dropped, so the rest of the operation comes out the same."""
+        left = {rank: list(names) for rank, names in CREW_NAMES.items()}
+        for i, crew in enumerate(self.crew):
+            name = NAMED.get(crew.crew_id) or left[str(crew.rank)].pop(0)
+            self.crew[i] = crew.model_copy(update={"name": name})
+
     def _fleet(self, code: str) -> tuple[Aircraft, ...]:
         return next(a.fleet for a in AIRLINES if a.code == code)
 
@@ -655,6 +820,7 @@ class Generator:
         self.schedule()
         self.gates()
         self.people()
+        self.name_crew()
         self.history()
         self.roster()
         self.standby_duty()
@@ -681,7 +847,7 @@ ON_DUTY = {
         "Bhavana Reddy",
     ),
     "station_ops": (
-        "Farhan Qureshi",
+        "Faizan Qadri",
         "Meera Joshi",
         "Vikram Desai",
         "Shreya Hegde",
@@ -696,7 +862,7 @@ ON_DUTY = {
 NETWORK_DESKS = (
     ("flight_info", "Nisha Kapoor", "+91 40 6612 3100"),
     ("ops_monitoring", "Venkat Subramanian", "+91 40 6612 3200"),
-    ("maintenance_control", "Imran Sheikh", "+91 40 6612 3300"),
+    ("maintenance_control", "Imtiaz Ahmed", "+91 40 6612 3300"),
     ("crew_records", "Padma Iyengar", "+91 40 6612 3400"),
     ("customer_care", "Rahul Mehta", "+91 40 6612 3500"),
 )

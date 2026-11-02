@@ -334,15 +334,25 @@ class SearchCrew(BaseModel):
     limit: int = Field(10, ge=1, le=25)
 
 
+def name_matches(name: str, query: str) -> bool:
+    """Whether ``query`` names this person. Crew are known by an initial and a surname
+    ("A. Nair"), so a single letter is an initial and must match the name's first letter."""
+    words = [w.strip(".") for w in query.lower().replace(".", ". ").split()]
+    words = [w for w in words if w]
+    full = name.lower()
+    if not words:
+        return False
+    return all(full.startswith(w) if len(w) == 1 else w in full for w in words)
+
+
 def search_crew(ctx: Context, args: SearchCrew) -> dict[str, Any]:
     op = ctx.operation()
-    words = args.query.lower().split()
     found = [
         c
         for c in op.crew.values()
         if (args.airline is None or c.airline == args.airline.upper())
         and (args.rank is None or c.rank is args.rank)
-        and (c.crew_id.lower() == args.query.lower() or all(w in c.name.lower() for w in words))
+        and (c.crew_id.lower() == args.query.lower() or name_matches(c.name, args.query))
     ]
     found.sort(key=lambda c: c.crew_id)
     return {

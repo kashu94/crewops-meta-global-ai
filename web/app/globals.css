@@ -158,26 +158,6 @@ details > summary::-webkit-details-marker {
     opacity: 0;
   }
 }
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-@keyframes bokeh {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-    opacity: 0.6;
-  }
-  50% {
-    transform: translate3d(-28px, 18px, 0);
-    opacity: 1;
-  }
-}
 .runway-drift {
   animation: runway-drift 40s ease-in-out infinite;
 }
@@ -188,19 +168,9 @@ details > summary::-webkit-details-marker {
   opacity: 0;
   animation: strobe 1.6s linear infinite;
 }
-.city-twinkle {
-  animation: twinkle 4.2s ease-in-out infinite;
-}
-.bokeh {
-  animation-name: bokeh;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
 @media (prefers-reduced-motion: reduce) {
   .runway-drift,
-  .sky-glow,
-  .city-twinkle,
-  .bokeh {
+  .sky-glow {
     animation: none;
   }
   .strobe {

@@ -1,138 +1,104 @@
-/* Sign-in artwork: short final at night. The runway's edge lights run to a vanishing point
-   right of centre, the approach strobes race towards the threshold, the glide-path lights
-   show two white and two red, and the airfield's lights drift past out of focus. Plain SVG
-   and CSS; motion stops under reduced motion. */
+/* Sign-in artwork: a runway at night on short final, kept dim behind the words as ambient
+   texture. The lighting follows the real pattern: white edge lights turning amber over the
+   last third, red end lights across the far end, a green threshold bar, and an approach light
+   system of centreline barrettes with a crossbar. Plain SVG and CSS; motion stops under reduced
+   motion. */
 
 const W = 600;
 const H = 800;
-const HORIZON = 420;
-const GROUND = 820;
-/** The vanishing point: right of centre, so the words sit over open sky. */
-const VX = 455;
-const HALF = 270;
-const ROWS = 60;
+const HORIZON = 330;
+const GROUND = 690;
+/** Centred: the runway's symmetry is what makes it read as a runway. */
+const VX = W / 2;
+const HALF = 230;
 
-/** 1 at the near end, shrinking towards the horizon. */
-const DEPTH = Array.from({ length: ROWS }, (_, i) => 1 / (1 + i * 0.32));
-const yAt = (d: number) => HORIZON + (GROUND - HORIZON) * d;
-/** Lights fade into the haze with distance instead of piling up at the vanishing point. */
-const glow = (d: number) => Math.max(0, Math.min(1, (d - 0.06) / 0.24));
+/** Perspective scale of a point ``z`` units down the runway from the near end (1 = nearest). */
+const scale = (z: number) => 1 / (1 + z * 0.42);
+const yAt = (s: number) => HORIZON + (GROUND - HORIZON) * s;
+/** Lights fade into the night haze with distance. */
+const haze = (s: number) => Math.max(0, Math.min(1, (s - 0.05) / 0.3));
 
-/** The approach light bars before the threshold, nearest first. */
-const STROBES = Array.from({ length: 9 }, (_, i) => 1.9 - i * 0.12);
+const RUNWAY = 30;
+/** Edge lights in pairs down the runway, from the threshold (z = 0) to the far end. */
+const EDGE = Array.from({ length: RUNWAY }, (_, z) => z);
+/** The far third of an instrument runway's edge lights shows amber. */
+const amber = (z: number) => z >= (RUNWAY * 2) / 3;
 
-/** Far-off city along the horizon: x, radius. Fixed, so server and browser draw the same. */
-const CITY: [number, number][] = [
-  [372, 1.1], [388, 1.8], [401, 1], [417, 2.2], [430, 1.2], [489, 1.4], [503, 2.4], [518, 1],
-  [536, 1.9], [551, 1.2], [570, 2.1], [588, 1.3], [326, 1.4], [341, 1],
-];
-
-/** Out-of-focus lights: left %, top %, size px, colour, seconds, delay. */
-const BOKEH: [number, number, number, string, number, number][] = [
-  [6, 14, 96, "amber", 27, 0],
-  [19, 58, 58, "blue", 32, 5],
-  [31, 26, 124, "white", 35, 10],
-  [44, 76, 72, "amber", 29, 2],
-  [57, 12, 66, "blue", 37, 7],
-  [64, 44, 112, "amber", 31, 13],
-  [77, 22, 50, "white", 25, 3],
-  [88, 62, 98, "blue", 34, 9],
-  [12, 86, 62, "white", 30, 15],
-  [93, 8, 76, "amber", 36, 4],
-];
-
-const TINT: Record<string, string> = {
-  amber: "rgba(246, 195, 91, 0.30)",
-  blue: "rgba(127, 211, 255, 0.26)",
-  white: "rgba(255, 255, 255, 0.20)",
-};
+/** The approach light system before the threshold: barrettes on the extended centreline,
+ * nearest first (negative z), with a wide crossbar 300 m out. */
+const BARRETTES = [-0.35, -0.7, -1.05, -1.4, -1.75, -2.1];
+const CROSSBAR = -1.05;
 
 export function RunwayAtNight() {
+  const end = scale(RUNWAY - 1);
+  const threshold = scale(0);
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="runway-drift absolute -inset-6 blur-[1.2px]">
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#030915_0%,#091a35_42%,#123056_58%,#1b3a5f_66%,#0a1730_100%)]" />
-        <div className="absolute inset-x-0 top-[43%] h-44 bg-[radial-gradient(ellipse_at_center,rgba(246,195,91,0.20),transparent_70%)]" />
-        <div className="sky-glow absolute -left-1/4 -top-1/4 h-[70%] w-[90%] rounded-full bg-[#1d5c96]/30 blur-[95px]" />
-        <div className="sky-glow absolute -right-1/4 top-[4%] h-[58%] w-[80%] rounded-full bg-[#4b4fb8]/20 blur-[110px] [animation-delay:-11s]" />
-        <div className="sky-glow absolute left-[12%] top-[22%] h-[44%] w-[70%] rounded-full bg-[#2a9d8f]/15 blur-[115px] [animation-delay:-19s]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#030915_0%,#081833_48%,#0d2546_60%,#0a1a33_72%,#050d1d_100%)]" />
+      <div className="sky-glow absolute -left-1/4 -top-1/4 h-[65%] w-[85%] rounded-full bg-[#1d5c96]/20 blur-[110px]" />
+      <div className="sky-glow absolute -right-1/3 top-[8%] h-[55%] w-[75%] rounded-full bg-[#3d4fb0]/15 blur-[120px] [animation-delay:-14s]" />
 
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" className="absolute inset-0 h-full w-full">
-          <defs>
-            <filter id="lamp" x="-200%" y="-200%" width="500%" height="500%">
-              <feGaussianBlur stdDeviation="3" result="soft" />
-              <feMerge>
-                <feMergeNode in="soft" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <linearGradient id="tarmac" gradientUnits="userSpaceOnUse" x1="0" y1={HORIZON} x2="0" y2={GROUND}>
-              <stop offset="0.25" stopColor="#020611" stopOpacity="0" />
-              <stop offset="1" stopColor="#020611" stopOpacity="0.85" />
-            </linearGradient>
-            <linearGradient id="skyline" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0.4" stopColor="#9cc9ff" stopOpacity="0" />
-              <stop offset="1" stopColor="#9cc9ff" stopOpacity="0.3" />
-            </linearGradient>
-          </defs>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" className="runway-drift absolute inset-0 h-full w-full opacity-75">
+        <defs>
+          <filter id="lamp" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="2.2" result="soft" />
+            <feMerge>
+              <feMergeNode in="soft" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
 
-          <polygon points={`${VX - 2},${HORIZON} ${VX + 2},${HORIZON} ${VX + HALF + 50},${GROUND} ${VX - HALF - 50},${GROUND}`} fill="url(#tarmac)" />
-          <line x1="0" x2={W} y1={HORIZON} y2={HORIZON} stroke="url(#skyline)" strokeWidth="1" />
-          {CITY.map(([x, r]) => (
-            <circle key={x} cx={x} cy={HORIZON - 3} r={r} fill="#fde7a8" filter="url(#lamp)" className="city-twinkle" style={{ animationDelay: `${(x % 7) * -0.6}s` }} />
-          ))}
-
-          <g filter="url(#lamp)">
-            {DEPTH.map((d, i) => (
-              <g key={i}>
-                {/* edge lights, warm white */}
-                <circle cx={VX - HALF * d} cy={yAt(d)} r={0.6 + 4.6 * d} fill="#fff1c9" opacity={glow(d)} />
-                <circle cx={VX + HALF * d} cy={yAt(d)} r={0.6 + 4.6 * d} fill="#fff1c9" opacity={glow(d)} />
-                {/* centreline, cool white, every other row */}
-                {i % 2 === 0 && <circle cx={VX} cy={yAt(d)} r={0.3 + 2.6 * d} fill="#dff3ff" opacity={glow(d) * 0.8} />}
+        <g filter="url(#lamp)">
+          {/* edge lights: white, amber over the far third */}
+          {EDGE.map((z) => {
+            const s = scale(z);
+            const fill = amber(z) ? "#ffc35c" : "#f4f8ff";
+            const r = 0.5 + 4 * s;
+            return (
+              <g key={z} opacity={haze(s)}>
+                <circle cx={VX - HALF * s} cy={yAt(s)} r={r} fill={fill} />
+                <circle cx={VX + HALF * s} cy={yAt(s)} r={r} fill={fill} />
               </g>
-            ))}
-            {/* the threshold: a green bar across the near end */}
-            {Array.from({ length: 11 }, (_, i) => {
-              const d = DEPTH[3];
-              const x = VX - HALF * d + (2 * HALF * d * i) / 10;
-              return <circle key={`t${i}`} cx={x} cy={yAt(d)} r={1 + 2.4 * d} fill="#7cf0a6" opacity={0.85} />;
-            })}
-            {/* glide-path indicator left of the runway: on the slope, two white and two red */}
-            {["#ffffff", "#ffffff", "#ff5a52", "#ff5a52"].map((c, i) => {
-              const d = DEPTH[6];
-              return <circle key={`p${i}`} cx={VX - HALF * d - 28 - i * 9 * d} cy={yAt(d) - 2} r={2.2} fill={c} opacity={0.95} />;
-            })}
-          </g>
+            );
+          })}
+          {/* centreline, every other station */}
+          {EDGE.filter((z) => z % 2 === 1).map((z) => {
+            const s = scale(z);
+            return <circle key={`c${z}`} cx={VX} cy={yAt(s)} r={0.3 + 2.2 * s} fill="#e6f4ff" opacity={haze(s) * 0.7} />;
+          })}
+          {/* runway end: red, across the runway's width only */}
+          {Array.from({ length: 7 }, (_, i) => (
+            <circle key={`e${i}`} cx={VX - HALF * end + (2 * HALF * end * i) / 6} cy={yAt(end)} r={0.9} fill="#ff4d4d" opacity={haze(end)} />
+          ))}
+          {/* threshold: green, across the near end */}
+          {Array.from({ length: 13 }, (_, i) => (
+            <circle key={`t${i}`} cx={VX - HALF * threshold + (2 * HALF * threshold * i) / 12} cy={yAt(threshold)} r={1.2 + 2.2 * threshold} fill="#5cf08f" />
+          ))}
+        </g>
 
-          {/* the approach strobes, firing in sequence towards the runway */}
-          <g filter="url(#lamp)">
-            {STROBES.map((d, i) => (
-              <circle key={`s${i}`} cx={VX} cy={yAt(d)} r={2 + 3.2 * d} fill="#ffffff" className="strobe" style={{ animationDelay: `${i * 0.07}s` }} />
-            ))}
-          </g>
-        </svg>
+        {/* approach lights: centreline barrettes and the crossbar, with a sequenced flash */}
+        <g filter="url(#lamp)">
+          {BARRETTES.map((z, i) => {
+            const s = scale(z);
+            const y = yAt(s);
+            const wide = z === CROSSBAR ? 9 : 2;
+            return (
+              <g key={`b${i}`}>
+                {Array.from({ length: wide * 2 + 1 }, (_, k) => (
+                  <circle key={k} cx={VX + (k - wide) * 7 * s} cy={y} r={0.6 + 1.4 * s} fill="#f4f8ff" opacity={0.85} />
+                ))}
+                <circle cx={VX} cy={y} r={2 + 2.4 * s} fill="#ffffff" className="strobe" style={{ animationDelay: `${(BARRETTES.length - i) * 0.08}s` }} />
+              </g>
+            );
+          })}
+        </g>
+      </svg>
 
-        {BOKEH.map(([left, top, size, tint, seconds, delay]) => (
-          <span
-            key={`${left}-${top}`}
-            className="bokeh absolute rounded-full"
-            style={{
-              left: `${left}%`,
-              top: `${top}%`,
-              width: size,
-              height: size,
-              background: `radial-gradient(circle, ${TINT[tint]} 0%, transparent 68%)`,
-              animationDuration: `${seconds}s`,
-              animationDelay: `-${delay}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* keep the words readable: darker where they sit, and a soft vignette */}
-      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(3,8,20,0.82)_0%,rgba(3,8,20,0.5)_45%,rgba(3,8,20,0.08)_100%)]" />
-      <div className="absolute inset-0 shadow-[inset_0_0_160px_rgba(0,0,0,0.55)]" />
+      {/* keep the words readable: the left and the middle darkest, a vignette all round */}
+      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(3,8,20,0.82)_0%,rgba(3,8,20,0.5)_50%,rgba(3,8,20,0.2)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_100%,transparent_0%,rgba(3,8,20,0.45)_70%)]" />
+      <div className="absolute inset-0 shadow-[inset_0_0_160px_rgba(0,0,0,0.6)]" />
     </div>
   );
 }

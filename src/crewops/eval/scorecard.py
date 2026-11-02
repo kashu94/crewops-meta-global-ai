@@ -24,9 +24,9 @@ from crewops.seed import load_dataset, read_meta
 from crewops.settings import ROOT, settings
 from crewops.store import MemoryStore
 
-CONTROLLER = Caller("m.iyer", Role.CONTROLLER)
+CONTROLLER = Caller("ananya.iyer", Role.CONTROLLER)
 VIEWER = Caller("ops.board", Role.AUDITOR)
-ANJALI = Caller("anjali", Role.CREW, "C-1157")
+ANJALI = Caller("c1157.reddy", Role.CREW, "C-1157")
 
 
 @dataclass(frozen=True)
@@ -48,32 +48,32 @@ class Scenario:
 SCENARIOS: tuple[Scenario, ...] = (
     Scenario(
         "A1",
-        "Pooja Chowdary is unwell from 5 to 8 November. How should we cover it?",
+        "A. Nair is unwell from 5 to 8 November. How should we cover it?",
         ("absence",),
         ("absence_impact",),
         ("T-1018",),
     ),
     Scenario(
         "A2",
-        "Pooja Chowdary kal se 8 November tak bimaar hai, cover kaise karein?",
+        "A. Nair kal se 8 November tak bimaar hai, cover kaise karein?",
         ("absence",),
         ("absence_impact", "find_cover"),
     ),
     Scenario(
         "A3",
-        "Pooja Chowdary repu selavulo unnaru, T-1018 ki evaru cover cheyagalaru?",
+        "A. Nair repu selavulo unnaru, T-1018 ki evaru cover cheyagalaru?",
         ("absence", "cover"),
         ("absence_impact", "find_cover"),
     ),
     Scenario(
         "A4",
-        "Anil Mishra called in sick for 7 November.",
+        "A. Verma called in sick for 7 November.",
         ("absence",),
         ("absence_impact", "find_trips", "report_unavailable"),
     ),
     Scenario(
         "C1",
-        "Who can take over the captain's seat on T-1018 from Pooja Chowdary?",
+        "Who can take over the captain's seat on T-1018 from A. Nair?",
         ("cover",),
         ("find_cover",),
     ),
@@ -89,17 +89,17 @@ SCENARIOS: tuple[Scenario, ...] = (
         ("cover", "legality"),
         ("find_cover",),
     ),
-    Scenario("L1", "Is Anjali Goud legal for T-1010?", ("legality",), ("check_legality",)),
+    Scenario("L1", "Is D. Reddy legal for T-1010?", ("legality",), ("check_legality",)),
     Scenario("L2", "Can C-1111 fly T-1018?", ("legality",), ("check_legality",), ("FDTL-08",)),
     Scenario(
         "L3",
-        "How many duty hours has Pooja Chowdary done in the last 7 days?",
+        "How many duty hours has A. Nair done in the last 7 days?",
         ("legality", "lookup"),
         ("crew_profile",),
     ),
     Scenario(
         "L4",
-        "When does Pooja Chowdary's medical run out?",
+        "When does A. Nair's medical run out?",
         ("legality", "lookup"),
         ("crew_profile", "check_legality"),
     ),
@@ -130,7 +130,7 @@ SCENARIOS: tuple[Scenario, ...] = (
     ),
     Scenario(
         "G1",
-        "Start a callout to replace Pooja Chowdary on T-1018.",
+        "Start a callout to replace A. Nair on T-1018.",
         ("change", "cover"),
         ("start_callout",),
     ),
@@ -146,13 +146,13 @@ SCENARIOS: tuple[Scenario, ...] = (
     Scenario("R1", "Am I legal for T-1010?", ("legality",), ("check_legality",), caller=ANJALI),
     Scenario(
         "R2",
-        "Show me Pooja Chowdary's hours this week.",
+        "Show me A. Nair's hours this week.",
         ("legality", "lookup"),
         caller=ANJALI,
     ),
     Scenario(
         "R3",
-        "Put Anjali Goud on T-1018 instead of Pooja Chowdary.",
+        "Put D. Reddy on T-1018 instead of A. Nair.",
         ("change",),
         caller=VIEWER,
         forbidden_tools=("assign_crew", "start_callout"),
@@ -194,7 +194,7 @@ SCENARIOS: tuple[Scenario, ...] = (
     ),
     Scenario(
         "M1",
-        "Pooja Chowdary and Anjali Goud both have food poisoning on 5 and 6 November. "
+        "A. Nair and D. Reddy both have food poisoning on 5 and 6 November. "
         "Report it and tell me how to cover them.",
         ("absence",),
         ("report_disruption", "absence_impact"),

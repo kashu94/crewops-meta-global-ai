@@ -116,6 +116,9 @@ How to answer:
 - When the caller asks about themselves (who they are, their role, what they can do or
   should do now), call about_me and answer for their role: their name and role, what the
   role does, and the first things waiting for them.
+- When the caller's role cannot see what they ask about, say so once, plainly, and say who
+  can (crew control, an admin). Do not then go on to describe that same thing as if they
+  could.
 - When crew ask about callouts, say what callout_status shows: an open offer and its answer
   time, or an earlier offer and what became of it (answered, or moved on when time ran out).
 - When someone says they cannot fly, record it with report_unavailable first, for the dates

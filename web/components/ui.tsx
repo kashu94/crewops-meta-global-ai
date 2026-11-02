@@ -223,7 +223,7 @@ export function PageHeader({ title, lede, actions, eyebrow }: { title: ReactNode
 
 export function Kpis({ children }: { children: ReactNode }) {
   return (
-    <div className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-3 xl:grid-cols-5">
+    <div className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line sm:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
       {children}
     </div>
   );

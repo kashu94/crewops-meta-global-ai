@@ -357,6 +357,17 @@ class CalloutDesk:
             offer.note = note.strip()
             if not accept:
                 self._answer(offer, "declined", now)
+                self.outbox.send(
+                    Notice(
+                        to=crew_id,
+                        subject=f"Declined: {callout.rank} on {callout.trip_id}",
+                        body=f"You declined to fly {callout.trip_id} as {callout.rank}"
+                        + (f" (\u201c{offer.note}\u201d)" if offer.note else "")
+                        + ". Thank you for answering; the seat has gone to the next crew member.",
+                        at=now,
+                        ref=callout.callout_id,
+                    )
+                )
                 if offer.note:
                     self.outbox.send(
                         Notice(
@@ -456,6 +467,16 @@ class CalloutDesk:
         callout.status = Status.ACCEPTED
         callout.plan_id = plan.plan_id
         callout.to_arrange = plan.to_arrange
+        self.outbox.send(
+            Notice(
+                to=offer.crew_id,
+                subject=f"Accepted: {callout.rank} on {callout.trip_id}",
+                body=f"You accepted {callout.trip_id} as {callout.rank}. It is not on your roster "
+                "yet: an approver confirms it, and you will get a message when it is.",
+                at=now,
+                ref=callout.callout_id,
+            )
+        )
 
     def _plan_decided(self, plan: Plan) -> None:
         """An approver decided a plan a callout made: fill the seat, or ask the next."""
@@ -470,6 +491,17 @@ class CalloutDesk:
         else:
             offer = callout.offers[-1]
             self._answer(offer, "not approved", self.clock())
+            self.outbox.send(
+                Notice(
+                    to=offer.crew_id,
+                    subject=f"Not approved: {callout.rank} on {callout.trip_id}",
+                    body=f"Your acceptance of {callout.trip_id} was not approved"
+                    + (f": {plan.decision_note}" if plan.decision_note else "")
+                    + ". Your roster is unchanged.",
+                    at=self.clock(),
+                    ref=callout.callout_id,
+                )
+            )
             callout.reason = f"{plan.plan_id} {plan.status}: {plan.decision_note}".rstrip(": ")
             callout.plan_id = None
             callout.to_arrange = ()

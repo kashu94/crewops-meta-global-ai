@@ -13,7 +13,7 @@ from crewops.store import MemoryStore
 LAPSED = "C-1111"  # medical lapses 2026-11-05; planted in the demo data
 TRIP = "T-1018"
 
-CONTROLLER = Caller("m.iyer", Role.CONTROLLER)
+CONTROLLER = Caller("ananya.iyer", Role.CONTROLLER)
 VIEWER = Caller("ops.board", Role.AUDITOR)
 
 
@@ -50,7 +50,8 @@ def test_each_role_sees_only_its_tools(box):
         "upload_roster",
     }
     approvals = {"confirm_resolution", "return_resolution", "reassign_disruption"}
-    assert names[Role.CONTROLLER] == {t.name for t in ALL_TOOLS} - admin_only - approvals
+    filing = {"report_disruption"}  # the station files; crew control works them
+    assert names[Role.CONTROLLER] == {t.name for t in ALL_TOOLS} - admin_only - approvals - filing
     controller_writes = {
         "assign_crew",
         "start_callout",
@@ -64,7 +65,6 @@ def test_each_role_sees_only_its_tools(box):
     assert names[Role.AUDITOR] == names[Role.APPROVER] - approvals - {
         "decide_callout",
         "review_plan",
-        "report_disruption",
     }
     assert names[Role.ADMIN] == names[Role.AUDITOR] | admin_only | {
         "report_disruption",
@@ -85,6 +85,8 @@ def test_each_role_sees_only_its_tools(box):
         "contacts",
         "my_queue",
         "about_me",
+        "operations",
+        "catalog",
     }
     assert names[Role.CREW] == {
         "find_trips",
@@ -135,11 +137,11 @@ def test_bad_calls_come_back_as_errors_the_model_can_read(box, mem):
 
 
 def test_search_finds_crew_by_name_or_id(box, mem):
-    by_name = call(box, mem, "search_crew", query="pooja chowdary")["matches"]
+    by_name = call(box, mem, "search_crew", query="a. nair")["matches"]
     assert [m["crew_id"] for m in by_name] == [LAPSED]
     by_id = call(box, mem, "search_crew", query=LAPSED.lower())["matches"]
-    assert [m["name"] for m in by_id] == ["Pooja Chowdary"]
-    captains = call(box, mem, "search_crew", query="an", rank="Captain", airline="sy", limit=25)
+    assert [m["name"] for m in by_id] == ["A. Nair"]
+    captains = call(box, mem, "search_crew", query="re", rank="Captain", airline="sy", limit=25)
     assert {m["rank"] for m in captains["matches"]} == {"Captain"}
     assert {m["airline"] for m in captains["matches"]} == {"SY"}
     assert "at least 2" in call(box, mem, "search_crew", query="a")["error"]
@@ -208,7 +210,7 @@ def test_assigning_cover_changes_the_roster_once(box, mem):
     crew = {c["crew_id"] for c in call(box, mem, "trip_details", trip_id=TRIP)["crew"]}
     assert pick in crew and LAPSED not in crew
     [change] = call(box, mem, "roster_changes", trip_id=TRIP)["changes"]
-    assert (change["by"], change["added"], change["removed"]) == ("m.iyer", [pick], [LAPSED])
+    assert (change["by"], change["added"], change["removed"]) == ("ananya.iyer", [pick], [LAPSED])
 
     again = call(
         box, mem, "assign_crew", **{**args, "replace_crew_id": pick, "with_crew_id": LAPSED}
@@ -295,11 +297,11 @@ def test_a_callout_runs_through_the_tools_and_never_cancels_by_itself(box, mem):
     assert box.call("decide_callout", decide, ctx())["status"] == "awaiting_approval"
     same = box.call("decide_callout", {**decide, "action": "approve"}, ctx())
     assert "only an approver" in same["error"]
-    approver = Caller("a.nair", Role.APPROVER)
+    approver = Caller("meera.bhatt", Role.APPROVER)
     refused = box.call("decide_callout", decide, ctx(approver))
     assert "a controller proposes" in refused["error"]
     done = box.call("decide_callout", {**decide, "action": "approve"}, ctx(approver))
-    assert done["status"] == "closed" and done["proposal"]["approved_by"] == "a.nair"
+    assert done["status"] == "closed" and done["proposal"]["approved_by"] == "meera.bhatt"
 
 
 def test_an_accepted_callout_fills_the_seat(box, mem):

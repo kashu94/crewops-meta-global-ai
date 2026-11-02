@@ -35,18 +35,18 @@ def desk(mem, outbox, clock):
 
 
 def test_a_plan_nobody_approves_reaches_the_supervisor_once(mem, desk, outbox, clock):
-    plan = desk.plans.submit(TRIP, SICK, LEGAL_CAPTAINS[0], "m.iyer")
+    plan = desk.plans.submit(TRIP, SICK, LEGAL_CAPTAINS[0], "ananya.iyer")
     assert escalate(mem, desk, outbox, clock()) == []  # just submitted
     clock.advance(11)
     [sent] = escalate(mem, desk, outbox, clock())
     assert sent.to == SUPERVISOR and sent.ref == plan.plan_id
-    assert "submitted by m.iyer 11 minutes ago" in sent.body
+    assert "submitted by ananya.iyer 11 minutes ago" in sent.body
     assert escalate(mem, desk, outbox, clock()) == []  # once only
     assert outbox.sent(SUPERVISOR) == [sent]
 
 
 def test_a_callout_with_nobody_left_escalates(mem, desk, outbox, clock):
-    callout = desk.open(TRIP, Rank.CAPTAIN, SICK, by="m.iyer")
+    callout = desk.open(TRIP, Rank.CAPTAIN, SICK, by="ananya.iyer")
     while desk.get(callout.callout_id).current is not None:
         current = desk.get(callout.callout_id).current
         desk.respond(callout.callout_id, current.crew_id, False)

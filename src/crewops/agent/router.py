@@ -120,9 +120,9 @@ EFFORT_FOR: dict[Intent, str] = {
 }
 
 EXAMPLES = """\
-"Pooja Chowdary is unwell and off until Saturday" -> absence
-"FO Rao called in sick for tomorrow's first wave" -> absence
-"Meena is unwell 5 to 8 November, how should we cover her trips?" -> absence
+"A. Nair is unwell and off until Saturday" -> absence
+"FO Nair called in sick for tomorrow's first wave" -> absence
+"Krishnan is unwell 5 to 8 November, how should we cover her trips?" -> absence
 "SY221 is holding for 3 hours with a tech fault" -> delay
 "What happens to the crew if T-1018 leaves 2 hours late?" -> delay
 "Gate 23's jet bridge is broken until noon, where do the flights board?" -> delay
@@ -132,8 +132,8 @@ EXAMPLES = """\
 "Who can take over the captain's seat on T-1009?" -> cover
 "Need a standby purser for the DEL night-stop" -> cover
 "Is C-1157 legal for T-1010?" -> legality
-"How many hours has Anil Mishra flown this month?" -> legality
-"Put Anjali Goud on T-1018 instead of Pooja" -> change
+"How many hours has A. Verma flown this month?" -> legality
+"Put D. Reddy on T-1018 instead of A. Nair" -> change
 "Who changed T-1018 this morning?" -> change
 "Nobody took the callout for T-1009, propose cancelling it" -> change
 "Anything for me to approve?" -> change

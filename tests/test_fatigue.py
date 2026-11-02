@@ -113,7 +113,7 @@ def test_the_watch_finds_the_lapsed_medical_before_anyone_reports_it():
     assert [(i.crew_id, i.trip_id, i.rule_ids) for i in illegal] == [
         ("C-1111", "T-1018", ("FDTL-08",))
     ]
-    assert illegal[0].suggestion.startswith("Captain Anjali Goud (C-1157)")
+    assert illegal[0].suggestion.startswith("Captain D. Reddy (C-1157)")
     assert illegal[0].suggestion_cost == 20840
     assert issues[0] is illegal[0]  # the most serious first
     assert [i.issue_id for i in scan(op)] == [i.issue_id for i in issues]  # stable ids

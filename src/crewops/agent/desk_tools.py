@@ -41,6 +41,7 @@ from crewops.agent.tools import (
     late_at_gate,
     station_closure_tool,
 )
+from crewops.domain import Rank
 from crewops.engine import NotFound, Operation
 from crewops.engine.clock import IST
 from crewops.engine.cover import Way
@@ -69,7 +70,8 @@ from crewops.settings import ROOT
 
 MAX_ABSENCE_DAYS = 31
 """As long as one absence record may run; days past the published roster need no cover yet."""
-OPERATIONAL_FILERS = frozenset({Role.REPORTER, Role.CONTROLLER, Role.APPROVER})
+OPERATIONAL_FILERS = frozenset({Role.REPORTER})
+"""Disruptions are filed by the station; crew control works them and approvers decide."""
 APPROVE_ROLES = frozenset({Role.APPROVER})
 
 
@@ -112,6 +114,9 @@ class FileReport(BaseModel):
     leg_id: str | None = None
     gate: str | None = Field(None, max_length=8)
     note: str = Field("", max_length=500)
+    severity: Literal["low", "medium", "high"] | None = Field(
+        None, description="How severe the person filing judges it; the engine's view still counts"
+    )
     evidence_ids: list[str] = Field(
         default_factory=list,
         max_length=4,
@@ -412,10 +417,52 @@ def _absence_severity(op: Operation, plan, gaps) -> tuple[str, list[str]]:
     ]
 
 
+def _by_flight(op: Operation, args: FileReport, crew_ids: list[str]) -> list[list[str]]:
+    """Crew out together, grouped by the flights they leave: those who share a trip are one
+    disruption (covered jointly), those on different trips are separate ones. Someone with no
+    trip in those days goes with the first group."""
+    first, last = _span(op, args)
+    trips = {c: {g.trip_id for g in absence_gaps(op, c, first, last)} for c in crew_ids}
+    groups: list[tuple[set[str], list[str]]] = []
+    for crew_id in crew_ids:
+        mine = trips[crew_id]
+        joined = [g for g in groups if g[0] & mine]
+        merged = (set(mine), [crew_id])
+        for g in joined:
+            merged[0].update(g[0])
+            merged[1][:0] = g[1]
+            groups.remove(g)
+        groups.append(merged)
+    grounded = [g for g in groups if g[0]]
+    idle = [c for g in groups if not g[0] for c in g[1]]
+    if not grounded:
+        return [crew_ids]
+    grounded[0][1].extend(idle)
+    order = {c: i for i, c in enumerate(crew_ids)}
+    return sorted((sorted(g[1], key=order.get) for g in grounded), key=lambda g: order[g[0]])
+
+
 def report_disruption(ctx: Context, args: FileReport) -> dict[str, Any]:
     desk = _reports(ctx)
     crew_ids = _who_may_file(ctx, args)
     op = ctx.operation()
+    if args.kind is Kind.CREW_UNAVAILABLE and len(crew_ids) > 1:
+        groups = _by_flight(op, args, crew_ids)
+        if len(groups) > 1:
+            filed = [
+                report_disruption(ctx, args.model_copy(update={"crew_ids": group}))
+                for group in groups
+            ]
+            first = filed[0]
+            first["also_filed"] = [
+                {"report_id": f["report_id"], "title": f["title"], "desk": f["desk"]}
+                for f in filed[1:]
+            ]
+            first["note"] = (
+                f"Filed as {len(filed)} disruptions, one per flight: crew on different flights "
+                "are covered separately; crew on the same flight are covered together."
+            )
+            return first
     by = ctx.caller.user
     details: dict[str, Any] = {"note": args.note} if args.note else {}
     if args.evidence_ids:
@@ -514,6 +561,7 @@ def report_disruption(ctx: Context, args: FileReport) -> dict[str, Any]:
         severity = _ops_severity(ctx, args.kind, analysis)
         stations, title = _ops_where(op, args, analysis)
 
+    severity = _with_reported(severity, args.severity, by)
     report = desk.file(
         args.kind,
         title,
@@ -526,6 +574,25 @@ def report_disruption(ctx: Context, args: FileReport) -> dict[str, Any]:
         unavailability_ids=unavailability,
     )
     return _report_json(ctx, report)
+
+
+LEVELS = ("low", "medium", "high")
+
+
+def _with_reported(
+    worked_out: tuple[str, list[str]], reported: str | None, by: str
+) -> tuple[str, list[str]]:
+    """The higher of the engine's severity and the one the person filing gave: what they saw
+    on the ground can raise it, never lower what the engine found it does to the flights."""
+    level, reasons = worked_out[0], list(worked_out[1])
+    if reported is None or reported == level:
+        return level, reasons
+    if LEVELS.index(reported) > LEVELS.index(level):
+        return reported, [f"reported as {reported} by {by}", *reasons]
+    return level, [
+        *reasons,
+        f"reported as {reported} by {by}; the flights affected keep it {level}",
+    ]
 
 
 def _ops_where(op: Operation, args: FileReport, a: dict[str, Any]) -> tuple[list[str], str]:
@@ -596,13 +663,7 @@ def _report_json(ctx: Context, report: Report) -> dict[str, Any]:
             f"{over} crew pushed over a duty limit." if over else "No crew over a limit."
         )
     out["teams"] = desk.teams(report)
-    plans = []
-    if ctx.desk is not None and ctx.desk.plans is not None:
-        for plan_id in report.plan_ids:
-            try:
-                plans.append(_plan(ctx.desk.plans.get(plan_id)))
-            except NotFound:
-                continue
+    plans = [{**_plan(p), "report_id": report.report_id} for p in _report_plans(ctx, report)]
     out["plans"] = plans
     callouts = []
     if ctx.desk is not None:
@@ -644,13 +705,20 @@ def disruptions(ctx: Context, args: Disruptions) -> dict[str, Any]:
     }
 
 
+def _report_plans(ctx: Context, report: Report) -> list[Any]:
+    """The plans made for a report: submitted from it, or made when someone accepted one of
+    its callouts."""
+    if ctx.desk is None or ctx.desk.plans is None:
+        return []
+    callouts = set(report.callout_ids)
+    ids = set(report.plan_ids)
+    return [p for p in ctx.desk.plans.all() if p.plan_id in ids or p.source in callouts]
+
+
 def _listed(ctx: Context, report: Report) -> dict[str, Any]:
     out = summary(report)
     out["filed_at"] = _when(report.filed_at)
-    out["plans_waiting"] = 0
-    if ctx.desk is not None and ctx.desk.plans is not None:
-        waiting = {p.plan_id for p in ctx.desk.plans.waiting()}
-        out["plans_waiting"] = sum(p in waiting for p in report.plan_ids)
+    out["plans_waiting"] = sum(p.status is PlanStatus.SUBMITTED for p in _report_plans(ctx, report))
     return out
 
 
@@ -988,6 +1056,214 @@ def my_queue(ctx: Context, args: MyQueue) -> dict[str, Any]:
     return {"items": items[: args.limit], "count": len(items)}
 
 
+# -- the station's view of the schedule ----------------------------------------------------
+
+LOOK_BACK_DAYS = 5
+
+
+class OperationsWeek(BaseModel):
+    start: date | None = Field(None, description="First day of the week shown; default today")
+    day: date | None = Field(None, description="The day whose flights to list; default the start")
+
+
+def _ist_day(moment: datetime) -> date:
+    return moment.astimezone(IST).date()
+
+
+def _short_rank(rank: Any) -> str:
+    return {"Captain": "CPT", "First Officer": "FO", "Purser": "PUR", "Cabin Crew": "CC"}.get(
+        str(rank), str(rank)
+    )
+
+
+def operations_week(ctx: Context, args: OperationsWeek) -> dict[str, Any]:
+    """A week of flights, who flies each and who is out: what a station needs to report from.
+    Who is out shows when, never why."""
+    op = ctx.operation()
+    today = _ist_day(op.now)
+    days_held = sorted({_ist_day(leg.off_block) for leg in op.legs.values()})
+    first_day, last_day = max(days_held[0], today - timedelta(days=LOOK_BACK_DAYS)), days_held[-1]
+    start = min(max(args.start or today, first_day), last_day)
+    week = [start + timedelta(days=i) for i in range(7)]
+    chosen = args.day if args.day in week else start
+
+    trip_of = {leg_id: t for t in op.trips.values() for leg_id in t.leg_ids}
+    out_on: dict[str, set[date]] = {c: {d for d, _ in days} for c, days in op.unavailable.items()}
+    reports = [r for r in ctx.reports.all() if r.status in ACTIVE] if ctx.reports else []
+
+    def touching(leg: Any, trip: Any) -> list[dict[str, Any]]:
+        found = []
+        for r in reports:
+            d = r.details
+            hit = (
+                d.get("trip_id") == trip.trip_id
+                or d.get("leg_id") == leg.leg_id
+                or (d.get("tail") == leg.tail and r.kind is Kind.AIRCRAFT_TECHNICAL)
+                or (d.get("station") == leg.origin and r.kind is Kind.STATION_DISRUPTION)
+                or (d.get("station") == leg.origin and leg.gate in (d.get("gates") or []))
+                or any(c in {s.crew_id for s in trip.crew} for c in r.crew_ids)
+            )
+            if hit:
+                found.append({"report_id": r.report_id, "severity": r.severity, "title": r.title})
+        return found
+
+    by_day: dict[date, list[Any]] = {}
+    for leg in op.legs.values():
+        by_day.setdefault(_ist_day(leg.off_block), []).append(leg)
+
+    def person(crew_id: str, day: date) -> dict[str, Any]:
+        state = op.state(crew_id)
+        return {"crew_id": crew_id, "name": state.name, "out": day in out_on.get(crew_id, set())}
+
+    summary = []
+    for day in week:
+        legs = by_day.get(day, [])
+        pax: dict[str, int] = {}
+        for leg in legs:
+            airline = trip_of[leg.leg_id].airline if leg.leg_id in trip_of else "?"
+            pax[airline] = pax.get(airline, 0) + leg.booked
+        summary.append(
+            {
+                "day": day.isoformat(),
+                "flights": len(legs),
+                "passengers": sum(pax.values()),
+                "by_airline": pax,
+                "crew_out": sum(1 for days in out_on.values() if day in days),
+                "disruptions": sum(
+                    1
+                    for leg in legs
+                    if leg.leg_id in trip_of and touching(leg, trip_of[leg.leg_id])
+                ),
+            }
+        )
+
+    flights = []
+    for leg in sorted(by_day.get(chosen, []), key=lambda leg: leg.off_block):
+        trip = trip_of.get(leg.leg_id)
+        if trip is None:
+            continue
+        seats = {s.rank: [] for s in trip.crew}
+        for s in trip.crew:
+            seats[s.rank].append(s.crew_id)
+        cabin = [person(c, chosen) for r, ids in seats.items() if not r.is_pilot for c in ids]
+        found = touching(leg, trip)
+        flights.append(
+            {
+                "leg_id": leg.leg_id,
+                "flight_no": leg.flight_no,
+                "trip_id": trip.trip_id,
+                "airline": trip.airline,
+                "from": leg.origin,
+                "to": leg.destination,
+                "departs": _when(leg.off_block),
+                "arrives": _when(leg.on_block),
+                "tail": leg.tail,
+                "aircraft_type": str(leg.aircraft_type),
+                "gate": leg.gate,
+                "booked": leg.booked,
+                "seats": leg.seats,
+                "captain": [person(c, chosen) for c in seats.get(Rank.CAPTAIN, [])],
+                "first_officer": [person(c, chosen) for c in seats.get(Rank.FIRST_OFFICER, [])],
+                "cabin": len(cabin),
+                "cabin_out": [c for c in cabin if c["out"]],
+                "disruptions": found,
+                "departed": leg.off_block <= op.now,
+            }
+        )
+
+    crew_out = []
+    for crew_id, days in sorted(out_on.items()):
+        shown = sorted(d for d in days if d in week)
+        if not shown:
+            continue
+        state = op.state(crew_id)
+        crew_out.append(
+            {
+                "crew_id": crew_id,
+                "name": state.name,
+                "rank": _short_rank(state.rank),
+                "airline": state.airline,
+                "days": [d.isoformat() for d in shown],
+            }
+        )
+
+    airlines = [
+        {"code": a.code, "name": a.name, "color": a.color} for a in ctx.store.dataset().airlines
+    ]
+    return {
+        "today": today.isoformat(),
+        "start": start.isoformat(),
+        "first_day": first_day.isoformat(),
+        "last_day": last_day.isoformat(),
+        "day": chosen.isoformat(),
+        "airlines": airlines,
+        "week": summary,
+        "flights": flights,
+        "crew_out": crew_out,
+    }
+
+
+class Catalog(BaseModel):
+    detail: bool = Field(True, description="Unused; the whole catalogue is returned")
+
+
+def catalog(ctx: Context, args: Catalog) -> dict[str, Any]:
+    """What a report form picks from, so nobody types an id that does not exist: trips, flights,
+    aircraft, stations and gates, from today on."""
+    op = ctx.operation()
+    today = _ist_day(op.now)
+    trip_of = {leg_id: t.trip_id for t in op.trips.values() for leg_id in t.leg_ids}
+    legs = sorted(
+        (leg for leg in op.legs.values() if _ist_day(leg.off_block) >= today),
+        key=lambda leg: leg.off_block,
+    )
+    trips = []
+    for t in sorted(op.trips.values(), key=lambda t: op.days_of(t.trip_id)[0].report):
+        days = op.days_of(t.trip_id)
+        if _ist_day(days[-1].release) < today:
+            continue
+        route = " ".join(
+            [op.legs[t.days[0].legs[0]].origin] + [op.legs[leg].destination for leg in t.leg_ids]
+        )
+        trips.append(
+            {
+                "trip_id": t.trip_id,
+                "airline": t.airline,
+                "tail": t.tail,
+                "route": route,
+                "reports": _when(days[0].report),
+                "days": [_ist_day(d.report).isoformat() for d in days],
+            }
+        )
+    tails: dict[str, dict[str, Any]] = {}
+    for t in op.trips.values():
+        leg = op.legs[t.leg_ids[0]]
+        tails.setdefault(
+            t.tail, {"tail": t.tail, "airline": t.airline, "type": str(leg.aircraft_type)}
+        )
+    return {
+        "trips": trips,
+        "flights": [
+            {
+                "leg_id": leg.leg_id,
+                "flight_no": leg.flight_no,
+                "trip_id": trip_of.get(leg.leg_id),
+                "from": leg.origin,
+                "to": leg.destination,
+                "departs": _when(leg.off_block),
+                "gate": leg.gate,
+            }
+            for leg in legs
+        ],
+        "tails": sorted(tails.values(), key=lambda t: t["tail"]),
+        "stations": sorted({leg.origin for leg in op.legs.values()}),
+        "gates": {
+            station: [g.gate for g in gates if str(g.kind) != "emergency"]
+            for station, gates in sorted(op.gates.items())
+        },
+    }
+
+
 # -- who the caller is -----------------------------------------------------------------------
 
 GUIDE: dict[Role, tuple[str, str, tuple[str, ...], tuple[str, ...]]] = {
@@ -1007,11 +1283,15 @@ GUIDE: dict[Role, tuple[str, str, tuple[str, ...], tuple[str, ...]]] = {
         "You are the station duty manager: you file disruptions once and follow them to the end.",
         (
             "file sick calls, delays, gate closures and changes, station closures, aircraft "
-            "faults and certificate lapses, with photos",
+            "faults and certificate lapses when someone tells you of one, with photos",
             "follow the reports you filed",
-            "look up flights, trips and gates",
+            "look up flights, trips and gates, and who to call in each team",
         ),
-        ("find cover or change a roster", "approve anything"),
+        (
+            "see crew records, certificates or duty hours: crew control watches those",
+            "find cover or change a roster",
+            "approve anything",
+        ),
     ),
     Role.CONTROLLER: (
         "Crew controller",
@@ -1461,6 +1741,21 @@ ALL_TOOLS = (
     TOOLS
     + MORE_TOOLS
     + (
+        Tool(
+            "operations",
+            "A week of flights for a station: passengers and disruptions per day, each flight of "
+            "one day with who flies it, and who is out (when, never why).",
+            OperationsWeek,
+            operations_week,
+            OPS,
+        ),
+        Tool(
+            "catalog",
+            "Every trip, flight, aircraft, station and gate from today on, to pick from a list.",
+            Catalog,
+            catalog,
+            OPS,
+        ),
         Tool(
             "about_me",
             "Who the caller is: name, role, desk or crew id, what their role does and may not do, "

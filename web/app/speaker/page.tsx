@@ -7,7 +7,7 @@ import { Logo } from "@/components/shell";
 import { cx } from "@/components/ui";
 import { apiUrl, authMode, demoIdentity, headers, loadConfig, message, saved, token } from "@/lib/api";
 import type { Answer, SpeakerFeed } from "@/lib/types";
-import { LANGUAGES, Recorder, say, transcribe } from "@/lib/voice";
+import { ANY_LANGUAGE, Recorder, say, transcribe } from "@/lib/voice";
 
 type Item = SpeakerFeed["items"][number];
 type Waiting = SpeakerFeed["waiting"] & { resolutions?: number; disruptions?: number; proposals?: number };
@@ -41,7 +41,6 @@ export default function SpeakerPage() {
   const [on, setOn] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [repeat, setRepeat] = useState(true);
-  const [lang, setLang] = useState("English");
   const [unack, setUnack] = useState<Set<string>>(new Set());
   const [heardNote, setHeardNote] = useState("");
   const [answer, setAnswer] = useState<{ q: string; text: string } | null>(null);
@@ -52,13 +51,9 @@ export default function SpeakerPage() {
   const queue = useRef<Item[]>([]);
   const busy = useRef(false);
   const onRef = useRef(false);
-  const langRef = useRef(lang);
   const heard = useRef<Set<string> | null>(null);
   const recorder = useRef(new Recorder());
 
-  useEffect(() => {
-    langRef.current = lang;
-  }, [lang]);
 
   const chime = useCallback(() => {
     const ctx = audio.current;
@@ -86,7 +81,7 @@ export default function SpeakerPage() {
       const item = queue.current.shift()!;
       chime();
       await new Promise((r) => setTimeout(r, 450));
-      await say(`${item.subject}. ${item.body}`, langRef.current, 1.02);
+      await say(`${item.subject}. ${item.body}`, { rate: 1.02 });
     }
     busy.current = false;
     setSpeaking(false);
@@ -153,7 +148,7 @@ export default function SpeakerPage() {
     setUnack(new Set());
     if (next) {
       audio.current ??= new AudioContext();
-      say("CrewOps speaker on.", lang);
+      say("CrewOps speaker on.");
     } else {
       speechSynthesis.cancel();
       queue.current = [];
@@ -166,7 +161,7 @@ export default function SpeakerPage() {
     const text = lines.length ? lines.join(" ") : "Nothing is waiting on the desk.";
     setAnswer({ q: "What's waiting?", text: lines.length ? lines.map((l) => `• ${l}`).join("\n") : text });
     audio.current ??= new AudioContext();
-    await say(text, lang);
+    await say(text);
   }
 
   async function ask(q: string) {
@@ -181,7 +176,7 @@ export default function SpeakerPage() {
       const a = (await r.json().catch(() => ({}))) as Partial<Answer> & { detail?: string };
       const text = a.text || a.detail || "No answer.";
       setAnswer({ q, text });
-      await say(text, lang);
+      await say(text);
     } catch (err) {
       setAnswer({ q, text: message(err) });
     }
@@ -203,7 +198,7 @@ export default function SpeakerPage() {
     setHeardNote("Transcribing…");
     try {
       await loadConfig();
-      const t = await transcribe(await recorder.current.stop(), lang).catch(async (err) => {
+      const t = await transcribe(await recorder.current.stop(), ANY_LANGUAGE).catch(async (err) => {
         if (/sign in|401|403/i.test(message(err))) throw new Error("Asking by voice needs someone signed in on this browser.");
         throw err;
       });
@@ -315,13 +310,6 @@ export default function SpeakerPage() {
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} className="accent-[#6fb6ff]" /> Repeat critical alerts until acknowledged
             </label>
-            <select aria-label="Spoken language" value={lang} onChange={(e) => setLang(e.target.value)} className="rounded-md border border-white/10 bg-[#121922] px-2 py-1 text-[#e7edf3]">
-              {LANGUAGES.slice(0, 3).map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
           </div>
           {heardNote && <p className="max-w-sm text-center text-sm text-[#93a1b0]">{heardNote}</p>}
           {answer && (

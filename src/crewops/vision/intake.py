@@ -69,7 +69,17 @@ class Status(StrEnum):
 # -- what the model fills in -----------------------------------------------------------------
 
 
-class SickNote(BaseModel):
+class Draft(BaseModel):
+    """Two fields every form ends with: a first draft of the report, which the person filing it
+    checks and changes before anything is filed."""
+
+    severity: Literal["low", "medium", "high"] = "medium"
+    """How much what the photo shows would hold flights back or matter for safety."""
+    description: str = ""
+    """One or two plain sentences on what the photo shows, as a duty manager would write it."""
+
+
+class SickNote(Draft):
     is_medical_note: bool
     readable: Clarity
     patient_name: str
@@ -79,7 +89,7 @@ class SickNote(BaseModel):
     issued_by: str
 
 
-class RosterSwap(BaseModel):
+class RosterSwap(Draft):
     is_roster_swap: bool
     readable: Clarity
     crew_names: list[str]
@@ -87,7 +97,7 @@ class RosterSwap(BaseModel):
     signed_by_both: bool
 
 
-class CertificateForm(BaseModel):
+class CertificateForm(Draft):
     is_certificate: bool
     readable: Clarity
     holder_name: str
@@ -104,7 +114,7 @@ class Damage(BaseModel):
     where: str
 
 
-class DefectForm(BaseModel):
+class DefectForm(Draft):
     shows_aircraft: bool
     """An aircraft or a recognisable part of one, inside or out."""
     subject: str
@@ -131,14 +141,14 @@ class FlightStatus(BaseModel):
     """The gate it now leaves from, as shown, such as 23; otherwise empty."""
 
 
-class DisruptionNotice(BaseModel):
+class DisruptionNotice(Draft):
     is_flight_notice: bool
     """A departures board, gate screen, delay message or printed notice about flights."""
     readable: Clarity
     flights: list[FlightStatus]
 
 
-class SceneForm(BaseModel):
+class SceneForm(Draft):
     shows_airport: bool
     """An airport, airfield, apron, runway, terminal or gate area."""
     subject: str
@@ -212,6 +222,13 @@ PROMPTS: dict[Kind, tuple[type[BaseModel], str]] = {
 }
 
 
+DRAFT_NOTE = (
+    " Last, set severity (high, medium or low: how much what the photo shows would hold flights "
+    "back or matter for safety) and description (one or two plain sentences on what the photo "
+    "shows, as a station duty manager would write it in a report; no guesses beyond the photo)."
+)
+
+
 class Reader(Protocol):
     """Fills a form from a photo: Muse Spark vision in production, a fake in tests."""
 
@@ -272,6 +289,8 @@ class Intake:
     crew: list[dict[str, str]] = field(default_factory=list)
     proposal: dict[str, Any] | None = None
     """A tool call a person can make with one click; never made by the photo itself."""
+    suggestion: dict[str, str] | None = None
+    """A first draft of the report's severity and description, for the person to check."""
 
 
 PAPER = frozenset({Kind.SICK_NOTE, Kind.CERTIFICATE, Kind.ROSTER_SWAP})
@@ -306,10 +325,16 @@ def measure(image: bytes, paper: bool = False, screen: bool = False) -> Quality:
 
 
 def _crew_named(op: Operation, name: str) -> list[dict[str, str]]:
+    from crewops.agent.tools import name_matches
+
     words = [w for w in name.lower().replace(".", " ").split() if len(w) > 1]
     if not words:
         return []
-    found = [c for c in op.crew.values() if all(w in c.name.lower() for w in words)]
+    found = [c for c in op.crew.values() if name_matches(c.name, name)]
+    if not found:
+        # A note may give a first name in full ("Arjun Nair") where the roster has "A. Nair".
+        initials = " ".join(w[0] for w in words[:-1])
+        found = [c for c in op.crew.values() if name_matches(c.name, f"{initials} {words[-1]}")]
     return [
         {"crew_id": c.crew_id, "name": c.name, "rank": str(c.rank), "airline": c.airline}
         for c in sorted(found, key=lambda c: c.crew_id)
@@ -352,8 +377,9 @@ def read_photo(
         )
 
     form_type, instructions = PROMPTS[kind]
-    form = reader.read(image, mime, form_type, instructions)
+    form = reader.read(image, mime, form_type, instructions + DRAFT_NOTE)
     result = Intake(kind, Status.DRAFT, "", quality, form.model_dump())
+    result.suggestion = {"severity": form.severity, "description": form.description.strip()}
     match kind:
         case Kind.SICK_NOTE:
             return _sick_note(op, form, result)

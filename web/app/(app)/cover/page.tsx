@@ -10,8 +10,16 @@ import { useSession } from "@/components/session";
 import { Button, control, cx, Input, Label, Loading, Mono, Notice, PageHeader, Panel, Pill, Spinner } from "@/components/ui";
 import { message, tool } from "@/lib/api";
 import { hhmm, inr, plural, short } from "@/lib/format";
-import type { Choice, CoverResult, Plan, TripDetails } from "@/lib/types";
+import type { Callout, Choice, CoverResult, Plan, TripDetails } from "@/lib/types";
 import { useAction, useLoad } from "@/lib/use-load";
+
+const OPEN_CALLOUT = ["offered", "accepted", "needs_decision", "awaiting_approval"];
+const CALLOUT_NOW: Record<string, string> = {
+  offered: "Callout running: waiting for an answer",
+  accepted: "Accepted: the plan waits for an approver",
+  needs_decision: "Nobody accepted: the desk must decide",
+  awaiting_approval: "A proposal waits for an approver",
+};
 
 const PICK: Record<string, string> = { cheapest: "cheapest", least_delay: "least delay", keeps_standby: "keeps standby free" };
 
@@ -188,12 +196,16 @@ export default function CoverPage() {
   const { data, error, loading } = useLoad(async () => {
     const details = await tool<TripDetails>("trip_details", { trip_id: trip });
     const seat = details.crew.find((c) => c.crew_id === crewParam) ?? details.crew[0];
-    if (!seat) return { details, seat: null, cover: null, coverError: "Nobody is rostered on this trip." };
+    if (!seat) return { details, seat: null, cover: null, coverError: "Nobody is rostered on this trip.", running: null, planned: null };
+    const callouts = await tool<{ callouts: Callout[] }>("callout_status", {}).catch(() => ({ callouts: [] as Callout[] }));
+    const running = (callouts.callouts ?? []).find((c) => c.trip_id === trip && c.replacing === seat.crew_id && OPEN_CALLOUT.includes(c.status)) ?? null;
+    const plans = await tool<{ plans: Plan[] }>("plan_status", {}).catch(() => ({ plans: [] as Plan[] }));
+    const planned = (plans.plans ?? []).find((p) => p.trip_id === trip && p.replacing === seat.crew_id && p.status === "submitted") ?? null;
     try {
       const cover = await tool<CoverResult>("find_cover", { trip_id: trip, rank: seat.seat, vacated_by: seat.crew_id, limit: 10 });
-      return { details, seat, cover, coverError: null };
+      return { details, seat, cover, coverError: null, running, planned };
     } catch (err) {
-      return { details, seat, cover: null, coverError: message(err) };
+      return { details, seat, cover: null, coverError: message(err), running, planned };
     }
   }, `${trip}|${crewParam}`);
 
@@ -260,6 +272,21 @@ export default function CoverPage() {
             ) : (
               <>
                 <Funnel r={r} />
+                {(data.planned || data.running) && (
+                  <div className="px-4 pt-4 sm:px-5">
+                    <Notice tone="pending">
+                      {data.planned ? (
+                        <>
+                          <b>{data.planned.name}</b> is already proposed for this seat (<Mono>{data.planned.plan_id}</Mono>) and waits for an approver. No other plan can be submitted.
+                        </>
+                      ) : (
+                        <>
+                          A callout is running for this seat (<Mono>{data.running!.callout_id}</Mono>): plans wait until it ends.
+                        </>
+                      )}
+                    </Notice>
+                  </div>
+                )}
                 <div className="flex flex-col gap-3 p-4 sm:p-5">
                   {crewed.map((c, i) => (
                     <ChoiceCard
@@ -269,7 +296,7 @@ export default function CoverPage() {
                       tags={pickOf(c.crew_id)}
                       saving={i === 0 ? r.facts?.saving_vs_cancel : undefined}
                       action={
-                        c.crew_id && can("assign_crew") && seat ? (
+                        c.crew_id && can("assign_crew") && seat && !data.planned && !data.running ? (
                           <Button
                             size={i === 0 ? "md" : "sm"}
                             tone={i === 0 ? "accent" : "secondary"}
@@ -346,8 +373,14 @@ export default function CoverPage() {
             {can("start_callout") && seat && (
               <Panel title="Call crew out" icon={<Radio size={15} />}>
                 <p className="mb-3 text-sm text-muted">Offers the seat to the cheapest legal crew member, then the next, until someone accepts. It never cancels on its own.</p>
+                {data.running && (
+                  <Notice tone={data.running.status === "accepted" ? "ok" : "pending"} className="mb-3">
+                    <b>{CALLOUT_NOW[data.running.status] ?? data.running.status}</b>
+                    {data.running.waiting_for ? <> ({data.running.asked.find((o) => o.crew_id === data.running!.waiting_for)?.name ?? data.running.waiting_for})</> : null}. <Mono>{data.running.callout_id}</Mono>
+                  </Notice>
+                )}
                 <Button
-                  disabled={busy !== null}
+                  disabled={busy !== null || data.running !== null}
                   onClick={() =>
                     run("callout", () => tool("start_callout", { trip_id: trip, replace_crew_id: seat.crew_id, ...(report ? { report_id: report } : {}) }), () => "Callout started.")
                   }

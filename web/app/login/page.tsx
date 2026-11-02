@@ -140,7 +140,7 @@ export default function Login() {
 
   return (
     <main className="grid min-h-screen flex-1 bg-surface lg:grid-cols-[1.08fr_1fr]">
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#040a18] px-12 py-10 text-white lg:flex">
+      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#040a18] px-12 py-9 text-white lg:sticky lg:top-0 lg:h-screen lg:flex">
         <RunwayAtNight />
         <div className="relative flex items-center gap-2.5">
           <Logo size={30} />
@@ -153,8 +153,8 @@ export default function Login() {
             A sick call, a late departure or a closed gate becomes ranked, legal cover within seconds, on the desk, on the
             ops-room speaker and on the wall. A second person approves every roster change.
           </p>
-          <p className="mt-10 text-sm font-medium text-white">Every cover is checked against {RULES.length} rules</p>
-          <dl className="mt-3 grid grid-cols-[7.5rem_1fr] gap-x-4 gap-y-2 rounded-lg bg-[#040a18]/55 p-4 text-sm ring-1 ring-white/10">
+          <p className="mt-7 text-sm font-medium text-white">Every cover is checked against {RULES.length} rules</p>
+          <dl className="mt-3 grid grid-cols-[7.5rem_1fr] gap-x-4 gap-y-1.5 rounded-lg bg-[#040a18]/60 p-4 text-sm ring-1 ring-white/10 backdrop-blur-[1px]">
             {RULES.map(([name, text]) => (
               <div key={name} className="contents">
                 <dt className="text-[#b9c6d6]">{name}</dt>

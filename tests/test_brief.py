@@ -45,7 +45,7 @@ def test_the_facts_lead_with_what_breaks_a_rule(op):
 def test_a_brief_from_muse_wonder_is_kept_when_every_figure_checks_out(op):
     good = BriefText(
         headline="Cover T-1018 now",
-        lines=["Pooja Chowdary (C-1111) cannot fly T-1018; cover C-1157 for INR 20840."],
+        lines=["A. Nair (C-1111) cannot fly T-1018; cover C-1157 for INR 20840."],
     )
     brief = write_brief(op, [], Writer(good))
     assert (brief.written_by, brief.verified, brief.lines) == ("muse-wonder", True, good.lines)
@@ -55,7 +55,7 @@ def test_a_brief_with_an_invented_figure_falls_back_to_the_template(op):
     bad = BriefText(headline="Cover T-1018", lines=["Cover C-1157 for INR 19000."])
     brief = write_brief(op, [], Writer(bad))
     assert brief.written_by == "template"
-    assert brief.lines[0].startswith("T-1018: Pooja Chowdary (C-1111)")
+    assert brief.lines[0].startswith("T-1018: A. Nair (C-1111)")
     assert write_brief(op, [], Writer(ModelError("down"))).written_by == "template"
     assert write_brief(op, [], None).headline == "Action needed"
 

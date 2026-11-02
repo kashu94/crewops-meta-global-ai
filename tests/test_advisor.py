@@ -10,7 +10,7 @@ from crewops.models import ModelError, Reply, ToolCall, Usage
 from crewops.seed import read_meta
 from crewops.store import MemoryStore
 
-CONTROLLER = Caller("m.iyer", Role.CONTROLLER)
+CONTROLLER = Caller("ananya.iyer", Role.CONTROLLER)
 
 
 def usage(purpose="plan"):
@@ -59,7 +59,7 @@ def advisor(mem, seed, planner, intent=Intent.LEGALITY, **kwargs):
 
 def test_the_planner_calls_tools_then_answers_from_their_results(mem, seed):
     planner = Script(
-        [("search_crew", {"query": "Pooja Chowdary"})],
+        [("search_crew", {"query": "A. Nair"})],
         [("check_legality", {"crew_id": "C-1111", "trip_id": "T-1018"})],
         "No. C-1111 is not legal for T-1018: FDTL-08, medical expired 05 Nov 2026.",
     )
@@ -83,7 +83,6 @@ def test_the_route_limits_the_tools_and_sets_the_effort(mem, seed):
         "find_trips",
         "trip_details",
         "report_unavailable",
-        "report_disruption",
         "absence_impact",
         "find_cover",
         "check_legality",
@@ -169,7 +168,7 @@ def test_an_unreachable_model_gives_an_honest_reply(mem, seed):
 @pytest.mark.parametrize(
     ("question", "intent"),
     [
-        ("Pooja Chowdary called in sick for tomorrow", Intent.ABSENCE),
+        ("A. Nair called in sick for tomorrow", Intent.ABSENCE),
         ("SY221 is holding for 3 hours", Intent.DELAY),
         ("Who can take over the captain's seat on T-1009?", Intent.COVER),
         ("Is C-1157 legal for T-1010?", Intent.LEGALITY),

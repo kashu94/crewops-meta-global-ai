@@ -9,13 +9,13 @@ from crewops.store import MemoryStore
 
 TRIP = "T-1018"  # flies 5-6 Nov
 CAPTAIN, FIRST_OFFICER, CABIN = "C-1111", "C-1191", "C-1460"
-IYER = Caller("m.iyer", Role.CONTROLLER)
-REDDY = Caller("s.reddy", Role.CONTROLLER)
-RAO = Caller("d.rao", Role.CONTROLLER)
-NAIR = Caller("a.nair", Role.APPROVER)
-STATION = Caller("ops.hyd", Role.REPORTER)
-MENON = Caller("k.menon", Role.ADMIN)
-ANJALI = Caller("anjali", Role.CREW, "C-1157")
+IYER = Caller("ananya.iyer", Role.CONTROLLER)
+REDDY = Caller("rohit.malhotra", Role.CONTROLLER)
+RAO = Caller("divya.rao", Role.CONTROLLER)
+NAIR = Caller("meera.bhatt", Role.APPROVER)
+STATION = Caller("imran.sheikh", Role.REPORTER)
+MENON = Caller("priya.desai", Role.ADMIN)
+ANJALI = Caller("c1157.reddy", Role.CREW, "C-1157")
 
 
 @pytest.fixture
@@ -90,7 +90,7 @@ def test_new_reports_go_to_the_least_busy_desk(box, ctx):
 def test_a_report_runs_from_plan_to_sign_off(box, ctx, mem):
     report = box.call("report_disruption", sick(CAPTAIN), ctx(STATION))
     rid = report["report_id"]
-    assert report["desk"]["controller"] == "m.iyer"
+    assert report["desk"]["controller"] == "ananya.iyer"
     assert box.call("show_disruption", {"report_id": rid}, ctx(IYER))["can"]["plan"]
 
     # Only the owning desk works it.
@@ -199,7 +199,7 @@ def test_reassigning_moves_the_work(box, ctx):
     report = box.call("report_disruption", sick(CAPTAIN), ctx(STATION))
     rid = report["report_id"]
     moved = box.call("reassign_disruption", {"report_id": rid, "desk_id": "desk-3"}, ctx(NAIR))
-    assert moved["desk"]["controller"] == "d.rao"
+    assert moved["desk"]["controller"] == "divya.rao"
     assert (
         "only its controller"
         in box.call("submit_report_plan", {"report_id": rid}, ctx(IYER))["error"]
@@ -236,7 +236,7 @@ def test_station_and_aircraft_reports_are_graded_from_the_engine(box, ctx):
         "start": "2026-11-05T05:00",
         "end": "2026-11-05T13:00",
     }
-    fault = box.call("report_disruption", aog, ctx(IYER))
+    fault = box.call("report_disruption", aog, ctx(STATION))
     assert fault["teams"][0]["team"] == "maintenance_control"
     assert fault["severity"]["level"] in ("high", "medium", "low")
     assert fault["severity"]["reasons"][-1].endswith("passengers affected") or fault["severity"][
@@ -247,7 +247,8 @@ def test_station_and_aircraft_reports_are_graded_from_the_engine(box, ctx):
 def test_an_absence_already_recorded_is_not_recorded_twice(box, ctx, mem):
     args = {"first_day": "2026-11-05", "last_day": "2026-11-06", "reason": "food poisoning"}
     box.call("report_unavailable", {**args, "crew_id": CAPTAIN}, ctx(IYER))
-    report = box.call("report_disruption", sick(CAPTAIN, CABIN), ctx(IYER))
+    report = box.call("report_disruption", sick(CAPTAIN, CABIN), ctx(STATION))
+    assert "cannot use" in box.call("report_disruption", sick(CABIN), ctx(IYER))["error"]
     assert sorted(u.crew_id for u in mem.unavailability()) == sorted([CAPTAIN, CABIN])
     assert report["crew_ids"] == [CAPTAIN, CABIN]
 
@@ -256,18 +257,18 @@ def test_about_me_answers_for_each_role(box, ctx):
     box.call("report_disruption", sick(CAPTAIN), ctx(STATION))
     iyer = box.call("about_me", {}, ctx(IYER))
     assert (iyer["name"], iyer["role_title"], iyer["desk"]["desk_id"]) == (
-        "Meera Iyer",
+        "Ananya Iyer",
         "Crew controller",
         "desk-1",
     )
     assert iyer["waiting_on_you"] == 1 and iyer["first_things"][0].startswith("Sick:")
-    anjali = box.call("about_me", {}, ctx(ANJALI))
-    assert (anjali["name"], anjali["crew_id"], anjali["rank"]) == (
-        "Anjali Goud",
+    reddy = box.call("about_me", {}, ctx(ANJALI))
+    assert (reddy["name"], reddy["crew_id"], reddy["rank"]) == (
+        "D. Reddy",
         "C-1157",
         "Captain",
     )
-    assert "accept or decline a callout" in " ".join(anjali["you_can"])
+    assert "accept or decline a callout" in " ".join(reddy["you_can"])
     menon = box.call("about_me", {}, ctx(MENON))
     assert menon["role_title"] == "Administrator" and "relax a limit" in menon["you_cannot"][0]
 
@@ -290,3 +291,67 @@ def test_crew_answer_a_callout_with_a_remark_and_see_what_became_of_it(box, ctx,
     assert declined.subject.startswith("Declined:") and "family wedding" in declined.body
     desk_view = box.call("callout_status", {"callout_id": started["callout_id"]}, ctx(IYER))
     assert desk_view["asked"][0]["remark"] == "family wedding"
+
+
+def test_the_person_filing_can_raise_the_severity_but_not_lower_it(box, ctx):
+    delay = {"kind": "flight_delay", "trip_id": TRIP, "hours": 0.5}
+    worked_out = box.call("report_disruption", delay, ctx(STATION))["severity"]["level"]
+    higher = box.call("report_disruption", {**delay, "severity": "high"}, ctx(STATION))
+    assert higher["severity"]["level"] == "high"
+    assert higher["severity"]["reasons"][0] == "reported as high by imran.sheikh"
+    if worked_out != "low":
+        lower = box.call("report_disruption", {**delay, "severity": "low"}, ctx(STATION))
+        assert lower["severity"]["level"] == worked_out
+
+
+def test_crew_on_different_flights_are_separate_disruptions(box, ctx, mem):
+    op = mem.operation()
+    other = next(
+        c
+        for c, state in sorted(op.crew.items())
+        if c not in (CAPTAIN, FIRST_OFFICER, CABIN)
+        and any(
+            d.trip_id != TRIP and str(d.day) in ("2026-11-05", "2026-11-06") for d in state.duties
+        )
+    )
+    first = box.call("report_disruption", sick(CAPTAIN, FIRST_OFFICER, other), ctx(STATION))
+    assert first["crew_ids"] == [CAPTAIN, FIRST_OFFICER], "the two pilots of T-1018 stay together"
+    [second] = first["also_filed"]
+    assert box.call("show_disruption", {"report_id": second["report_id"]}, ctx(STATION))[
+        "crew_ids"
+    ] == [other]
+    assert "one per flight" in first["note"]
+
+
+def test_the_station_sees_a_week_of_flights_and_who_is_out(box, ctx):
+    box.call("report_disruption", sick(CAPTAIN), ctx(STATION))
+    week = box.call("operations", {"start": "2026-11-02", "day": "2026-11-05"}, ctx(STATION))
+    assert [d["day"] for d in week["week"]][0] == "2026-11-02" and len(week["week"]) == 7
+    ours = [f for f in week["flights"] if f["trip_id"] == TRIP]
+    assert ours and all(
+        f["captain"][0] == {"crew_id": CAPTAIN, "name": "A. Nair", "out": True} for f in ours
+    )
+    assert all(f["disruptions"] for f in ours), "the sick report marks the trip's flights"
+    [out] = [c for c in week["crew_out"] if c["crew_id"] == CAPTAIN]
+    assert out["days"] == ["2026-11-05", "2026-11-06"] and "reason" not in out
+    listed = box.call("catalog", {}, ctx(STATION))
+    assert TRIP in {t["trip_id"] for t in listed["trips"]}
+    assert "21" in listed["gates"]["HYD"]
+    assert "cannot use" in box.call("operations", {}, ctx(ANJALI))["error"]
+
+
+def test_a_plan_from_an_accepted_callout_belongs_to_its_report(box, ctx):
+    rid = box.call("report_disruption", sick(CAPTAIN), ctx(STATION))["report_id"]
+    started = box.call(
+        "start_callout", {"trip_id": TRIP, "replace_crew_id": CAPTAIN, "report_id": rid}, ctx(IYER)
+    )
+    box.call("answer_callout", {"callout_id": started["callout_id"], "accept": True}, ctx(ANJALI))
+    report = box.call("show_disruption", {"report_id": rid}, ctx(IYER))
+    [plan] = report["plans"]
+    assert (plan["source"], plan["status"], plan["report_id"]) == (
+        started["callout_id"],
+        "submitted",
+        rid,
+    )
+    listed = box.call("disruptions", {"status": "active"}, ctx(IYER))["disruptions"]
+    assert next(r for r in listed if r["report_id"] == rid)["plans_waiting"] == 1

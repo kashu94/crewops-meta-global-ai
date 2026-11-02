@@ -1,7 +1,7 @@
 """CrewOps as an MCP server: the agent's tools, with the same roles, for any MCP client.
 
     uv run python -m crewops.mcp_server                        # viewer: read-only
-    uv run python -m crewops.mcp_server --role controller --user m.iyer
+    uv run python -m crewops.mcp_server --role controller --user ananya.iyer
     uv run python -m crewops.mcp_server --role crew --crew-id C-1111
 
 The role is fixed when the server starts, so a client can only list and call the tools that

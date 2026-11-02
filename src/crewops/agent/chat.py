@@ -1,7 +1,7 @@
 """Ask CrewOps questions from the terminal.
 
-    uv run python -m crewops.agent.chat --role controller --user m.iyer
-    uv run python -m crewops.agent.chat --ask "Pooja Chowdary is sick from 5 to 8 November"
+    uv run python -m crewops.agent.chat --role controller --user ananya.iyer
+    uv run python -m crewops.agent.chat --ask "A. Nair is sick from 5 to 8 November"
 
 In the conversation: ``/issues`` lists problems the watch finds, ``/outbox`` shows messages
 sent to crew and the desk, ``/new`` starts over, ``/usage`` shows tokens used, ``/quit`` ends.

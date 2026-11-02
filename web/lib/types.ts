@@ -246,6 +246,7 @@ export type ReportSummary = {
   severity: { level: Level; reasons?: string[] } | null;
   seats_open?: number;
   plans_waiting?: number;
+  crew_ids?: string[];
   evidence?: { level: "high" | "medium" | "low" | "read" | "none"; label: string; photos?: number };
 };
 

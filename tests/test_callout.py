@@ -48,7 +48,7 @@ def desk(mem, outbox, clock):
 
 
 def open_callout(desk):
-    return desk.open(TRIP, Rank.CAPTAIN, SICK, by="m.iyer")
+    return desk.open(TRIP, Rank.CAPTAIN, SICK, by="ananya.iyer")
 
 
 def test_the_cheapest_legal_crew_member_is_asked_first(desk, outbox):
@@ -103,18 +103,21 @@ def test_cancelling_needs_two_different_controllers(desk, mem):
         desk.respond(callout.callout_id, crew_id, accept=False)
 
     with pytest.raises(CalloutError, match="not an option"):
-        desk.propose(callout.callout_id, "one_short", by="m.iyer")
-    desk.propose(callout.callout_id, "cancel", by="m.iyer")
+        desk.propose(callout.callout_id, "one_short", by="ananya.iyer")
+    desk.propose(callout.callout_id, "cancel", by="ananya.iyer")
     assert callout.status is Status.AWAITING_APPROVAL
     with pytest.raises(CalloutError, match="someone else"):
-        desk.approve(callout.callout_id, by="m.iyer")
+        desk.approve(callout.callout_id, by="ananya.iyer")
 
-    desk.reject(callout.callout_id, by="s.reddy")
+    desk.reject(callout.callout_id, by="rohit.malhotra")
     assert callout.status is Status.NEEDS_DECISION and callout.proposal is None
-    desk.propose(callout.callout_id, "cancel", by="m.iyer")
-    desk.approve(callout.callout_id, by="s.reddy")
+    desk.propose(callout.callout_id, "cancel", by="ananya.iyer")
+    desk.approve(callout.callout_id, by="rohit.malhotra")
     assert callout.status is Status.CLOSED
-    assert (callout.proposal.proposed_by, callout.proposal.approved_by) == ("m.iyer", "s.reddy")
+    assert (callout.proposal.proposed_by, callout.proposal.approved_by) == (
+        "ananya.iyer",
+        "rohit.malhotra",
+    )
     assert mem.changes() == []  # the roster itself is never changed by a cancellation decision
 
 
@@ -163,7 +166,7 @@ def test_a_seat_someone_else_already_filled_closes_the_callout(desk, mem):
     callout = open_callout(desk)
     trip, version = mem.trip(TRIP)
     crew = [Seat(crew_id="C-1167", rank=s.rank) if s.crew_id == SICK else s for s in trip.crew]
-    mem.change_crew(TRIP, crew, version, "s.reddy", "filled by phone")
+    mem.change_crew(TRIP, crew, version, "rohit.malhotra", "filled by phone")
     desk.respond(callout.callout_id, LEGAL_CAPTAINS[0], accept=True)
     assert callout.status is Status.CLOSED and "no longer on" in callout.reason
     assert len(mem.changes()) == 1
@@ -179,7 +182,7 @@ def test_a_trip_that_has_reported_goes_straight_to_the_desk(mem, outbox, clock):
 
 def test_only_crew_on_the_trip_can_be_replaced(desk):
     with pytest.raises(CalloutError, match="not on T-1018"):
-        desk.open(TRIP, Rank.CAPTAIN, "C-1157", by="m.iyer")
+        desk.open(TRIP, Rank.CAPTAIN, "C-1157", by="ananya.iyer")
 
 
 def test_accepting_a_positioned_seat_tells_the_desk_what_to_book(desk, mem, outbox, monkeypatch):
@@ -219,5 +222,5 @@ def test_nobody_is_offered_two_seats_at_once(desk, mem):
         }
     )
     captain = next(s.crew_id for s in trip.crew if s.rank is Rank.CAPTAIN)
-    second = desk.open(trip.trip_id, Rank.CAPTAIN, captain, by="m.iyer")
+    second = desk.open(trip.trip_id, Rank.CAPTAIN, captain, by="ananya.iyer")
     assert second.current.crew_id != first.current.crew_id

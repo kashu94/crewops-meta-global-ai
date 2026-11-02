@@ -156,7 +156,8 @@ function CrewWork({ report, a }: { report: Report; a: CrewAnalysis }) {
                             <Button
                               size="sm"
                               tone="secondary"
-                              disabled={busy !== null}
+                              disabled={busy !== null || Boolean(f?.in_hand)}
+                              title={f?.in_hand ? `Already in hand: ${f.in_hand}` : undefined}
                               onClick={() =>
                                 run(`${s.trip_id}${s.replacing}`, () => tool("start_callout", { trip_id: s.trip_id, replace_crew_id: s.replacing, report_id: report.report_id }), () => `Callout started for ${s.trip_id}.`)
                               }

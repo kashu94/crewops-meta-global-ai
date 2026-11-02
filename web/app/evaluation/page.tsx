@@ -1,12 +1,12 @@
 "use client";
 
 import { ChevronDown, LineChart } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Kpi, Kpis, Loading, Mono, Notice, PageHeader, Panel, Pill, Segmented } from "@/components/ui";
-import { api } from "@/lib/api";
+import { Logo } from "@/components/shell";
+import { api, message } from "@/lib/api";
 import { words } from "@/lib/format";
-import { useLoad } from "@/lib/use-load";
 
 type Scenario = {
   id: string;
@@ -26,8 +26,31 @@ type Scenario = {
 };
 type Scorecard = { run_at: string; summary: string; passed: number; total: number; scenarios: Scenario[] };
 
+/** The published scorecard: a page of its own, open to anyone, like the TV board. */
 export default function EvaluationPage() {
-  const { data: s, error } = useLoad(() => api<Scorecard>("/api/scorecard"));
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="flex h-14 items-center gap-2.5 border-b border-line bg-surface px-4 sm:px-8">
+        <Logo />
+        <b className="text-[15px] tracking-tight">CrewOps</b>
+        <span className="text-sm text-muted">Evaluation</span>
+        <a href="/login/" className="ml-auto text-sm text-accent hover:underline">
+          Sign in
+        </a>
+      </header>
+      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-8">
+        <Scorecard />
+      </main>
+    </div>
+  );
+}
+
+function Scorecard() {
+  const [s, setS] = useState<Scorecard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    api<Scorecard>("/api/scorecard", { auth: false }).then(setS, (err) => setError(message(err)));
+  }, []);
   const [show, setShow] = useState<"all" | "failed">("all");
   if (error)
     return (

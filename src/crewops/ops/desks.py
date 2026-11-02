@@ -23,9 +23,9 @@ class Desk:
 
 
 DESKS: tuple[Desk, ...] = (
-    Desk("desk-1", "Desk 1", "m.iyer", "Meera Iyer"),
-    Desk("desk-2", "Desk 2", "s.reddy", "Sandeep Reddy"),
-    Desk("desk-3", "Desk 3", "d.rao", "Divya Rao"),
+    Desk("desk-1", "Desk 1", "ananya.iyer", "Ananya Iyer"),
+    Desk("desk-2", "Desk 2", "rohit.malhotra", "Rohit Malhotra"),
+    Desk("desk-3", "Desk 3", "divya.rao", "Divya Rao"),
 )
 
 

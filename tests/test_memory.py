@@ -16,7 +16,7 @@ from crewops.seed import read_meta
 from crewops.settings import load_settings
 from crewops.store import MemoryStore
 
-CONTROLLER = Caller("m.iyer", Role.CONTROLLER)
+CONTROLLER = Caller("ananya.iyer", Role.CONTROLLER)
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def advisor(mem, seed, planner):
 
 def test_a_follow_up_sees_earlier_turns_and_who_was_discussed(mem, seed):
     planner = Script(
-        [("search_crew", {"query": "Pooja"})],
+        [("search_crew", {"query": "a. nair"})],
         [("check_legality", {"crew_id": "C-1111", "trip_id": "T-1018"})],
         "No: C-1111 fails FDTL-08 on T-1018.",
         "Also not legal.",
@@ -46,7 +46,7 @@ def test_a_follow_up_sees_earlier_turns_and_who_was_discussed(mem, seed):
     assert [m["role"] for m in sent] == ["system", "user", "assistant", "user"]
     assert sent[2]["content"] == "No: C-1111 fails FDTL-08 on T-1018."
     assert sent[0]["content"].endswith(
-        "Earlier in this conversation: already discussed T-1018, C-1111 (Pooja Chowdary)."
+        "Earlier in this conversation: already discussed T-1018, C-1111 (A. Nair)."
     )
     assert second.focus[0] == "T-1010"
 
@@ -65,7 +65,7 @@ def test_only_the_last_turns_are_kept(mem, seed):
 def test_another_caller_never_sees_someone_elses_conversation(mem, seed):
     chats = Conversations()
     mine, _ = chats.ask(advisor(mem, seed, Script("ok")), "Is C-1157 legal?", CONTROLLER)
-    other = Caller("s.reddy", Role.CONTROLLER)
+    other = Caller("rohit.malhotra", Role.CONTROLLER)
     theirs = chats.get(mine.id, other)
     assert theirs.id != mine.id and theirs.turns == []
 

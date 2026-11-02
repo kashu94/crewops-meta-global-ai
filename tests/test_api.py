@@ -33,9 +33,10 @@ BASE = {
     "CREWOPS_AUTH": "demo",
     "CREWOPS_BUCKET": "",
 }
-CONTROLLER = {"X-Demo-User": "m.iyer", "X-Demo-Role": "controller"}
+CONTROLLER = {"X-Demo-User": "ananya.iyer", "X-Demo-Role": "controller"}
 VIEWER = {"X-Demo-User": "board", "X-Demo-Role": "auditor"}
-ANJALI = {"X-Demo-User": "anjali", "X-Demo-Role": "crew", "X-Demo-Crew-Id": "C-1157"}
+STATION = {"X-Demo-User": "imran.sheikh", "X-Demo-Role": "reporter"}
+ANJALI = {"X-Demo-User": "c1157.reddy", "X-Demo-Role": "crew", "X-Demo-Crew-Id": "C-1157"}
 
 
 class Media:
@@ -100,13 +101,13 @@ def test_public_endpoints_and_pages(services, tmp_path, monkeypatch):
 
 def test_me_reports_the_identity_role_and_the_operation_clock(client):
     me = client.get("/api/me", headers=ANJALI).json()
-    assert (me["user"], me["role"], me["crew_id"]) == ("anjali", "crew", "C-1157")
+    assert (me["user"], me["role"], me["crew_id"]) == ("c1157.reddy", "crew", "C-1157")
     assert "assign_crew" not in me["tools"] and me["clock"].endswith("IST")
     assert client.get("/api/me", headers={"X-Demo-Role": "pilot"}).status_code == 400
 
 
 def test_tools_go_through_the_same_role_checks(client):
-    found = client.post("/api/tools/search_crew", json={"query": "chowdary"}, headers=VIEWER)
+    found = client.post("/api/tools/search_crew", json={"query": "a. nair"}, headers=VIEWER)
     assert found.json()["matches"][0]["crew_id"] == "C-1111"
     refused = client.post("/api/tools/assign_crew", json={}, headers=VIEWER).json()
     assert "cannot use" in refused["error"]
@@ -193,7 +194,7 @@ def test_the_board_shows_brief_issues_and_callouts(client):
     assert b["callouts"][0]["trip_id"] == "T-1018"
     assert b["next_24h"]["open_callouts"] == 1 and b["next_24h"]["illegal"] == 1
     assert len(b["departures"]) == min(10, b["next_24h"]["flights"])
-    assert b["desks"] == [{"controller": "m.iyer", "open": 1, "filled": 0, "to_approve": 0}]
+    assert b["desks"] == [{"controller": "ananya.iyer", "open": 1, "filled": 0, "to_approve": 0}]
     sy_captains = [x for x in b["standby"] if (x["airline"], x["rank"]) == ("SY", "Captain")]
     assert len(sy_captains) == 1 and sy_captains[0]["on_call"] >= 1
     assert b["latest"] == []  # the callout messaged the crew member, not the desk
@@ -241,11 +242,11 @@ def test_tokens_are_checked_for_signature_audience_and_issuer():
         "token_use": "id",
         "exp": int(time.time()) + 600,
         "iss": "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_x",
-        "cognito:username": "s.reddy",
+        "cognito:username": "rohit.malhotra",
         "cognito:groups": ["controller"],
     }
     good = jwt.encode(claims, private, algorithm="RS256")
-    assert verify(good, config, Keys())["cognito:username"] == "s.reddy"
+    assert verify(good, config, Keys())["cognito:username"] == "rohit.malhotra"
     with pytest.raises(HTTPException):
         verify(jwt.encode({**claims, "aud": "other"}, private, algorithm="RS256"), config, Keys())
     with pytest.raises(HTTPException):
@@ -273,8 +274,8 @@ def test_the_speaker_feed_is_public_and_says_how_each_notice_sounds(client):
         "disruptions": 0,
     }
     illegal, running = feed["summary"]
-    assert illegal.startswith("1 rostered crew member is not legal: Pooja Chowdary on T-1018")
-    assert running.startswith("Callout running for Captain on T-1018: waiting for Anjali Goud")
+    assert illegal.startswith("1 rostered crew member is not legal: A. Nair on T-1018")
+    assert running.startswith("Callout running for Captain on T-1018: waiting for D. Reddy")
 
 
 def test_an_approval_needs_an_approver_through_the_api(client):
@@ -295,11 +296,11 @@ def test_an_approval_needs_an_approver_through_the_api(client):
     feed = client.get("/api/speaker").json()
     assert feed["waiting"]["plans"] == 1
     assert feed["items"][0]["tone"] == "pending"
-    reddy = {"X-Demo-User": "s.reddy", "X-Demo-Role": "controller"}
+    reddy = {"X-Demo-User": "rohit.malhotra", "X-Demo-Role": "controller"}
     review = {"plan_id": plan["plan_id"], "action": "approve"}
     refused = client.post("/api/tools/review_plan", json=review, headers=reddy).json()
     assert "only an approver" in refused["error"]
-    nair = {"X-Demo-User": "a.nair", "X-Demo-Role": "approver"}
+    nair = {"X-Demo-User": "meera.bhatt", "X-Demo-Role": "approver"}
     done = client.post("/api/tools/review_plan", json=review, headers=nair).json()
     assert done["status"] == "approved"
     log = client.get("/api/log/activity", headers=CONTROLLER).json()["entries"]
@@ -308,9 +309,9 @@ def test_an_approval_needs_an_approver_through_the_api(client):
 
 def test_only_an_admin_reads_the_security_log(client):
     assert client.get("/api/log/security", headers=CONTROLLER).status_code == 403
-    crew = {"X-Demo-User": "anjali", "X-Demo-Role": "crew", "X-Demo-Crew-Id": "C-1157"}
+    crew = {"X-Demo-User": "c1157.reddy", "X-Demo-Role": "crew", "X-Demo-Crew-Id": "C-1157"}
     assert client.get("/api/log/activity", headers=crew).status_code == 403
-    admin = {"X-Demo-User": "k.menon", "X-Demo-Role": "admin"}
+    admin = {"X-Demo-User": "priya.desai", "X-Demo-Role": "admin"}
     assert client.get("/api/log/security", headers=admin).json() == {"entries": []}
 
 
@@ -334,7 +335,7 @@ def test_a_checked_photo_is_kept_with_the_report_it_backs(client, services):
         "/api/intake",
         files=photo,
         data={"kind": "defect", "tail": "VT-SYA", "keep": "true"},
-        headers=CONTROLLER,
+        headers=STATION,
     ).json()
     fault = {
         "kind": "aircraft_technical",
@@ -342,13 +343,13 @@ def test_a_checked_photo_is_kept_with_the_report_it_backs(client, services):
         "start": "2026-11-05T05:00",
         "end": "2026-11-05T09:00",
     }
-    reddy = {"X-Demo-User": "s.reddy", "X-Demo-Role": "controller"}
+    reddy = {"X-Demo-User": "lakshmi.hegde", "X-Demo-Role": "reporter"}
     theirs = {**fault, "evidence_ids": [kept["evidence_id"]]}
     assert (
         "no photo"
         in client.post("/api/tools/report_disruption", json=theirs, headers=reddy).json()["error"]
     )
-    report = client.post("/api/tools/report_disruption", json=theirs, headers=CONTROLLER).json()
+    report = client.post("/api/tools/report_disruption", json=theirs, headers=STATION).json()
     assert report["evidence"] == {
         "level": "high",
         "label": "Photo checked, high confidence",
@@ -357,7 +358,7 @@ def test_a_checked_photo_is_kept_with_the_report_it_backs(client, services):
     assert report["details"]["evidence"][0]["message"].startswith("Draft defect report")
     assert client.get(f"/api/evidence/{kept['evidence_id']}", headers=CONTROLLER).content == SHARP
     assert client.get(f"/api/evidence/{kept['evidence_id']}", headers=ANJALI).status_code == 403
-    bare = client.post("/api/tools/report_disruption", json=fault, headers=CONTROLLER).json()
+    bare = client.post("/api/tools/report_disruption", json=fault, headers=STATION).json()
     assert bare["evidence"]["label"] == "No photo"
     assert "maintenance confirms" in bare["details"]["evidence_note"]
 
@@ -368,7 +369,7 @@ def test_a_note_that_does_not_match_the_report_is_flagged(client, services):
         "/api/intake",
         files={"image": ("n.jpg", SHARP, "image/jpeg")},
         data={"kind": "sick_note", "keep": "true"},
-        headers=CONTROLLER,
+        headers=STATION,
     ).json()
     form = services.store.get_doc("evidence", kept["evidence_id"])
     [crew_id] = form["crew_ids"]
@@ -384,7 +385,7 @@ def test_a_note_that_does_not_match_the_report_is_flagged(client, services):
                 "last_day": day_two,
                 "evidence_ids": [kept["evidence_id"]],
             },
-            headers=CONTROLLER,
+            headers=STATION,
         ).json()["details"]["evidence"][0]
 
     same = sick(crew_id, first, last)

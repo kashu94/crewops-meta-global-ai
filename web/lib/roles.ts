@@ -62,13 +62,13 @@ const I = {
   approvals: { href: "/approvals/", label: "Approvals", hint: "Plans and resolutions waiting for a second person", icon: "approvals", count: "approvals" },
   cover: { href: "/cover/", label: "Find cover", hint: "Every legal way to fill a seat", icon: "cover" },
   report: { href: "/report/", label: "Report a disruption", hint: "Work out what it breaks and who to tell", icon: "report" },
-  operations: { href: "/operations/", label: "Operations", hint: "The next 24 hours at a glance", icon: "operations" },
+  leave: { href: "/report/", label: "Book planned leave", hint: "Leave, training and medical days ahead", icon: "report" },
+  operations: { href: "/operations/", label: "Operations", hint: "A week of flights, who flies them and who is out", icon: "operations" },
   myReports: { href: "/disruptions/", label: "My reports", hint: "Reports you filed and where they stand", icon: "disruptions" },
   gates: { href: "/gates/", label: "Gates", hint: "Who boards where, and what a closure moves", icon: "gates" },
   assistant: { href: "/assistant/", label: "Assistant", hint: "Ask by text or voice; every figure checked", icon: "assistant" },
   activity: { href: "/activity/", label: "Activity", hint: "Who changed what, and refused questions", icon: "activity" },
   limits: { href: "/limits/", label: "Duty limits", hint: "The limits every seat is judged against", icon: "limits" },
-  evaluation: { href: "/evaluation/", label: "Evaluation", hint: "The published scorecard", icon: "evaluation" },
   crew: { href: "/crew/", label: "My roster", hint: "Your calendar, flights, limits and offers", icon: "crew" },
   messages: { href: "/messages/", label: "Messages", hint: "Offers and roster changes sent to you", icon: "messages" },
   admin: { href: "/admin/", label: "Admin", hint: "Accounts, alerts, roster upload and limits", icon: "admin" },
@@ -83,33 +83,22 @@ export function navFor(role: Role): NavGroup[] {
     case "crew":
       return [{ group: "Me", items: [I.crew, I.messages, I.assistant] }];
     case "reporter":
-      return [
-        { group: "Station", items: [I.operations, I.report, I.myReports, I.gates, I.assistant] },
-        OPS_ROOM,
-      ];
+      return [{ group: "Station", items: [I.operations, I.report, I.myReports, I.assistant] }, OPS_ROOM];
     case "controller":
-      return [
-        { group: "Crew control", items: [I.desk, I.disruptions, I.approvals, I.cover, I.report, I.gates, I.assistant] },
-        { group: "Oversight", items: [I.activity, I.limits, I.evaluation] },
-        OPS_ROOM,
-      ];
+      return [{ group: "Crew control", items: [I.desk, I.disruptions, I.assistant] }, OPS_ROOM];
     case "approver":
-      return [
-        { group: "Second pair of eyes", items: [I.approvals, I.disruptions, I.desk, I.report, I.gates, I.assistant] },
-        { group: "Oversight", items: [I.activity, I.limits, I.evaluation] },
-        OPS_ROOM,
-      ];
+      return [{ group: "Second pair of eyes", items: [I.approvals, I.disruptions, I.assistant] }, OPS_ROOM];
     case "auditor":
       return [
-        { group: "Read only", items: [I.disruptions, I.desk, I.approvals, I.gates, I.assistant] },
-        { group: "Oversight", items: [I.activity, I.limits, I.evaluation] },
+        { group: "Read only", items: [I.disruptions, I.approvals, I.assistant] },
+        { group: "Oversight", items: [I.activity, I.limits] },
         OPS_ROOM,
       ];
     case "admin":
     case "super_admin":
       return [
-        { group: "Administration", items: [I.admin, I.disruptions, I.report, I.limits] },
-        { group: "Oversight", items: [I.activity, I.evaluation, I.assistant] },
+        { group: "Administration", items: [I.admin, I.disruptions, I.leave, I.limits] },
+        { group: "Oversight", items: [I.activity, I.assistant] },
         OPS_ROOM,
       ];
     default:

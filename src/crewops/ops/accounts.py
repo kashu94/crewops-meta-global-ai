@@ -34,17 +34,23 @@ class DemoAccount:
 
 
 DEMO_ACCOUNTS: tuple[DemoAccount, ...] = (
-    DemoAccount("m.iyer", Role.CONTROLLER, None, "Meera Iyer, desk 1"),
-    DemoAccount("s.reddy", Role.CONTROLLER, None, "Sandeep Reddy, desk 2"),
-    DemoAccount("d.rao", Role.CONTROLLER, None, "Divya Rao, desk 3"),
-    DemoAccount("a.nair", Role.APPROVER, None, "Arun Nair"),
-    DemoAccount("ops.hyd", Role.REPORTER, None, "HYD station duty manager"),
-    DemoAccount("v.shah", Role.AUDITOR, None, "Vandana Shah"),
-    DemoAccount("k.menon", Role.ADMIN, None, "Kiran Menon"),
-    DemoAccount("r.kapoor", Role.SUPER_ADMIN, None, "Ritu Kapoor"),
+    DemoAccount("ananya.iyer", Role.CONTROLLER, None, "Ananya Iyer, desk 1"),
+    DemoAccount("rohit.malhotra", Role.CONTROLLER, None, "Rohit Malhotra, desk 2"),
+    DemoAccount("divya.rao", Role.CONTROLLER, None, "Divya Rao, desk 3"),
+    DemoAccount("meera.bhatt", Role.APPROVER, None, "Meera Bhatt"),
+    DemoAccount("karan.mehta", Role.APPROVER, None, "Karan Mehta"),
+    DemoAccount("farah.qureshi", Role.APPROVER, None, "Farah Qureshi"),
+    DemoAccount("imran.sheikh", Role.REPORTER, None, "Imran Sheikh, HYD station duty manager"),
+    DemoAccount("lakshmi.hegde", Role.REPORTER, None, "Lakshmi Hegde, HYD station duty manager"),
+    DemoAccount("nikhil.agarwal", Role.AUDITOR, None, "Nikhil Agarwal"),
+    DemoAccount("priya.desai", Role.ADMIN, None, "Priya Desai"),
+    DemoAccount("vikram.saxena", Role.SUPER_ADMIN, None, "Vikram Saxena"),
     DemoAccount("ops.speaker", Role.SPEAKER, None, "Ops-room speaker"),
-    DemoAccount("anjali", Role.CREW, "C-1157", "Anjali Goud, captain"),
-    DemoAccount("pooja.f", Role.CREW, "C-1167", "Pooja Fernandes, captain"),
+    DemoAccount("c1111.nair", Role.CREW, "C-1111", "A. Nair, captain"),
+    DemoAccount("c1157.reddy", Role.CREW, "C-1157", "D. Reddy, captain"),
+    DemoAccount("c1167.iyer", Role.CREW, "C-1167", "R. Iyer, captain"),
+    DemoAccount("c1191.nair", Role.CREW, "C-1191", "S. Nair, first officer"),
+    DemoAccount("c1460.krishnan", Role.CREW, "C-1460", "S. Krishnan, cabin crew"),
 )
 
 

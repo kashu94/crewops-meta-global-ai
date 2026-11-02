@@ -55,12 +55,12 @@ async def test_a_controller_can_change_the_roster_and_a_viewer_cannot(mem):
         refused = await client.call_tool("assign_crew", args)
     assert refused.is_error and "cannot use" in refused.structured_content["error"]
 
-    async with Client(build_server(mem, Caller("m.iyer", Role.CONTROLLER))) as client:
+    async with Client(build_server(mem, Caller("ananya.iyer", Role.CONTROLLER))) as client:
         tools = {t.name: t for t in (await client.list_tools()).tools}
         done = await client.call_tool("assign_crew", args)
     assert tools["assign_crew"].annotations.destructive_hint
     assert not done.is_error and done.structured_content["version"] == 2
-    assert [c.actor for c in mem.changes()] == ["m.iyer"]
+    assert [c.actor for c in mem.changes()] == ["ananya.iyer"]
 
 
 @pytest.mark.anyio
