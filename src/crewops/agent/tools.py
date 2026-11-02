@@ -137,7 +137,11 @@ class Context:
 
     def on_trip(self, trip: Trip) -> None:
         if self.caller.role is Role.CREW and self.caller.crew_id not in _on_board(trip):
-            raise Forbidden("crew members can only look up trips they fly")
+            offered = self.desk is not None and any(
+                c.trip_id == trip.trip_id for c in self.desk.offers_for(self.caller.crew_id or "")
+            )
+            if not offered:
+                raise Forbidden("crew members can only look up trips they fly, or are offered")
 
     def callouts(self) -> CalloutDesk:
         if self.desk is None:
@@ -273,6 +277,7 @@ def _callout(c: Callout) -> dict[str, Any]:
                 "name": o.name,
                 "cost_inr": o.cost,
                 "answer": o.answer or "waiting",
+                **({"remark": o.note} if o.note else {}),
             }
             for o in c.offers
         ],
@@ -576,8 +581,8 @@ class AbsenceImpact(BaseModel):
 def absence_impact(ctx: Context, args: AbsenceImpact) -> dict[str, Any]:
     if args.last_day < args.first_day:
         raise ToolError("last_day is before first_day")
-    if (args.last_day - args.first_day).days > 13:
-        raise ToolError("an absence can cover at most 14 days at a time")
+    if (args.last_day - args.first_day).days > 30:
+        raise ToolError("one absence covers up to 31 days; ask again for the rest")
     op = ctx.operation()
     gaps = absence_gaps(op, args.crew_id, args.first_day, args.last_day)
     span = (args.last_day - args.first_day).days + 1
@@ -809,7 +814,28 @@ class CalloutStatus(BaseModel):
 def callout_status(ctx: Context, args: CalloutStatus) -> dict[str, Any]:
     desk = ctx.callouts()
     if ctx.caller.role is Role.CREW:
-        return {"offers_to_me": [_callout(c) for c in desk.offers_for(ctx.caller.crew_id or "")]}
+        mine = ctx.caller.crew_id or ""
+        return {
+            "offers_to_me": [_callout(c) for c in desk.offers_for(mine)],
+            "earlier_offers": [
+                {
+                    "callout_id": c.callout_id,
+                    "trip_id": c.trip_id,
+                    "seat": str(c.rank),
+                    "offered_at": _when(o.offered_at),
+                    "answer_by": _when(o.expires_at),
+                    "outcome": o.answer,
+                    **({"answered_at": _when(o.answered_at)} if o.answered_at else {}),
+                    **({"your_remark": o.note} if o.note else {}),
+                    "seat_now": "filled by you"
+                    if c.filled_by == mine
+                    else "filled by someone else"
+                    if c.filled_by
+                    else str(c.status),
+                }
+                for c, o in desk.answered_by(mine)[:5]
+            ],
+        }
     if args.callout_id:
         return _callout(desk.get(args.callout_id))
     return {"callouts": [_callout(c) for c in desk.all()]}
@@ -818,6 +844,7 @@ def callout_status(ctx: Context, args: CalloutStatus) -> dict[str, Any]:
 class AnswerCallout(BaseModel):
     callout_id: str
     accept: bool
+    note: str = Field("", max_length=200, description="The crew member's remark, if any")
     crew_id: str | None = Field(
         None, pattern=CREW_ID, description="For a controller recording a crew member's answer"
     )
@@ -828,7 +855,7 @@ def answer_callout(ctx: Context, args: AnswerCallout) -> dict[str, Any]:
     if not crew_id:
         raise ToolError("say whose answer this is with crew_id")
     try:
-        return _callout(ctx.callouts().respond(args.callout_id, crew_id, args.accept))
+        return _callout(ctx.callouts().respond(args.callout_id, crew_id, args.accept, args.note))
     except CalloutError as err:
         raise ToolError(str(err)) from err
 

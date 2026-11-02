@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import threading
+import uuid
 from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -37,19 +38,21 @@ from crewops.ops import DESK, SUPERVISOR, CalloutDesk, StoreOutbox
 from crewops.ops.accounts import DEMO_ACCOUNTS, CognitoAccounts, StoreAccounts
 from crewops.ops.alerts import AlertAddresses
 from crewops.ops.brief import BucketImages, Images, MemoryImages, draw_card, write_brief
-from crewops.ops.desks import desk_of
+from crewops.ops.desks import DESKS, desk_of
 from crewops.ops.governance import entries
 from crewops.ops.push import Push, PushingOutbox
 from crewops.ops.reports import ReportDesk, ReportStatus
 from crewops.ops.roster_upload import MAX_BYTES as ROSTER_LIMIT
-from crewops.seed import load_dataset, read_meta
+from crewops.seed import load_dataset, read_meta, shifted
 from crewops.settings import ROOT, Settings, settings
 from crewops.store import MemoryStore, Store, open_store
 from crewops.vision import Kind, ModelReader, read_photo
+from crewops.vision.intake import Status as PhotoStatus
 
 WEB = ROOT / "web" / "out"
 SCORECARD = ROOT / "docs" / "scorecard.json"
 BRIEF_EVERY_SECONDS = 120
+RESEED_AFTER = timedelta(days=7)
 AUDIO_LIMIT = 10 * 1024 * 1024
 IMAGE_LIMIT = 8 * 1024 * 1024
 LANGUAGES = {"English", "Hindi", "Telugu", "Tamil", "Kannada", "Marathi", "Bengali"}
@@ -76,12 +79,10 @@ class Services:
     def __init__(self, config: Settings, store: Store | MemoryStore | None = None) -> None:
         self.config = config
         self.store = store or open_store(config)
-        meta = read_meta(config.seed_dir)
-        # A store seeded from older demo data is reseeded: the demo always runs on one shape.
-        if self.store.is_empty() or self.store.meta().get("data_version") != meta.get(
-            "data_version"
-        ):
-            self.store.load(load_dataset(config.seed_dir), meta)
+        self.store.live = config.live_clock
+        self._seed()
+        meta = self.store.meta()
+        self.days = {"first": meta.get("first_day"), "last": meta.get("last_day")}
         self.push = Push(self.store)
         self.outbox = PushingOutbox(StoreOutbox(self.store), self.push)
         self.desk = CalloutDesk(self.store, self.outbox, docs=self.store, four_eyes=True)
@@ -106,6 +107,29 @@ class Services:
             self.images = BucketImages(boto3.client("s3"), config.bucket)
         self._advisor: Advisor | None = None
         self._lock = threading.Lock()
+
+    def _seed(self) -> None:
+        """Load the demo operation when the store has none, an older shape of it, or (on the
+        wall clock) one that started over a week ago, so there is always a week to work in."""
+        meta = read_meta(self.config.seed_dir)
+        stale = self.store.is_empty()
+        if not stale:
+            held = self.store.meta()
+            stale = held.get("data_version") != meta.get("data_version")
+            if self.config.live_clock and not stale:
+                stale = (
+                    "shifted_days" not in held
+                    or datetime.now(UTC) - datetime.fromisoformat(held["as_of"]) > RESEED_AFTER
+                )
+        if not stale:
+            return
+        data = load_dataset(self.config.seed_dir)
+        if self.config.live_clock:
+            # The data was taken late on the evening before its first day: move it so that
+            # evening was yesterday, and the first day is today.
+            yesterday = datetime.now(IST).date() - timedelta(days=1)
+            data, meta = shifted(data, meta, (yesterday - data.as_of.astimezone(IST).date()).days)
+        self.store.load(data, meta)
 
     @property
     def advisor(self) -> Advisor:
@@ -194,6 +218,7 @@ TONES = (
     ("Sent back", "pending"),
     ("Stale", "pending"),
     ("Offer withdrawn", "pending"),
+    ("Declined", "pending"),
     ("Approved", "ok"),
     ("Filled", "ok"),
 )
@@ -292,6 +317,72 @@ def desk_notices(s: Services) -> list[Any]:
     return sorted(found, key=lambda n: n.at, reverse=True)
 
 
+def desk_name(desk_id: str) -> str:
+    found = next((d for d in DESKS if d.desk_id == desk_id), None)
+    return found.name if found else desk_id
+
+
+def waiting_lines(s: Services) -> list[str]:
+    """What waits on the desk, one sentence per thing to do, most urgent first: what the
+    speaker says when asked "what's waiting?"."""
+    lines: list[str] = []
+    escalated = {d["ref"]: d["at"] for d in s.store.docs("escalated")}
+    callouts = s.desk.all()
+    for c in callouts:
+        if str(c.status) == "needs_decision":
+            line = (
+                f"{c.rank} seat on {c.trip_id}: nobody is left to call out ({c.reason}). "
+                "A controller proposes cancelling or flying one short, and an approver decides."
+            )
+            if c.callout_id in escalated:
+                at = datetime.fromisoformat(escalated[c.callout_id]).astimezone(IST)
+                line += f" Escalated to the duty supervisor at {at:%H:%M}."
+            lines.append(line)
+    for c in callouts:
+        if str(c.status) == "awaiting_approval" and c.proposal is not None:
+            lines.append(
+                f"An approver must decide: {c.proposal.summary}, "
+                f"proposed by {c.proposal.proposed_by}."
+            )
+    plans = s.desk.plans.waiting() if s.desk.plans is not None else []
+    if plans:
+        named = "; ".join(f"{p.name} for {p.rank} on {p.trip_id}" for p in plans[:3])
+        more = f", and {len(plans) - 3} more" if len(plans) > 3 else ""
+        lines.append(
+            f"{len(plans)} roster {'change waits' if len(plans) == 1 else 'changes wait'} "
+            f"for an approver: {named}{more}."
+        )
+    reports = s.reports.all()
+    signoff = [r for r in reports if r.status is ReportStatus.RESOLVED]
+    if signoff:
+        lines.append(
+            f"{len(signoff)} resolved {'report waits' if len(signoff) == 1 else 'reports wait'} "
+            f"for an approver's sign-off: {', '.join(r.title for r in signoff[:3])}."
+        )
+    working = [r for r in reports if r.status in (ReportStatus.OPEN, ReportStatus.IN_PROGRESS)]
+    if working:
+        named = "; ".join(f"{r.title} ({r.severity}, {desk_name(r.desk_id)})" for r in working[:3])
+        more = f", and {len(working) - 3} more" if len(working) > 3 else ""
+        lines.append(
+            f"{len(working)} {'disruption is' if len(working) == 1 else 'disruptions are'} "
+            f"open: {named}{more}."
+        )
+    illegal = [i for i in scan(s.store.operation()) if i.kind == "illegal"]
+    if illegal:
+        named = "; ".join(f"{i.name} on {i.trip_id}, {i.detail.split(';')[0]}" for i in illegal[:3])
+        lines.append(
+            f"{len(illegal)} rostered crew {'member is' if len(illegal) == 1 else 'members are'} "
+            f"not legal: {named}."
+        )
+    for c in callouts:
+        if c.current is not None:
+            lines.append(
+                f"Callout running for {c.rank} on {c.trip_id}: waiting for {c.current.name} "
+                f"to answer by {c.current.expires_at.astimezone(IST):%H:%M}."
+            )
+    return lines
+
+
 def refresh_brief(s: Services, force: bool = False) -> bool:
     """Write a new shift brief when the roster or the callouts have moved, at most every two
     minutes. Returns whether one was written."""
@@ -368,6 +459,7 @@ def create_app(config: Settings | None = None, services: Services | None = None)
             "crew_id": who.crew_id,
             "desk": {"desk_id": owns.desk_id, "name": owns.name} if owns else None,
             "clock": op.now.astimezone(IST).strftime("%a %d %b %Y, %H:%M IST"),
+            "days": s.days,
             "tools": [t.name for t in s.toolbox.available(who)],
             "push": s.push.subscribed(who.user),
         }
@@ -450,8 +542,11 @@ def create_app(config: Settings | None = None, services: Services | None = None)
         image: UploadFile = File(...),
         kind: Kind = Form(...),
         tail: str | None = Form(None),
-        _who: Caller = Depends(caller),
+        keep: bool = Form(False),
+        who: Caller = Depends(caller),
     ) -> dict[str, Any]:
+        """Check a photo. With ``keep``, a photo that passes is kept as evidence for a report
+        and its ``evidence_id`` returned, to pass to report_disruption."""
         data = await image.read()
         if len(data) > IMAGE_LIMIT:
             raise HTTPException(413, "send a photo under 8 MB")
@@ -465,7 +560,44 @@ def create_app(config: Settings | None = None, services: Services | None = None)
         )
         out = asdict(result)
         out["kind"], out["status"] = str(result.kind), str(result.status)
+        if keep and result.status in (PhotoStatus.DRAFT, PhotoStatus.CONFIRM):
+            evidence_id = uuid.uuid4().hex[:12]
+            s.images.put(f"evidence/{evidence_id}", data)
+            s.store.put_doc(
+                "evidence",
+                evidence_id,
+                {
+                    "evidence_id": evidence_id,
+                    "by": who.user,
+                    "kind": str(result.kind),
+                    "status": str(result.status),
+                    "message": result.message,
+                    "confidence": result.confidence,
+                    "crew_ids": [c["crew_id"] for c in result.crew],
+                    "days": [
+                        (result.proposal or {}).get("arguments", {}).get(k)
+                        for k in ("first_day", "last_day")
+                    ],
+                    "mime": mime,
+                    "at": datetime.now(UTC).isoformat(),
+                },
+            )
+            out["evidence_id"] = evidence_id
         return out
+
+    @app.get("/api/evidence/{evidence_id}")
+    def evidence(evidence_id: str, who: Caller = Depends(caller)) -> Response:
+        """A photo kept with a report: for the desk roles, and for whoever took it."""
+        s = svc()
+        doc = s.store.get_doc("evidence", evidence_id) if evidence_id.isalnum() else None
+        if doc is None:
+            raise HTTPException(404)
+        if who.role in (Role.CREW, Role.REPORTER, Role.SPEAKER) and doc["by"] != who.user:
+            raise HTTPException(403, "only the desk and whoever took it can see this photo")
+        data = s.images.get(f"evidence/{evidence_id}")
+        if data is None:
+            raise HTTPException(404)
+        return Response(data, media_type=doc.get("mime", "image/jpeg"))
 
     @app.get("/api/log/{kind}")
     def activity_log(kind: str, limit: int = 50, who: Caller = Depends(caller)) -> dict:
@@ -573,6 +705,7 @@ def create_app(config: Settings | None = None, services: Services | None = None)
             "waiting": {
                 "plans": len(waiting),
                 "decisions": sum(1 for c in s.desk.all() if str(c.status) == "needs_decision"),
+                "proposals": sum(1 for c in s.desk.all() if str(c.status) == "awaiting_approval"),
                 "resolutions": sum(1 for r in s.reports.all() if r.status is ReportStatus.RESOLVED),
                 "disruptions": sum(
                     1
@@ -580,6 +713,7 @@ def create_app(config: Settings | None = None, services: Services | None = None)
                     if r.status in (ReportStatus.OPEN, ReportStatus.IN_PROGRESS)
                 ),
             },
+            "summary": waiting_lines(s),
             "items": [
                 {
                     "id": f"{n.ref}:{n.at.isoformat()}:{n.subject}",

@@ -2,6 +2,7 @@ import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
   ReactNode,
+  Ref,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
@@ -190,7 +191,7 @@ export function Spinner({ className }: { className?: string }) {
 
 export function Loading({ label = "Loading…" }: { label?: string }) {
   return (
-    <div className="flex items-center gap-2 py-6 text-sm text-muted">
+    <div className="flex min-h-[45vh] w-full flex-1 items-center justify-center gap-2 py-10 text-sm text-muted">
       <Spinner /> {label}
     </div>
   );
@@ -207,13 +208,15 @@ export function Empty({ icon, children }: { icon?: ReactNode; children: ReactNod
 
 export function PageHeader({ title, lede, actions, eyebrow }: { title: ReactNode; lede?: ReactNode; actions?: ReactNode; eyebrow?: ReactNode }) {
   return (
-    <header className="mb-5 flex flex-wrap items-start gap-x-6 gap-y-3">
-      <div className="min-w-0 flex-1 basis-80">
-        {eyebrow && <div className="mb-1 text-[13px] text-muted">{eyebrow}</div>}
-        <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.01em]">{title}</h1>
-        {lede && <p className="mt-1 max-w-[75ch] text-sm leading-relaxed text-muted">{lede}</p>}
+    <header className="mb-6 flex flex-col gap-3 border-b border-rule pb-5">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          {eyebrow && <div className="mb-1 text-[13px] text-muted">{eyebrow}</div>}
+          <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.015em]">{title}</h1>
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {lede && <p className="w-full text-[14.5px] leading-relaxed text-muted">{lede}</p>}
     </header>
   );
 }
@@ -306,10 +309,16 @@ export function Label({ label, hint, children, className }: { label: ReactNode; 
   );
 }
 
-export function Input({ label, hint, className, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: ReactNode; hint?: ReactNode }) {
+export function Input({
+  label,
+  hint,
+  className,
+  ref,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { label: ReactNode; hint?: ReactNode; ref?: Ref<HTMLInputElement> }) {
   return (
     <Label label={label} hint={hint} className={className}>
-      <input className={control} {...props} />
+      <input ref={ref} className={control} {...props} />
     </Label>
   );
 }

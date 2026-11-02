@@ -118,6 +118,7 @@ class CrewOpsStack(cdk.Stack):
             "CREWOPS_TABLE": table.table_name,
             "CREWOPS_BUCKET": bucket.bucket_name,
             "CREWOPS_AUTH": "cognito",
+            "CREWOPS_LIVE_CLOCK": "true",
             "COGNITO_POOL_ID": pool.user_pool_id,
             "COGNITO_CLIENT_ID": client.user_pool_client_id,
             "CREWOPS_ALERT_TOPIC_ARN": topic.topic_arn,

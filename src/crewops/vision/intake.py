@@ -1,5 +1,6 @@
 """Photos into the crew desk: sick notes, roster swaps, certificates, aircraft defects, and
-disruption notices (a departures board, a gate screen, an ATC delay message).
+disruption notices (a departures board, a gate screen, an ATC delay message), and conditions at
+the airport (fog, flooding, a closed gate).
 
 Every photo passes the same gates, and the code decides what happens, not the model:
 
@@ -55,6 +56,7 @@ class Kind(StrEnum):
     CERTIFICATE = "certificate"
     DEFECT = "defect"
     DISRUPTION = "disruption"
+    SCENE = "scene"
 
 
 class Status(StrEnum):
@@ -96,7 +98,9 @@ class CertificateForm(BaseModel):
 
 class Damage(BaseModel):
     part: str
-    kind: Literal["dent", "crack", "scratch", "hole", "leak", "burn", "missing", "other"]
+    kind: Literal[
+        "dent", "crack", "scratch", "hole", "tear", "bent", "leak", "burn", "missing", "other"
+    ]
     where: str
 
 
@@ -134,6 +138,41 @@ class DisruptionNotice(BaseModel):
     flights: list[FlightStatus]
 
 
+class SceneForm(BaseModel):
+    shows_airport: bool
+    """An airport, airfield, apron, runway, terminal or gate area."""
+    subject: str
+    """What the photo shows, in a few words."""
+    condition: Literal[
+        "fog",
+        "heavy_rain",
+        "flooding",
+        "snow",
+        "storm",
+        "closed_gate",
+        "barrier",
+        "closed_terminal",
+        "none",
+        "other",
+    ]
+    view: Clarity
+    detail: str
+    """One short sentence on what is visible, such as "apron under standing water"."""
+
+
+SCENE_WORDS = {
+    "fog": "fog",
+    "heavy_rain": "heavy rain",
+    "flooding": "flooding",
+    "snow": "snow",
+    "storm": "a storm",
+    "closed_gate": "a closed gate",
+    "barrier": "a barrier across the way",
+    "closed_terminal": "a closed terminal",
+    "other": "a disruption",
+}
+
+
 PROMPTS: dict[Kind, tuple[type[BaseModel], str]] = {
     Kind.SICK_NOTE: (
         SickNote,
@@ -161,6 +200,14 @@ PROMPTS: dict[Kind, tuple[type[BaseModel], str]] = {
         "This should show flight disruptions: a departures board, a gate screen, an ATC delay "
         "message or a printed notice. List only flights shown with a status; copy flight "
         "numbers and times exactly. Times are local (IST).",
+    ),
+    Kind.SCENE: (
+        SceneForm,
+        "This should show conditions at an airport that hold flights back: fog, heavy rain, "
+        "flooding, snow, a storm, or a gate, jet bridge or terminal that is closed or blocked. "
+        "A no-entry or closed sign, tape, a chain or a barrier across a gate counts as closed "
+        "or blocked. view is about the photo, not the weather: a sharp photo of thick fog is "
+        "clear. Describe only what is visible. If nothing is wrong in the photo, say none.",
     ),
 }
 
@@ -227,7 +274,15 @@ class Intake:
     """A tool call a person can make with one click; never made by the photo itself."""
 
 
-def measure(image: bytes) -> Quality:
+PAPER = frozenset({Kind.SICK_NOTE, Kind.CERTIFICATE, Kind.ROSTER_SWAP})
+"""Documents: white paper is bright by nature, so brightness alone is never glare."""
+
+
+SCREENS = frozenset({Kind.DISRUPTION})
+"""Departures boards and gate screens: lit text on a dark ground, never too dark to read."""
+
+
+def measure(image: bytes, paper: bool = False, screen: bool = False) -> Quality:
     try:
         picture = Image.open(io.BytesIO(image))
         picture.load()
@@ -239,9 +294,9 @@ def measure(image: bytes) -> Quality:
     sharpness = ImageStat.Stat(grey.filter(ImageFilter.FIND_EDGES)).var[0]
     brightness = ImageStat.Stat(grey).mean[0]
     problems = []
-    if brightness < MIN_BRIGHTNESS:
+    if brightness < MIN_BRIGHTNESS and not screen:
         problems.append("too dark: add light or use the torch")
-    elif brightness > MAX_BRIGHTNESS:
+    elif brightness > MAX_BRIGHTNESS and not paper:
         problems.append("washed out: step out of direct glare")
     if sharpness < MIN_SHARPNESS:
         problems.append("blurred: hold the phone still and let it focus")
@@ -285,7 +340,7 @@ def read_photo(
     if len(image) > MAX_BYTES:
         return Intake(kind, Status.REJECTED, "That file is too large: send a photo under 8 MB.")
     try:
-        quality = measure(image)
+        quality = measure(image, paper=kind in PAPER, screen=kind in SCREENS)
     except ValueError:
         return Intake(kind, Status.REJECTED, "That is not a photo this service can read.")
     if quality.problems:
@@ -308,6 +363,8 @@ def read_photo(
             return _certificate(op, form, result)
         case Kind.DISRUPTION:
             return _disruption(op, form, result)
+        case Kind.SCENE:
+            return _scene(form, result)
         case _:
             return _defect(op, form, result, image, mime, locator, tail)
 
@@ -482,14 +539,43 @@ def _defect(
         result.confidence = "low"
     first = form.damage[0]
     on = tail or seen or "the aircraft"
+    what = "damage" if first.kind == "other" else first.kind
     result.message = (
-        f"Draft defect report for {on}: {first.kind} on the {first.part} ({first.where}). "
+        f"Draft defect report for {on}: {what} on the {first.part} ({first.where}). "
         f"Confidence {result.confidence}. Needs engineer confirmation before anything changes."
     )
     if result.confidence == "low":
         result.message += (
             " The damage could not be located in the photo: a closer photo would help."
         )
+    return result
+
+
+def _scene(form: SceneForm, result: Intake) -> Intake:
+    if not form.shows_airport:
+        result.status = Status.REJECTED
+        result.message = (
+            f"This shows {form.subject or 'something else'}, not an airport. Please photograph "
+            "the conditions, gate or area affected."
+        )
+        return result
+    if form.view == "unclear":
+        result.status = Status.RESHOOT
+        result.message = "The photo does not show the conditions clearly. Please take another."
+        return result
+    result.signals = {"picture_quality": "good", "model_view": form.view}
+    if form.condition == "none":
+        result.confidence = "low"
+        result.message = (
+            "The photo shows the airport but nothing visibly wrong. It is kept with the report; "
+            "the desk will confirm the closure another way."
+        )
+        return result
+    result.confidence = "high" if form.view == "clear" else "medium"
+    result.message = (
+        f"Shows {SCENE_WORDS[form.condition]}: {form.detail.rstrip('.')}. "
+        f"Confidence {result.confidence}."
+    )
     return result
 
 

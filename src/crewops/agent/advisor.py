@@ -113,6 +113,11 @@ How to answer:
   more than one trip from separate results.
 - Never say the roster was changed unless assign_crew returned a new version, or a callout
   shows filled. Never say anyone accepted a callout unless callout_status says so.
+- When the caller asks about themselves (who they are, their role, what they can do or
+  should do now), call about_me and answer for their role: their name and role, what the
+  role does, and the first things waiting for them.
+- When crew ask about callouts, say what callout_status shows: an open offer and its answer
+  time, or an earlier offer and what became of it (answered, or moved on when time ran out).
 - When someone says they cannot fly, record it with report_unavailable first, for the dates
   they gave, so they are never offered as cover elsewhere.
 - To arrange cover with the crew, start a callout. If nobody accepts, it waits for the desk:
@@ -226,7 +231,7 @@ class Advisor:
             answer.text = self._plan(messages, tools, names, route.effort, ctx, answer)
             self._check(messages, route.effort, answer)
         except ModelError as err:
-            answer.text = f"The planning model is unavailable right now ({err})."
+            answer.text = f"I could not reach the model just now ({err}). Please ask again."
             answer.problems.append(str(err))
             answer.verified = False
         return answer

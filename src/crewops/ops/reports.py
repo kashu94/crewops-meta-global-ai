@@ -372,6 +372,18 @@ class ReportDesk:
             return report
 
 
+def evidence_level(details: dict[str, Any]) -> dict[str, Any]:
+    """How far a report has been checked against a photo, for the lists and the desk."""
+    photos = details.get("evidence") or []
+    if not photos:
+        return {"level": "none", "label": "No photo"}
+    rank = {"high": 3, "medium": 2, "low": 1}
+    best = max((p.get("confidence") or "" for p in photos), key=lambda c: rank.get(c, 2))
+    if best in rank:
+        return {"level": best, "label": f"Photo checked, {best} confidence", "photos": len(photos)}
+    return {"level": "read", "label": "Photo checked", "photos": len(photos)}
+
+
 def summary(report: Report) -> dict[str, Any]:
     owner = desk(report.desk_id)
     return {
@@ -392,4 +404,5 @@ def summary(report: Report) -> dict[str, Any]:
         "severity": {"level": report.severity, "reasons": report.severity_reasons},
         "crew_ids": report.crew_ids,
         "stations": report.stations,
+        "evidence": evidence_level(report.details),
     }

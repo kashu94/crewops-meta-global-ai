@@ -71,7 +71,7 @@ def test_each_role_sees_only_its_tools(box):
         "reassign_disruption",
     }
     assert names[Role.SUPER_ADMIN] == names[Role.ADMIN]
-    assert names[Role.SPEAKER] == {"my_queue"}
+    assert names[Role.SPEAKER] == {"my_queue", "about_me"}
     assert names[Role.REPORTER] == {
         "search_crew",
         "find_trips",
@@ -84,6 +84,7 @@ def test_each_role_sees_only_its_tools(box):
         "show_disruption",
         "contacts",
         "my_queue",
+        "about_me",
     }
     assert names[Role.CREW] == {
         "find_trips",
@@ -99,6 +100,7 @@ def test_each_role_sees_only_its_tools(box):
         "show_disruption",
         "crew_risk",
         "my_queue",
+        "about_me",
     }
 
 

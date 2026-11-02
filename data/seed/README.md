@@ -1,7 +1,10 @@
 # Demo operation
 
-Two weeks (30 October to 12 November 2026) of three fictional regional airlines flying out of
-Hyderabad:
+Two weeks of three fictional regional airlines flying out of Hyderabad. The files hold 30
+October to 12 November 2026. Deployed, the operation runs on the wall clock
+(`CREWOPS_LIVE_CLOCK`): the store loads the same two weeks moved whole days later so that they
+start today, and reloads a week later. Every rule counts calendar days, so moving whole days
+changes no answer:
 
 | Airline | Code | Fleet |
 |---|---|---|
@@ -27,5 +30,8 @@ The files are written by `uv run python -m crewops.seed.generate`, which is dete
 | `rates.json` | What each way of covering a seat costs, in rupees |
 | `meta.json` | When the histories were taken, the date range, problems planted on purpose, and the data version (a deployed store reloads when it changes) |
 
-Every rostered seat is legal except the ones listed under `known_issues` in `meta.json`.
+Every rostered seat is legal except the ones listed under `known_issues` in `meta.json`: a
+captain whose medical runs out two days before a trip they are rostered on. One other
+certificate runs out the week after, and nobody has a high fatigue pattern, so the watch starts
+quiet and the disruptions are the ones you report.
 All names, flight numbers and registrations are made up.

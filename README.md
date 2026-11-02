@@ -112,7 +112,8 @@ Copy `.env.example` to `.env` and fill in `MODEL_API_KEY` to use the hosted mode
 The watch (`crewops.engine.watch`) re-judges every rostered crew member on every trip of the
 next seven days and reports what nobody has raised yet, most serious first: someone who would
 break a rule (with the cheapest legal cover already worked out), high fatigue, and
-certificates running out. On the demo data it finds the lapsed medical on T-1018 by itself.
+certificates running out. On the demo data it finds the lapsed medical on T-1018 by itself,
+and one other certificate running out the week after.
 Each issue keeps the same id on every run, so a schedule can alert once and stay quiet.
 
 ## Fatigue
@@ -273,7 +274,7 @@ uv run python -m crewops.models.check
 
 ## Tools and roles
 
-The models never touch the data directly. They call forty-nine typed tools (`crewops.agent`),
+The models never touch the data directly. They call fifty typed tools (`crewops.agent`),
 each a thin wrapper over the rules engine or the database:
 
 | Tool | Returns |
@@ -418,9 +419,26 @@ be), `reshoot` (with the reason), `confirm` (a person or aircraft that does not 
 `draft`. A draft is a proposal a person confirms with one click; nothing changes because of a
 photo.
 
+A disruption report carries its photo with it. The report form asks for the one that backs up
+its kind, checks it the moment it is added and keeps it, so the desk sees what the reporter saw
+and how far it was checked:
+
+| Report | Photo | Needed |
+|---|---|---|
+| Crew can't fly | Sick note or medical report | optional; checked against the person and the dates reported |
+| Certificate lapse | The certificate | optional; checked against the holder and the date on file |
+| Delay, gate change | Departures board or gate screen | optional |
+| Aircraft fault | The fault | required in the console; the agent can file without one, marked for maintenance to confirm |
+| Station closure, gate closure | The conditions: fog, flooding, snow, a closed gate | optional |
+
+A photo never changes how severe a report is: severity comes from what the disruption does to
+the flights and crew. A photo says how far the report is confirmed, shown as a badge on every
+list (photo, with its confidence, or no photo).
+
 | Photo | What it becomes |
 |---|---|
 | Sick note | A proposed unavailability report for the named crew member and dates |
+| Conditions at the airport | What the photo shows (fog, flooding, a closed gate), or that nothing visible is wrong |
 | Departures board or delay notice | Each delayed flight matched to its trip, with a delay-impact check to run |
 | Aircraft defect | A draft defect report needing engineer confirmation, with SAM 3.1's box on the damage and a high, medium or low confidence built from picture quality, the model's view, whether SAM found the damage and whether the tail matches |
 | Roster swap, certificate | Checked against the roster and the certificates on file |
@@ -450,7 +468,9 @@ deadlines, watch alerts and escalations by email through SNS, the shift brief), 
 Cognito with a group per role and the demo accounts: `m.iyer`, `s.reddy` and `d.rao`
 (controllers, desks 1 to 3), `a.nair` (approver), `ops.hyd` (reporter), `v.shah` (auditor),
 `k.menon` (admin), `r.kapoor` (super admin), `ops.speaker` (speaker), `anjali` and `pooja.f`
-(crew). A store seeded from older demo data is reseeded when the data version changes. It is
+(crew). A store seeded from older demo data is reseeded when the data version changes, and on
+the wall clock it is moved to start today, and again a week later. Photos kept with reports go
+to the same S3 bucket and are served only to the desk roles and whoever took them. It is
 bootstrapped with its own toolkit stack (`CrewOpsMetaToolkit`, qualifier
 `crewmeta`), so it shares nothing with other CDK projects in the account. No Docker is needed:
 the bundle is built from Linux wheels.

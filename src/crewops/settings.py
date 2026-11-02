@@ -65,6 +65,9 @@ class Settings:
     board_art: bool
     """Draw artwork for the shift brief with Muse Image (off: the board shows text only)."""
     seed_dir: Path
+    live_clock: bool
+    """Run the operation on the wall clock, with the demo dates moved to start today. Off, it
+    stays at the moment the demo data was taken (tests, the scorecard)."""
 
     @property
     def has_meta_api(self) -> bool:
@@ -119,6 +122,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         daily_asks=int(get("CREWOPS_DAILY_ASKS", "300")),
         board_art=get("CREWOPS_BOARD_ART", "false").lower() in ("1", "true", "yes"),
         seed_dir=Path(get("CREWOPS_SEED_DIR", str(ROOT / "data" / "seed"))),
+        live_clock=get("CREWOPS_LIVE_CLOCK", "false").lower() in ("1", "true", "yes"),
     )
 
 

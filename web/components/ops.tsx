@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Gauge, Inbox, Users } from "lucide-react";
+import { Camera, CameraOff, ChevronDown, Gauge, Inbox, Users } from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
@@ -324,6 +324,19 @@ export function NoticeList({ notices, empty = "No messages yet." }: { notices: N
 
 // -- disruption reports ----------------------------------------------------------------------
 
+const EVIDENCE_TONE = { high: "ok", read: "ok", medium: "pending", low: "critical", none: "neutral" } as const;
+
+/** How far a report is backed by a photo. */
+export function EvidenceBadge({ evidence }: { evidence?: ReportSummary["evidence"] }) {
+  if (!evidence) return null;
+  return (
+    <Pill tone={EVIDENCE_TONE[evidence.level] ?? "neutral"} title={evidence.label}>
+      {evidence.level === "none" ? <CameraOff size={11} /> : <Camera size={11} />}
+      {evidence.level === "none" ? "no photo" : evidence.level === "read" ? "photo" : `photo · ${evidence.level}`}
+    </Pill>
+  );
+}
+
 export function ReportRows({ reports, empty = "No disruption reports here." }: { reports: ReportSummary[]; empty?: ReactNode }) {
   const { me } = useSession();
   if (!reports.length) return <Empty icon={<Inbox size={20} />}>{empty}</Empty>;
@@ -350,6 +363,7 @@ export function ReportRows({ reports, empty = "No disruption reports here." }: {
             <span className="flex flex-wrap items-center gap-1.5">
               {(r.seats_open ?? 0) > 0 && <Pill tone="critical">{plural(r.seats_open ?? 0, "seat")} open</Pill>}
               {(r.plans_waiting ?? 0) > 0 && <Pill tone="pending">{plural(r.plans_waiting ?? 0, "plan")} waiting</Pill>}
+              <EvidenceBadge evidence={r.evidence} />
               <SeverityBadge severity={r.severity} />
               <StatusPill value={r.status} />
             </span>

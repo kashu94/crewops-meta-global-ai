@@ -250,3 +250,43 @@ def test_an_absence_already_recorded_is_not_recorded_twice(box, ctx, mem):
     report = box.call("report_disruption", sick(CAPTAIN, CABIN), ctx(IYER))
     assert sorted(u.crew_id for u in mem.unavailability()) == sorted([CAPTAIN, CABIN])
     assert report["crew_ids"] == [CAPTAIN, CABIN]
+
+
+def test_about_me_answers_for_each_role(box, ctx):
+    box.call("report_disruption", sick(CAPTAIN), ctx(STATION))
+    iyer = box.call("about_me", {}, ctx(IYER))
+    assert (iyer["name"], iyer["role_title"], iyer["desk"]["desk_id"]) == (
+        "Meera Iyer",
+        "Crew controller",
+        "desk-1",
+    )
+    assert iyer["waiting_on_you"] == 1 and iyer["first_things"][0].startswith("Sick:")
+    anjali = box.call("about_me", {}, ctx(ANJALI))
+    assert (anjali["name"], anjali["crew_id"], anjali["rank"]) == (
+        "Anjali Goud",
+        "C-1157",
+        "Captain",
+    )
+    assert "accept or decline a callout" in " ".join(anjali["you_can"])
+    menon = box.call("about_me", {}, ctx(MENON))
+    assert menon["role_title"] == "Administrator" and "relax a limit" in menon["you_cannot"][0]
+
+
+def test_crew_answer_a_callout_with_a_remark_and_see_what_became_of_it(box, ctx, outbox):
+    started = box.call("start_callout", {"trip_id": TRIP, "replace_crew_id": CAPTAIN}, ctx(IYER))
+    assert started["waiting_for"] == "C-1157"
+    assert box.call("trip_details", {"trip_id": TRIP}, ctx(ANJALI))["trip_id"] == TRIP
+    mine = box.call("callout_status", {}, ctx(ANJALI))
+    assert [c["callout_id"] for c in mine["offers_to_me"]] == [started["callout_id"]]
+    assert "by " in outbox.sent("C-1157")[-1].body and "IST" in outbox.sent("C-1157")[-1].body
+
+    answer = {"callout_id": started["callout_id"], "accept": False, "note": "family wedding"}
+    box.call("answer_callout", answer, ctx(ANJALI))
+    after = box.call("callout_status", {}, ctx(ANJALI))
+    assert after["offers_to_me"] == []
+    [earlier] = after["earlier_offers"]
+    assert (earlier["outcome"], earlier["your_remark"]) == ("declined", "family wedding")
+    declined = outbox.sent(DESK)[-1]
+    assert declined.subject.startswith("Declined:") and "family wedding" in declined.body
+    desk_view = box.call("callout_status", {"callout_id": started["callout_id"]}, ctx(IYER))
+    assert desk_view["asked"][0]["remark"] == "family wedding"

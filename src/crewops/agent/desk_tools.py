@@ -67,7 +67,8 @@ from crewops.ops.roster_upload import upload
 from crewops.ops.teams import ALERT_GROUPS, TEAMS, Team, contacts
 from crewops.settings import ROOT
 
-MAX_ABSENCE_DAYS = 14
+MAX_ABSENCE_DAYS = 31
+"""As long as one absence record may run; days past the published roster need no cover yet."""
 OPERATIONAL_FILERS = frozenset({Role.REPORTER, Role.CONTROLLER, Role.APPROVER})
 APPROVE_ROLES = frozenset({Role.APPROVER})
 
@@ -111,6 +112,11 @@ class FileReport(BaseModel):
     leg_id: str | None = None
     gate: str | None = Field(None, max_length=8)
     note: str = Field("", max_length=500)
+    evidence_ids: list[str] = Field(
+        default_factory=list,
+        max_length=4,
+        description="Photos already checked and kept (POST /api/intake with keep), by id",
+    )
 
     @model_validator(mode="after")
     def _needs(self) -> FileReport:
@@ -133,6 +139,59 @@ class FileReport(BaseModel):
         if len(set(self.crew_ids)) != len(self.crew_ids):
             raise ValueError("a crew member is listed twice")
         return self
+
+
+PHOTO_FOR: dict[Kind, str] = {
+    Kind.CREW_UNAVAILABLE: "sick_note",
+    Kind.CERTIFICATION_LAPSE: "certificate",
+    Kind.FLIGHT_DELAY: "disruption",
+    Kind.GATE_CHANGE: "disruption",
+    Kind.AIRCRAFT_TECHNICAL: "defect",
+    Kind.STATION_DISRUPTION: "scene",
+    Kind.GATE_CLOSURE: "scene",
+}
+"""The photo that backs up each kind of report: a sick note, the certificate, the departures
+board, the damage, the conditions. A photo never changes how severe a report is, which comes
+from what it does to the flights; it says how far the report has been checked."""
+
+
+def _evidence(ctx: Context, args: FileReport) -> list[dict[str, Any]]:
+    found = []
+    for evidence_id in args.evidence_ids:
+        doc = ctx.store.get_doc("evidence", evidence_id) if evidence_id.isalnum() else None  # type: ignore[attr-defined]
+        if doc is None or doc["by"] != ctx.caller.user:
+            raise ToolError(f"no photo {evidence_id} of yours to attach")
+        item = {k: doc[k] for k in ("evidence_id", "kind", "message", "confidence", "at")}
+        # A note's own next step ("confirm to record them") is the report itself here.
+        item["message"] = item["message"].replace(" Confirm to record them as unavailable.", "")
+        if check := _photo_matches(args, doc):
+            item["check"] = check
+        found.append(item)
+    return found
+
+
+def _photo_matches(args: FileReport, doc: dict[str, Any]) -> str | None:
+    """Whether a note or certificate names someone on the report, for the dates reported: a
+    photo that does not match is kept, and the desk is told why it does not."""
+    named = set(doc.get("crew_ids") or [])
+    if not named or not args.crew_ids:
+        return None
+    if not named & set(args.crew_ids):
+        return f"The photo names {', '.join(sorted(named))}, who is not on this report."
+    first, last = (doc.get("days") or [None, None])[:2]
+    if first and args.first_day and args.kind is Kind.CREW_UNAVAILABLE:
+        shown = (date.fromisoformat(first), date.fromisoformat(last or first))
+        wanted = (args.first_day, args.last_day or args.first_day)
+        if shown[1] < wanted[0] or shown[0] > wanted[1]:
+            return (
+                f"The photo covers {_days(*shown)}, not the {_days(*wanted)} reported: "
+                "check the dates with the crew member."
+            )
+        if shown[0] > wanted[0] or shown[1] < wanted[1]:
+            return f"The photo covers {_days(*shown)}, part of the {_days(*wanted)} reported."
+    if first and args.kind is Kind.CREW_UNAVAILABLE:
+        return "The photo matches the person and the dates reported."
+    return "The photo names the person reported."
 
 
 def _who_may_file(ctx: Context, args: FileReport) -> list[str]:
@@ -167,7 +226,9 @@ def _span(op: Operation, args: FileReport) -> tuple[date, date]:
     if last < first:
         raise ToolError("last_day is before first_day")
     if (last - first).days >= MAX_ABSENCE_DAYS:
-        raise ToolError(f"report at most {MAX_ABSENCE_DAYS} days at a time")
+        raise ToolError(
+            f"one report covers up to {MAX_ABSENCE_DAYS} days; file a second report for the rest"
+        )
     return first, last
 
 
@@ -357,6 +418,10 @@ def report_disruption(ctx: Context, args: FileReport) -> dict[str, Any]:
     op = ctx.operation()
     by = ctx.caller.user
     details: dict[str, Any] = {"note": args.note} if args.note else {}
+    if args.evidence_ids:
+        details["evidence"] = _evidence(ctx, args)
+    elif args.kind is Kind.AIRCRAFT_TECHNICAL:
+        details["evidence_note"] = "No photo: maintenance confirms the fault on the aircraft."
     unavailability: list[str] = []
     stations: list[str] = []
 
@@ -923,6 +988,138 @@ def my_queue(ctx: Context, args: MyQueue) -> dict[str, Any]:
     return {"items": items[: args.limit], "count": len(items)}
 
 
+# -- who the caller is -----------------------------------------------------------------------
+
+GUIDE: dict[Role, tuple[str, str, tuple[str, ...], tuple[str, ...]]] = {
+    Role.CREW: (
+        "Crew member",
+        "You fly the trips on your roster. Crew control keeps you legal and calls you out when "
+        "a seat needs covering.",
+        (
+            "see your roster, duty hours, certificates and risk score",
+            "accept or decline a callout offered to you, with a remark",
+            "report that you cannot fly, and withdraw it if you can",
+        ),
+        ("see anyone else's roster or record", "change a roster"),
+    ),
+    Role.REPORTER: (
+        "Station reporter",
+        "You are the station duty manager: you file disruptions once and follow them to the end.",
+        (
+            "file sick calls, delays, gate closures and changes, station closures, aircraft "
+            "faults and certificate lapses, with photos",
+            "follow the reports you filed",
+            "look up flights, trips and gates",
+        ),
+        ("find cover or change a roster", "approve anything"),
+    ),
+    Role.CONTROLLER: (
+        "Crew controller",
+        "You own a desk: you work the disruption reports assigned to it, find legal cover, run "
+        "callouts and propose roster changes.",
+        (
+            "find cover and submit plans for the reports on your desk",
+            "start callouts and propose cancelling or flying one short when nobody accepts",
+            "file disruptions and report crew unavailable",
+            "resolve a report once its seats are covered",
+        ),
+        ("approve your own plans: an approver does", "work a report on another desk"),
+    ),
+    Role.APPROVER: (
+        "Approver",
+        "You are the second pair of eyes: no roster change happens until you approve it.",
+        (
+            "approve, reject or send back roster plans",
+            "approve or reject a cancellation or flying one short",
+            "confirm or return a controller's resolution",
+            "move a report to another desk",
+        ),
+        ("propose changes yourself",),
+    ),
+    Role.AUDITOR: (
+        "Auditor",
+        "You read everything, the activity and security logs included, and change nothing.",
+        ("read every report, plan, callout and log",),
+        ("change anything",),
+    ),
+    Role.ADMIN: (
+        "Administrator",
+        "You look after the team and the system.",
+        (
+            "create accounts, disable them and reset passwords",
+            "tighten duty limits beyond the regulator's",
+            "upload rosters, book planned leave and set alert email addresses",
+            "revoke a report filed in error",
+        ),
+        ("relax a limit: only a super admin can", "manage other admins"),
+    ),
+    Role.SUPER_ADMIN: (
+        "Super admin",
+        "You do everything an administrator does, and look after the administrators too.",
+        (
+            "everything an administrator can",
+            "manage administrator accounts",
+            "relax a duty limit back towards the regulator's figure, never past it",
+        ),
+        ("relax a limit past the regulator's figure",),
+    ),
+    Role.SPEAKER: (
+        "Ops-room speaker",
+        "This account is the ops-room speaker: it hears what waits for the desk.",
+        ("hear what is waiting",),
+        ("change anything",),
+    ),
+}
+
+
+class AboutMe(BaseModel):
+    detail: bool = Field(True, description="Include what waits for the caller now")
+
+
+def about_me(ctx: Context, args: AboutMe) -> dict[str, Any]:
+    """Who the caller is, what their role does and what waits for them now."""
+    from crewops.ops.accounts import DEMO_ACCOUNTS
+    from crewops.ops.desks import desk_of
+
+    who = ctx.caller
+    title, does, can, cannot = GUIDE[who.role]
+    out: dict[str, Any] = {
+        "user": who.user,
+        "role": str(who.role),
+        "role_title": title,
+        "what_you_do": does,
+        "you_can": list(can),
+        "you_cannot": list(cannot),
+    }
+    demo = next((a for a in DEMO_ACCOUNTS if a.user == who.user), None)
+    if demo is not None:
+        out["name"] = demo.label.split(",")[0]
+    if (desk := desk_of(who.user)) is not None:
+        out["desk"] = {"desk_id": desk.desk_id, "name": desk.name}
+    op = ctx.operation()
+    out["now"] = _when(op.now)
+    if who.role is Role.CREW and who.crew_id:
+        state = op.state(who.crew_id)
+        out.update(
+            name=state.name,
+            crew_id=who.crew_id,
+            rank=str(state.rank),
+            airline=state.airline,
+            base=state.base,
+        )
+        if state.rest_until is not None and state.rest_until > op.now:
+            out["resting_until"] = _when(state.rest_until)
+        ahead = [d for d in state.duties if d.release > op.now]
+        if ahead:
+            out["next_duty"] = {"trip_id": ahead[0].trip_id, "reports": _when(ahead[0].report)}
+    if args.detail:
+        queue = my_queue(ctx, MyQueue(limit=5))
+        out["waiting_on_you"] = queue["count"] or "nothing right now"
+        if queue["items"]:
+            out["first_things"] = [f"{i['title']} ({i['detail']})" for i in queue["items"]]
+    return out
+
+
 # -- accounts, alerts, roster ----------------------------------------------------------------
 
 
@@ -1260,4 +1457,17 @@ MORE_TOOLS = (
     ),
 )
 
-ALL_TOOLS = TOOLS + MORE_TOOLS
+ALL_TOOLS = (
+    TOOLS
+    + MORE_TOOLS
+    + (
+        Tool(
+            "about_me",
+            "Who the caller is: name, role, desk or crew id, what their role does and may not do, "
+            "and what waits for them now. For 'who am I', 'what is my role', 'what should I do'.",
+            AboutMe,
+            about_me,
+            frozenset(Role),
+        ),
+    )
+)

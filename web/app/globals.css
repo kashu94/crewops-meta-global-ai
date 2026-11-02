@@ -107,6 +107,14 @@ select {
 details > summary {
   list-style: none;
 }
+
+/* A box that scrolls when it must, without a scrollbar of its own (the sidebar). */
+.quiet-scroll {
+  scrollbar-width: none;
+}
+.quiet-scroll::-webkit-scrollbar {
+  display: none;
+}
 details > summary::-webkit-details-marker {
   display: none;
 }
@@ -119,52 +127,86 @@ details > summary::-webkit-details-marker {
   background: repeating-linear-gradient(135deg, var(--critical-soft) 0 6px, var(--surface) 6px 9px);
 }
 
-/* -- sign-in artwork: a night route map of the network ---------------------------------- */
-@keyframes route-flow {
-  to {
-    stroke-dashoffset: -40;
-  }
-}
-@keyframes blip {
+/* -- sign-in artwork: short final at night ------------------------------------------- */
+@keyframes runway-drift {
   0%,
   100% {
-    opacity: 0.35;
-    transform: scale(1);
+    transform: translate3d(0, 0, 0) scale(1.02);
   }
   50% {
-    opacity: 1;
-    transform: scale(1.35);
+    transform: translate3d(-1.2%, 0.8%, 0) scale(1.05);
   }
 }
-@keyframes sweep {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes haze {
+@keyframes sky-glow {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
   }
   50% {
-    transform: translate3d(4%, -3%, 0) scale(1.08);
+    transform: translate3d(5%, -4%, 0) scale(1.12);
+    opacity: 1;
   }
 }
-.route-flow {
-  stroke-dasharray: 2 8;
-  animation: route-flow 2.6s linear infinite;
+@keyframes strobe {
+  0%,
+  8% {
+    opacity: 0.95;
+  }
+  14%,
+  100% {
+    opacity: 0;
+  }
 }
-.station-blip {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: blip 3.4s ease-in-out infinite;
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
-.radar-sweep {
-  transform-origin: 50% 50%;
-  animation: sweep 14s linear infinite;
+@keyframes bokeh {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate3d(-28px, 18px, 0);
+    opacity: 1;
+  }
 }
-.haze {
-  animation: haze 30s ease-in-out infinite;
+.runway-drift {
+  animation: runway-drift 40s ease-in-out infinite;
+}
+.sky-glow {
+  animation: sky-glow 32s ease-in-out infinite;
+}
+.strobe {
+  opacity: 0;
+  animation: strobe 1.6s linear infinite;
+}
+.city-twinkle {
+  animation: twinkle 4.2s ease-in-out infinite;
+}
+.bokeh {
+  animation-name: bokeh;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .runway-drift,
+  .sky-glow,
+  .city-twinkle,
+  .bokeh {
+    animation: none;
+  }
+  .strobe {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 
 /* -- the ops-room speaker -------------------------------------------------------------- */

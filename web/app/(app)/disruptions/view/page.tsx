@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Camera,
   ArrowLeft,
   Building2,
   CheckCheck,
@@ -22,12 +23,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
-import { CalloutList, DelayView, GateChangeView, GatePlanView, HoldView, PlanList, RiskBadge } from "@/components/ops";
+import { CalloutList, DelayView, EvidenceBadge, GateChangeView, GatePlanView, HoldView, PlanList, RiskBadge } from "@/components/ops";
+import { EvidencePhoto } from "@/components/photo-intake";
 import { useSession } from "@/components/session";
 import { Button, cx, Dl, Empty, Kpi, Kpis, Loading, Mono, Notice, PageHeader, Panel, Pill, Select, SeverityBadge, StatusPill, Table, TextArea } from "@/components/ui";
 import { tool } from "@/lib/api";
 import { hhmm, inr, kindLabel, plural, short, words } from "@/lib/format";
-import type { CrewAnalysis, DelayResult, DeskLoad, GateChangeResult, GatePlan, HoldResult, Report } from "@/lib/types";
+import type { CrewAnalysis, DelayResult, DeskLoad, EvidenceItem, GateChangeResult, GatePlan, HoldResult, Report } from "@/lib/types";
 import { useAction, useLoad } from "@/lib/use-load";
 
 const STEPS = [
@@ -365,7 +367,11 @@ export default function DisruptionView() {
       </div>
     );
   const yours = me.desk && r.desk?.desk_id === me.desk.desk_id;
-  const details = Object.entries(r.details ?? {}).filter(([, v]) => v !== null && v !== "" && !(Array.isArray(v) && !v.length));
+  const details = Object.entries(r.details ?? {}).filter(
+    ([k, v]) => !["evidence", "evidence_note"].includes(k) && v !== null && v !== "" && !(Array.isArray(v) && !v.length),
+  );
+  const photos = (r.details?.evidence as EvidenceItem[] | undefined) ?? [];
+  const photoNote = r.details?.evidence_note as string | undefined;
 
   return (
     <div className="animate-rise">
@@ -457,6 +463,28 @@ export default function DisruptionView() {
         <aside className="flex min-w-0 flex-col gap-5">
           <Panel title="Actions" icon={<ClipboardList size={15} />}>
             <Actions report={r} />
+          </Panel>
+          <Panel title="Evidence" icon={<Camera size={15} />} action={<EvidenceBadge evidence={r.evidence} />}>
+            {photos.length === 0 ? (
+              <p className="text-sm text-muted">{photoNote ?? "Filed without a photo. The desk confirms it with the reporter or the team on the ground."}</p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {photos.map((p) => (
+                  <li key={p.evidence_id} className="flex flex-col gap-2">
+                    <EvidencePhoto id={p.evidence_id} alt={p.message} />
+                    <p className="text-[13px] leading-relaxed">{p.message}</p>
+                    {p.check && (
+                      <Notice tone={/^The photo (matches|names the person)/.test(p.check) ? "ok" : "pending"} className="text-[13px]">
+                        {p.check}
+                      </Notice>
+                    )}
+                    <p className="text-xs text-faint">
+                      {words(p.kind)} · checked when it was added{p.confidence ? ` · ${p.confidence} confidence` : ""}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Panel>
           {details.length > 0 && (
             <Panel title="As filed" icon={<ChevronDown size={15} />}>

@@ -113,7 +113,10 @@ def template(f: dict[str, Any]) -> list[str]:
     if f["fatigue"]:
         lines.append(f"{len(f['fatigue'])} crew at high fatigue in the next 7 days.")
     if f["certificates"]:
-        lines.append(f"{len(f['certificates'])} certificates run out in the next 14 days.")
+        n = len(f["certificates"])
+        lines.append(
+            f"{n} {'certificate runs' if n == 1 else 'certificates run'} out in the next 14 days."
+        )
     return lines[:3] or ["No open problems in the next 7 days."]
 
 

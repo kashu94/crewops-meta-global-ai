@@ -5,7 +5,7 @@ from datetime import timedelta
 
 import httpx
 import pytest
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
 from crewops.engine import build_operation
 from crewops.engine.clock import IST
@@ -360,3 +360,38 @@ def test_a_notice_that_is_not_one_or_shows_none_of_our_flights(op):
     none = board({"flight_no": "AI101", "status": "delayed", "new_time": "", "delay_minutes": 30})
     result = read_photo(op, Kind.DISRUPTION, SHARP, "image/jpeg", Reader(none))
     assert result.status is Status.CONFIRM and "AI101" in result.message
+
+
+def test_a_photo_of_the_conditions_backs_a_closure(op):
+    from crewops.vision.intake import SceneForm
+
+    def scene(**changes):
+        base = {
+            "shows_airport": True,
+            "subject": "apron",
+            "condition": "flooding",
+            "view": "clear",
+            "detail": "apron under standing water",
+        }
+        return SceneForm(**{**base, **changes})
+
+    flooded = read_photo(op, Kind.SCENE, SHARP, "image/jpeg", Reader(scene()))
+    assert (flooded.status, flooded.confidence) == (Status.DRAFT, "high")
+    assert flooded.message.startswith("Shows flooding: apron under standing water.")
+    cat = read_photo(
+        op, Kind.SCENE, SHARP, "image/jpeg", Reader(scene(shows_airport=False, subject="a cat"))
+    )
+    assert cat.status is Status.REJECTED and "a cat" in cat.message
+    calm = read_photo(op, Kind.SCENE, SHARP, "image/jpeg", Reader(scene(condition="none")))
+    assert (calm.status, calm.confidence) == (Status.DRAFT, "low")
+
+
+def test_white_paper_is_not_glare():
+    page = Image.new("RGB", (900, 600), "white")
+    pen = ImageDraw.Draw(page)
+    for y in range(40, 560, 40):
+        pen.line((40, y, 860, y), fill=(30, 30, 30), width=1)
+    out = io.BytesIO()
+    page.save(out, "JPEG")
+    assert "washed out" in " ".join(measure(out.getvalue()).problems)
+    assert measure(out.getvalue(), paper=True).problems == ()

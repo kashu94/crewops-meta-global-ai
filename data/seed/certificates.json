@@ -492,7 +492,7 @@
  {
   "crew_id": "C-1319",
   "kind": "recurrent_training",
-  "expires": "2026-11-03"
+  "expires": "2027-07-08"
  },
  {
   "crew_id": "C-1319",
@@ -582,7 +582,7 @@
  {
   "crew_id": "C-1373",
   "kind": "licence",
-  "expires": "2026-11-03"
+  "expires": "2029-03-20"
  },
  {
   "crew_id": "C-1373",
@@ -637,7 +637,7 @@
  {
   "crew_id": "C-1391",
   "kind": "safety_equipment",
-  "expires": "2026-11-02"
+  "expires": "2028-01-19"
  },
  {
   "crew_id": "C-1396",
@@ -1587,7 +1587,7 @@
  {
   "crew_id": "C-1871",
   "kind": "medical",
-  "expires": "2026-11-05"
+  "expires": "2027-11-20"
  },
  {
   "crew_id": "C-1871",
@@ -1827,7 +1827,7 @@
  {
   "crew_id": "C-2003",
   "kind": "medical",
-  "expires": "2026-11-07"
+  "expires": "2027-11-23"
  },
  {
   "crew_id": "C-2003",

@@ -2,7 +2,6 @@
 
 import {
   BadgeAlert,
-  Camera,
   CalendarOff,
   Clock,
   CloudLightning,
@@ -15,10 +14,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 
 import { CrewPicker, type CrewPick } from "@/components/crew-picker";
-import { PhotoIntake } from "@/components/photo-intake";
+import { EvidenceField, PHOTO } from "@/components/photo-intake";
 import { useSession } from "@/components/session";
 import { Button, Chips, cx, Input, Notice, PageHeader, Panel, Select, Spinner, TextArea } from "@/components/ui";
 import { message, tool } from "@/lib/api";
@@ -33,8 +32,7 @@ type Kind =
   | "aircraft_technical"
   | "station_disruption"
   | "gate_closure"
-  | "gate_change"
-  | "photo";
+  | "gate_change";
 
 const KINDS: { id: Kind; label: string; hint: string; icon: LucideIcon }[] = [
   { id: "crew_unavailable", label: "Crew can't fly", hint: "Sick, fatigue, personal: every seat they leave", icon: UserX },
@@ -45,7 +43,6 @@ const KINDS: { id: Kind; label: string; hint: string; icon: LucideIcon }[] = [
   { id: "station_disruption", label: "Station closure", hint: "Weather or runway: flights held", icon: CloudLightning },
   { id: "gate_closure", label: "Gate closure", hint: "Gates shut: where each flight boards", icon: DoorClosed },
   { id: "gate_change", label: "Gate change", hint: "Move a departure: is the gate free", icon: MoveRight },
-  { id: "photo", label: "From a photo", hint: "Sick note, board, defect, certificate", icon: Camera },
 ];
 
 const STATIONS = ["HYD", "DEL", "BOM", "BLR", "MAA", "GOI", "VGA", "RJA", "TIR", "VTZ"];
@@ -59,7 +56,7 @@ const CERTS = [
 function allowed(role: string): Kind[] {
   if (role === "admin" || role === "super_admin") return ["planned_leave"];
   if (role === "crew") return ["crew_unavailable"];
-  return KINDS.map((k) => k.id);
+  return KINDS.map((k) => k.id).filter((k) => k !== "planned_leave");
 }
 
 export default function ReportPage() {
@@ -72,6 +69,8 @@ export default function ReportPage() {
   const [crew, setCrew] = useState<CrewPick[]>([]);
   const [reason, setReason] = useState("sick");
   const [busy, setBusy] = useState(false);
+  const [evidence, setEvidence] = useState<string | null>(null);
+  const tailRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const today = workDay(me.clock);
   const def = KINDS.find((k) => k.id === kind)!;
@@ -90,6 +89,8 @@ export default function ReportPage() {
     }
     if (f.hours) args.hours = Number(f.hours);
     if (f.gates) args.gates = f.gates.split(",").map((g) => g.trim()).filter(Boolean);
+    if (evidence) args.evidence_ids = [evidence];
+    else if (PHOTO[kind]?.required) return setError("Add a photo of the fault: an aircraft fault is filed with one.");
     setBusy(true);
     setError(null);
     try {
@@ -129,6 +130,7 @@ export default function ReportPage() {
                 onClick={() => {
                   setKind(k.id);
                   setError(null);
+                  setEvidence(null);
                 }}
                 className={cx(
                   "flex items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
@@ -148,11 +150,7 @@ export default function ReportPage() {
         </div>
       )}
 
-      {kind === "photo" ? (
-        <Panel title="From a photo" icon={<Camera size={15} />}>
-          <PhotoIntake />
-        </Panel>
-      ) : (
+      {
         <div className="grid gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <Panel title={def.label} icon={<def.icon size={15} />}>
             <form key={kind} onSubmit={submit} className="flex flex-col gap-4">
@@ -213,7 +211,7 @@ export default function ReportPage() {
               )}
               {kind === "aircraft_technical" && (
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <Input label="Aircraft" name="tail" defaultValue="VT-SYB" pattern="[Vv][Tt]-[A-Za-z]{3}" required />
+                  <Input ref={tailRef} label="Aircraft" name="tail" defaultValue="VT-SYB" pattern="[Vv][Tt]-[A-Za-z]{3}" required />
                   <Input label="Out of service from (IST)" type="datetime-local" name="start" defaultValue={`${today}T06:00`} required />
                   <Input label="Back (IST)" type="datetime-local" name="end" defaultValue={`${today}T11:00`} required />
                 </div>
@@ -251,10 +249,11 @@ export default function ReportPage() {
                   <Input label="New gate" name="gate" defaultValue="22" required />
                 </div>
               )}
+              {PHOTO[kind] && <EvidenceField key={`photo-${kind}`} reportKind={kind} tail={() => tailRef.current?.value ?? ""} onChange={setEvidence} />}
               <TextArea label="Note for the desk (optional)" name="note" rows={2} maxLength={500} placeholder="Anything the controller should know" />
               {error && <Notice tone="error">{error}</Notice>}
               <div>
-                <Button type="submit" disabled={busy || !can("report_disruption")}>
+                <Button type="submit" disabled={busy || !can("report_disruption") || (PHOTO[kind]?.required === true && !evidence)}>
                   {busy ? <Spinner /> : <Send size={15} />} File the report
                 </Button>
               </div>
@@ -267,6 +266,7 @@ export default function ReportPage() {
                 ["Sent to a desk", "It goes to the controller desk with the fewest open reports; you can follow it on its own page."],
                 ["Teams told", "The teams who must know (crew control, the station, maintenance) are listed with a contact."],
                 ["Covered together", crewKind ? "The seats are covered together: nobody fills two, and nobody reported is used." : "Crew pushed over a limit are covered like any other seat."],
+                ["Photo checked", "A photo is read the moment you add it and kept with the report, so the desk sees what you saw. It shows how far the report is confirmed; how severe it is comes from what it does to the flights."],
                 ["Two people", "A controller plans it, an approver approves every change and confirms the resolution."],
               ].map(([t, d], i) => (
                 <li key={t} className="flex gap-3">
@@ -279,7 +279,7 @@ export default function ReportPage() {
             </ol>
           </Panel>
         </div>
-      )}
+      }
     </div>
   );
 }

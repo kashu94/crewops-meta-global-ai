@@ -1,121 +1,138 @@
-/* Sign-in artwork: the network at night, seen as a route map. Stations sit where they are on
-   the map of India, the routes out of the Hyderabad hub glow and carry traffic, and a slow
-   radar sweep turns over the hub. Plain SVG and CSS; motion stops under reduced motion. */
+/* Sign-in artwork: short final at night. The runway's edge lights run to a vanishing point
+   right of centre, the approach strobes race towards the threshold, the glide-path lights
+   show two white and two red, and the airfield's lights drift past out of focus. Plain SVG
+   and CSS; motion stops under reduced motion. */
 
-type Pt = [number, number];
+const W = 600;
+const H = 800;
+const HORIZON = 420;
+const GROUND = 820;
+/** The vanishing point: right of centre, so the words sit over open sky. */
+const VX = 455;
+const HALF = 270;
+const ROWS = 60;
 
-// Longitude and latitude, projected onto a 600 x 700 canvas.
-const at = (lon: number, lat: number): Pt => [(lon - 68) * 34 + 20, (31 - lat) * 34 + 20];
+/** 1 at the near end, shrinking towards the horizon. */
+const DEPTH = Array.from({ length: ROWS }, (_, i) => 1 / (1 + i * 0.32));
+const yAt = (d: number) => HORIZON + (GROUND - HORIZON) * d;
+/** Lights fade into the haze with distance instead of piling up at the vanishing point. */
+const glow = (d: number) => Math.max(0, Math.min(1, (d - 0.06) / 0.24));
 
-const STATIONS: Record<string, Pt> = {
-  DEL: at(77.1, 28.6),
-  BOM: at(72.9, 19.1),
-  GOI: at(73.8, 15.4),
-  BLR: at(77.7, 13.2),
-  MAA: at(80.2, 13.0),
-  HYD: at(78.4, 17.2),
-  VGA: at(80.8, 16.5),
-  RJA: at(81.8, 17.1),
-  TIR: at(79.5, 13.6),
-  VTZ: at(83.2, 17.7),
-};
+/** The approach light bars before the threshold, nearest first. */
+const STROBES = Array.from({ length: 9 }, (_, i) => 1.9 - i * 0.12);
 
-const ROUTES: [string, string, number][] = [
-  ["HYD", "DEL", 0],
-  ["HYD", "BOM", 1],
-  ["HYD", "BLR", 2],
-  ["HYD", "MAA", 3],
-  ["HYD", "GOI", 4],
-  ["HYD", "VTZ", 5],
-  ["HYD", "TIR", 6],
-  ["BOM", "DEL", 7],
-  ["BOM", "GOI", 8],
-  ["BLR", "MAA", 9],
-  ["VGA", "BLR", 10],
-  ["RJA", "BOM", 11],
-  ["DEL", "VTZ", 12],
+/** Far-off city along the horizon: x, radius. Fixed, so server and browser draw the same. */
+const CITY: [number, number][] = [
+  [372, 1.1], [388, 1.8], [401, 1], [417, 2.2], [430, 1.2], [489, 1.4], [503, 2.4], [518, 1],
+  [536, 1.9], [551, 1.2], [570, 2.1], [588, 1.3], [326, 1.4], [341, 1],
 ];
 
-function arc(a: Pt, b: Pt, bend = 0.18): string {
-  const [x1, y1] = a;
-  const [x2, y2] = b;
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2;
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  return `M${x1.toFixed(1)},${y1.toFixed(1)} Q${(mx - dy * bend).toFixed(1)},${(my + dx * bend).toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
-}
+/** Out-of-focus lights: left %, top %, size px, colour, seconds, delay. */
+const BOKEH: [number, number, number, string, number, number][] = [
+  [6, 14, 96, "amber", 27, 0],
+  [19, 58, 58, "blue", 32, 5],
+  [31, 26, 124, "white", 35, 10],
+  [44, 76, 72, "amber", 29, 2],
+  [57, 12, 66, "blue", 37, 7],
+  [64, 44, 112, "amber", 31, 13],
+  [77, 22, 50, "white", 25, 3],
+  [88, 62, 98, "blue", 34, 9],
+  [12, 86, 62, "white", 30, 15],
+  [93, 8, 76, "amber", 36, 4],
+];
 
-const HUB = STATIONS.HYD;
+const TINT: Record<string, string> = {
+  amber: "rgba(246, 195, 91, 0.30)",
+  blue: "rgba(127, 211, 255, 0.26)",
+  white: "rgba(255, 255, 255, 0.20)",
+};
 
-export function RouteMap() {
+export function RunwayAtNight() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_70%_70%,#123457_0%,#0a1c33_45%,#050c18_100%)]" />
-      <div className="haze absolute -right-1/4 top-1/4 h-[70%] w-[90%] rounded-full bg-[#1d5c96]/25 blur-[110px]" />
-      <div className="haze absolute -left-1/4 -top-1/4 h-[60%] w-[70%] rounded-full bg-[#2a7f8f]/15 blur-[120px] [animation-delay:-12s]" />
+      <div className="runway-drift absolute -inset-6 blur-[1.2px]">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#030915_0%,#091a35_42%,#123056_58%,#1b3a5f_66%,#0a1730_100%)]" />
+        <div className="absolute inset-x-0 top-[43%] h-44 bg-[radial-gradient(ellipse_at_center,rgba(246,195,91,0.20),transparent_70%)]" />
+        <div className="sky-glow absolute -left-1/4 -top-1/4 h-[70%] w-[90%] rounded-full bg-[#1d5c96]/30 blur-[95px]" />
+        <div className="sky-glow absolute -right-1/4 top-[4%] h-[58%] w-[80%] rounded-full bg-[#4b4fb8]/20 blur-[110px] [animation-delay:-11s]" />
+        <div className="sky-glow absolute left-[12%] top-[22%] h-[44%] w-[70%] rounded-full bg-[#2a9d8f]/15 blur-[115px] [animation-delay:-19s]" />
 
-      <svg viewBox="0 0 600 700" preserveAspectRatio="xMaxYMid slice" className="absolute inset-0 h-full w-full">
-        <defs>
-          <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.8" fill="#8fb6dc" opacity="0.14" />
-          </pattern>
-          <radialGradient id="sweep-fade" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stopColor="#7fb2e5" stopOpacity="0.16" />
-            <stop offset="1" stopColor="#7fb2e5" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="route" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#7fd3ff" stopOpacity="0.55" />
-            <stop offset="1" stopColor="#f6c35b" stopOpacity="0.45" />
-          </linearGradient>
-          <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.4" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" className="absolute inset-0 h-full w-full">
+          <defs>
+            <filter id="lamp" x="-200%" y="-200%" width="500%" height="500%">
+              <feGaussianBlur stdDeviation="3" result="soft" />
+              <feMerge>
+                <feMergeNode in="soft" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <linearGradient id="tarmac" gradientUnits="userSpaceOnUse" x1="0" y1={HORIZON} x2="0" y2={GROUND}>
+              <stop offset="0.25" stopColor="#020611" stopOpacity="0" />
+              <stop offset="1" stopColor="#020611" stopOpacity="0.85" />
+            </linearGradient>
+            <linearGradient id="skyline" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0.4" stopColor="#9cc9ff" stopOpacity="0" />
+              <stop offset="1" stopColor="#9cc9ff" stopOpacity="0.3" />
+            </linearGradient>
+          </defs>
 
-        <rect width="600" height="700" fill="url(#dots)" />
+          <polygon points={`${VX - 2},${HORIZON} ${VX + 2},${HORIZON} ${VX + HALF + 50},${GROUND} ${VX - HALF - 50},${GROUND}`} fill="url(#tarmac)" />
+          <line x1="0" x2={W} y1={HORIZON} y2={HORIZON} stroke="url(#skyline)" strokeWidth="1" />
+          {CITY.map(([x, r]) => (
+            <circle key={x} cx={x} cy={HORIZON - 3} r={r} fill="#fde7a8" filter="url(#lamp)" className="city-twinkle" style={{ animationDelay: `${(x % 7) * -0.6}s` }} />
+          ))}
 
-        {/* range rings and the radar sweep over the hub */}
-        {[70, 140, 210, 280].map((r) => (
-          <circle key={r} cx={HUB[0]} cy={HUB[1]} r={r} fill="none" stroke="#8fb6dc" strokeOpacity={0.09} strokeDasharray="2 6" />
-        ))}
-        <g style={{ transformOrigin: `${HUB[0]}px ${HUB[1]}px`, transformBox: "view-box" }} className="radar-sweep">
-          <path d={`M${HUB[0]},${HUB[1]} L${HUB[0] + 280},${HUB[1]} A280,280 0 0,0 ${HUB[0] + 280 * Math.cos(-0.5)},${HUB[1] + 280 * Math.sin(-0.5)} Z`} fill="url(#sweep-fade)" />
-        </g>
-
-        {/* the routes, each with traffic moving along it */}
-        {ROUTES.map(([from, to, i]) => {
-          const d = arc(STATIONS[from], STATIONS[to]);
-          return (
-            <g key={`${from}-${to}`}>
-              <path d={d} fill="none" stroke="#8fb6dc" strokeOpacity={0.12} strokeWidth={1} />
-              <path d={d} fill="none" stroke="url(#route)" strokeWidth={1.4} className="route-flow" style={{ animationDelay: `${-i * 0.37}s` }} />
-              <circle r={2.3} fill="#fff6d6" filter="url(#soft)" className="plane-dot">
-                <animateMotion dur={`${9 + (i % 5) * 2.2}s`} begin={`${-i * 1.3}s`} repeatCount="indefinite" path={d} />
-              </circle>
-            </g>
-          );
-        })}
-
-        {/* stations */}
-        {Object.entries(STATIONS).map(([code, [x, y]], i) => (
-          <g key={code}>
-            <circle cx={x} cy={y} r={code === "HYD" ? 9 : 6} fill="#7fd3ff" opacity={0.18} className="station-blip" style={{ animationDelay: `${-i * 0.4}s` }} />
-            <circle cx={x} cy={y} r={code === "HYD" ? 3.6 : 2.6} fill={code === "HYD" ? "#f6c35b" : "#dff3ff"} filter="url(#soft)" />
-            <text x={x + 8} y={y + 4} fill="#c9d8e8" fillOpacity={0.75} fontSize="10.5" fontFamily="var(--font-plex-mono), monospace" letterSpacing="0.06em">
-              {code}
-            </text>
+          <g filter="url(#lamp)">
+            {DEPTH.map((d, i) => (
+              <g key={i}>
+                {/* edge lights, warm white */}
+                <circle cx={VX - HALF * d} cy={yAt(d)} r={0.6 + 4.6 * d} fill="#fff1c9" opacity={glow(d)} />
+                <circle cx={VX + HALF * d} cy={yAt(d)} r={0.6 + 4.6 * d} fill="#fff1c9" opacity={glow(d)} />
+                {/* centreline, cool white, every other row */}
+                {i % 2 === 0 && <circle cx={VX} cy={yAt(d)} r={0.3 + 2.6 * d} fill="#dff3ff" opacity={glow(d) * 0.8} />}
+              </g>
+            ))}
+            {/* the threshold: a green bar across the near end */}
+            {Array.from({ length: 11 }, (_, i) => {
+              const d = DEPTH[3];
+              const x = VX - HALF * d + (2 * HALF * d * i) / 10;
+              return <circle key={`t${i}`} cx={x} cy={yAt(d)} r={1 + 2.4 * d} fill="#7cf0a6" opacity={0.85} />;
+            })}
+            {/* glide-path indicator left of the runway: on the slope, two white and two red */}
+            {["#ffffff", "#ffffff", "#ff5a52", "#ff5a52"].map((c, i) => {
+              const d = DEPTH[6];
+              return <circle key={`p${i}`} cx={VX - HALF * d - 28 - i * 9 * d} cy={yAt(d) - 2} r={2.2} fill={c} opacity={0.95} />;
+            })}
           </g>
-        ))}
-      </svg>
 
-      {/* keep the words readable */}
-      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(4,10,22,0.86)_0%,rgba(4,10,22,0.55)_45%,rgba(4,10,22,0.05)_100%)]" />
-      <style>{`@media (prefers-reduced-motion: reduce) { .plane-dot { display: none; } }`}</style>
+          {/* the approach strobes, firing in sequence towards the runway */}
+          <g filter="url(#lamp)">
+            {STROBES.map((d, i) => (
+              <circle key={`s${i}`} cx={VX} cy={yAt(d)} r={2 + 3.2 * d} fill="#ffffff" className="strobe" style={{ animationDelay: `${i * 0.07}s` }} />
+            ))}
+          </g>
+        </svg>
+
+        {BOKEH.map(([left, top, size, tint, seconds, delay]) => (
+          <span
+            key={`${left}-${top}`}
+            className="bokeh absolute rounded-full"
+            style={{
+              left: `${left}%`,
+              top: `${top}%`,
+              width: size,
+              height: size,
+              background: `radial-gradient(circle, ${TINT[tint]} 0%, transparent 68%)`,
+              animationDuration: `${seconds}s`,
+              animationDelay: `-${delay}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* keep the words readable: darker where they sit, and a soft vignette */}
+      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(3,8,20,0.82)_0%,rgba(3,8,20,0.5)_45%,rgba(3,8,20,0.08)_100%)]" />
+      <div className="absolute inset-0 shadow-[inset_0_0_160px_rgba(0,0,0,0.55)]" />
     </div>
   );
 }

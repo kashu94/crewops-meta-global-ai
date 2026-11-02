@@ -1,19 +1,134 @@
 "use client";
 
-import { Filter, HelpCircle, Plane, Radio, Search } from "lucide-react";
+import { Ban, BatteryLow, ClipboardList, Filter, HelpCircle, Plane, Radio, Search, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { RiskBadge } from "@/components/ops";
 import { useSession } from "@/components/session";
-import { Button, control, cx, Input, Label, Loading, Mono, Notice, PageHeader, Panel, Pill, Table } from "@/components/ui";
+import { Button, control, cx, Input, Label, Loading, Mono, Notice, PageHeader, Panel, Pill, Spinner } from "@/components/ui";
 import { message, tool } from "@/lib/api";
 import { hhmm, inr, plural, short } from "@/lib/format";
-import type { CoverResult, Plan, TripDetails } from "@/lib/types";
+import type { Choice, CoverResult, Plan, TripDetails } from "@/lib/types";
 import { useAction, useLoad } from "@/lib/use-load";
 
 const PICK: Record<string, string> = { cheapest: "cheapest", least_delay: "least delay", keeps_standby: "keeps standby free" };
+
+function initials(name?: string) {
+  return (name ?? "?")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("");
+}
+
+function Stat({ label, children, tone }: { label: string; children: React.ReactNode; tone?: "ok" | "pending" }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium uppercase tracking-[0.06em] text-faint">{label}</dt>
+      <dd className={cx("mt-0.5 font-mono text-[15px] font-semibold", tone === "ok" && "text-ok", tone === "pending" && "text-pending")}>{children}</dd>
+    </div>
+  );
+}
+
+/** One way to fill the seat. The first is shown large: it is what the engine would do. */
+function ChoiceCard({ c, top, tags, saving, action }: { c: Choice; top: boolean; tags: string[]; saving?: number; action: React.ReactNode }) {
+  const late = c.departure_late_hours ?? 0;
+  const breakdown = Object.entries(c.cost_breakdown ?? {})
+    .map(([k, v]) => `${k} ${inr(v)}`)
+    .join(" + ");
+  return (
+    <article
+      className={cx(
+        "rounded-xl border transition-shadow hover:shadow-[0_6px_20px_rgb(20_40_70/0.08)]",
+        top ? "border-accent/40 bg-[linear-gradient(135deg,var(--accent-soft),var(--surface)_60%)] p-4 sm:p-5" : "border-line bg-surface p-3.5 sm:px-4",
+      )}
+    >
+      <div className="flex flex-wrap items-start gap-3">
+        <span className="relative shrink-0">
+          <span className={cx("grid place-items-center rounded-full font-semibold", top ? "h-12 w-12 bg-accent text-base text-white" : "h-10 w-10 bg-accent-soft text-sm text-accent")}>
+            {initials(c.name)}
+          </span>
+          <span className="absolute -bottom-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-foreground px-1 font-mono text-[10px] font-semibold text-white ring-2 ring-surface">
+            {c.position}
+          </span>
+        </span>
+        <div className="min-w-0 flex-1">
+          {top && <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">Recommended</p>}
+          <h3 className={cx("font-semibold leading-snug", top ? "text-lg" : "text-[15px]")}>
+            {c.rank} {c.name} <span className="whitespace-nowrap font-mono text-[0.85em] font-normal text-muted">{c.crew_id}</span>
+          </h3>
+          <p className="mt-0.5 text-[13px] text-muted">
+            {c.way}
+            {c.base ? ` · based ${c.base}` : ""}
+          </p>
+          {tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {tags.map((x) => (
+                <Pill key={x} tone="accent">
+                  {x}
+                </Pill>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:ml-auto sm:w-auto sm:flex-col sm:items-end">
+          <span className={cx("font-mono font-semibold tracking-tight", top ? "text-2xl" : "text-lg")} title={breakdown}>
+            {inr(c.cost_inr)}
+          </span>
+          {action}
+        </div>
+      </div>
+      <dl className={cx("mt-3 grid grid-cols-2 gap-3 border-t border-rule pt-3 sm:grid-cols-4", !top && "mt-2.5 pt-2.5")}>
+        <Stat label="Risk">{c.risk ? <RiskBadge risk={c.risk} /> : "–"}</Stat>
+        <Stat label="To the airport">{c.minutes_to_airport ? `${c.minutes_to_airport} min` : "–"}</Stat>
+        <Stat label="Departure" tone={late ? "pending" : "ok"}>
+          {late ? `${Math.floor(late)}h${String(Math.round((late % 1) * 60)).padStart(2, "0")}m late` : "on time"}
+        </Stat>
+        {top && saving ? <Stat label="Saves vs cancelling">{inr(saving)}</Stat> : <Stat label="Cost made of">{<span className="block truncate font-sans text-xs font-normal text-muted" title={breakdown}>{breakdown || "–"}</span>}</Stat>}
+      </dl>
+      {((c.fatigue ?? []).length > 0 || (c.to_arrange ?? []).length > 0) && (
+        <ul className="mt-3 flex flex-col gap-1.5">
+          {(c.fatigue ?? []).map((f) => (
+            <li key={f.detail} className="flex items-start gap-2 rounded-md bg-pending-soft px-2.5 py-1.5 text-xs text-pending-ink">
+              <BatteryLow size={13} className="mt-px shrink-0" /> <span><b className="font-semibold capitalize">{f.severity} fatigue:</b> {f.detail}</span>
+            </li>
+          ))}
+          {(c.to_arrange ?? []).map((a) => (
+            <li key={a} className="flex items-start gap-2 rounded-md bg-sunken px-2.5 py-1.5 text-xs text-muted">
+              <ClipboardList size={13} className="mt-px shrink-0" /> <span><b className="font-semibold text-foreground">To arrange:</b> {a}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
+  );
+}
+
+/** How many could sit in the seat, and how many each check left. */
+function Funnel({ r }: { r: CoverResult }) {
+  const steps = [{ stage: "could sit in the seat", left: r.considered, dropped: 0, reason: "Same rank, or qualified to fly it" }, ...r.funnel];
+  return (
+    <div className="border-b border-rule px-4 py-4 sm:px-5">
+      <p className="mb-2.5 text-xs text-muted">Who is left after each check</p>
+      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+        {steps.map((s, i) => (
+          <li key={s.stage} title={s.reason} className="rounded-lg bg-sunken px-3 py-2">
+            <div className="flex items-baseline justify-between gap-1">
+              <b className={cx("font-mono text-lg", i === steps.length - 1 && "text-accent")}>{s.left}</b>
+              {s.dropped > 0 && <span className="font-mono text-xs text-critical">−{s.dropped}</span>}
+            </div>
+            <div className="mt-1 h-1 overflow-hidden rounded-full bg-line">
+              <i className={cx("block h-full rounded-full", i === steps.length - 1 ? "bg-accent" : "bg-[#9fb3c8]")} style={{ width: `${r.considered ? (s.left / r.considered) * 100 : 0}%` }} />
+            </div>
+            <span className="mt-1 block text-[11px] leading-tight text-muted">{s.stage}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
 
 function WhyNot({ trip, rank, crew }: { trip: string; rank: string; crew: string }) {
   const [out, setOut] = useState<React.ReactNode>(null);
@@ -85,13 +200,15 @@ export default function CoverPage() {
   const t = data?.details;
   const seat = data?.seat;
   const r = data?.cover;
+  const crewed = (r?.choices ?? []).filter((c) => c.crew_id);
+  const others = (r?.choices ?? []).filter((c) => !c.crew_id);
   const pickOf = (id?: string) => (id ? Object.entries(r?.picks ?? {}).filter(([, c]) => c.crew_id === id).map(([k]) => PICK[k] ?? k) : []);
 
   return (
     <div className="animate-rise">
       <PageHeader
         title="Find cover"
-        lede="Every legal way to fill a seat, cheapest first, with who was ruled out at each stage and why. Crew who reported they cannot fly stay on the list, struck through. Risk is shown beside each person; it never changes the order."
+        lede="Every legal way to fill a seat, cheapest first, with how many people each check ruled out. Crew who reported they cannot fly stay on the list, struck through. Risk is shown beside each person; it never changes the order."
       />
       {report && (
         <Notice className="mb-4">
@@ -142,95 +259,65 @@ export default function CoverPage() {
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap gap-px border-b border-rule bg-rule">
-                  <div className="flex-1 basis-28 bg-surface px-4 py-2.5">
-                    <b className="block font-mono text-lg">{r.considered}</b>
-                    <span className="text-xs text-muted">could sit in the seat</span>
-                  </div>
-                  {r.funnel.map((s) => (
-                    <div key={s.stage} className="flex-1 basis-28 bg-surface px-4 py-2.5" title={s.reason}>
-                      <b className="block font-mono text-lg">{s.left}</b>
-                      <span className="text-xs text-muted">
-                        {s.stage} <span className="text-critical">−{s.dropped}</span>
+                <Funnel r={r} />
+                <div className="flex flex-col gap-3 p-4 sm:p-5">
+                  {crewed.map((c, i) => (
+                    <ChoiceCard
+                      key={`${c.position}-${c.crew_id}`}
+                      c={c}
+                      top={i === 0}
+                      tags={pickOf(c.crew_id)}
+                      saving={i === 0 ? r.facts?.saving_vs_cancel : undefined}
+                      action={
+                        c.crew_id && can("assign_crew") && seat ? (
+                          <Button
+                            size={i === 0 ? "md" : "sm"}
+                            tone={i === 0 ? "accent" : "secondary"}
+                            disabled={busy !== null}
+                            onClick={() =>
+                              run(
+                                c.crew_id!,
+                                () =>
+                                  tool<Plan>("assign_crew", {
+                                    trip_id: trip,
+                                    replace_crew_id: seat.crew_id,
+                                    with_crew_id: c.crew_id,
+                                    expected_version: t!.version,
+                                    reason: `cover for ${seat.crew_id}`,
+                                    ...(report ? { report_id: report } : {}),
+                                  }),
+                                (p) => `${p.plan_id} submitted. An approver decides it.`,
+                              )
+                            }
+                          >
+                            {busy === c.crew_id ? <Spinner /> : <Send size={14} />} Submit plan
+                          </Button>
+                        ) : null
+                      }
+                    />
+                  ))}
+                  {!crewed.length && <Notice tone="pending">No crew member can legally take this seat.</Notice>}
+                  {(r.withdrawn ?? []).map((w) => (
+                    <div key={`w-${w.crew_id}`} className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-[#f3c4c0] px-4 py-3 text-sm text-faint">
+                      <span className="line-through">{w.summary}</span>
+                      <Pill tone="critical">cannot fly: {w.reason}</Pill>
+                      <span className="ml-auto font-mono">{inr(w.cost_inr)}</span>
+                    </div>
+                  ))}
+                  {r.more_choices > 0 && <p className="text-xs text-muted">{plural(r.more_choices, "more legal choice")} not shown.</p>}
+                  {others.map((c) => (
+                    <div key={`o-${c.position}`} className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-control bg-sunken px-4 py-3">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface text-muted ring-1 ring-line">
+                        <Ban size={15} />
                       </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">{c.way}</span>
+                        <span className="block text-xs text-muted">{c.note ?? c.summary} · last resort: needs a controller to propose it and an approver to agree</span>
+                      </span>
+                      <span className="font-mono text-sm font-semibold text-critical">{inr(c.cost_inr)}</span>
                     </div>
                   ))}
                 </div>
-                <Table>
-                  <thead>
-                    <tr>
-                      <th className="text-right">#</th>
-                      <th>Choice</th>
-                      <th>Risk</th>
-                      <th className="text-right">Cost</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {r.choices.map((c) => {
-                      const tags = pickOf(c.crew_id);
-                      return (
-                        <tr key={`${c.position}-${c.crew_id ?? c.way}`} className={tags.length ? "bg-accent-soft/50" : ""}>
-                          <td className="text-right font-mono text-muted">{c.position}</td>
-                          <td>
-                            <span className="font-medium">{c.summary}</span>{" "}
-                            {tags.map((x) => (
-                              <Pill key={x} tone="accent" className="ml-1">
-                                {x}
-                              </Pill>
-                            ))}
-                            {(c.fatigue ?? []).map((f) => (
-                              <span key={f.detail} className="mt-0.5 block text-xs text-pending-ink">
-                                {f.severity} fatigue: {f.detail}
-                              </span>
-                            ))}
-                            {c.to_arrange && <span className="mt-0.5 block text-xs text-muted">To arrange: {c.to_arrange.join("; ")}</span>}
-                          </td>
-                          <td>{c.risk ? <RiskBadge risk={c.risk} compact /> : <span className="text-faint">–</span>}</td>
-                          <td className="text-right font-mono">{inr(c.cost_inr)}</td>
-                          <td className="text-right">
-                            {c.crew_id && can("assign_crew") && seat && (
-                              <Button
-                                size="sm"
-                                tone="secondary"
-                                disabled={busy !== null}
-                                onClick={() =>
-                                  run(
-                                    c.crew_id!,
-                                    () =>
-                                      tool<Plan>("assign_crew", {
-                                        trip_id: trip,
-                                        replace_crew_id: seat.crew_id,
-                                        with_crew_id: c.crew_id,
-                                        expected_version: t!.version,
-                                        reason: `cover for ${seat.crew_id}`,
-                                        ...(report ? { report_id: report } : {}),
-                                      }),
-                                    (p) => `${p.plan_id} submitted. An approver decides it.`,
-                                  )
-                                }
-                              >
-                                Submit plan
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {(r.withdrawn ?? []).map((w) => (
-                      <tr key={`w-${w.crew_id}`} className="text-faint">
-                        <td className="text-right">–</td>
-                        <td>
-                          <span className="line-through">{w.summary}</span> <Pill tone="critical">cannot fly: {w.reason}</Pill>
-                        </td>
-                        <td>{w.risk && <RiskBadge risk={w.risk} compact />}</td>
-                        <td className="text-right font-mono">{inr(w.cost_inr)}</td>
-                        <td />
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-                {r.more_choices > 0 && <p className="border-t border-rule px-4 py-2 text-xs text-muted">{plural(r.more_choices, "more legal choice")} not shown.</p>}
               </>
             )}
           </Panel>
@@ -250,7 +337,7 @@ export default function CoverPage() {
                       <span className="font-mono text-xs text-muted">
                         {short(l.departs).slice(0, 6)} {hhmm(l.departs)}
                       </span>
-                      <span className="w-12 text-right font-mono text-xs text-muted">{l.booked} pax</span>
+                      <span className="w-16 whitespace-nowrap text-right font-mono text-xs text-muted">{l.booked} pax</span>
                     </li>
                   ))}
                 </ul>

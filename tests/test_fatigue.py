@@ -117,8 +117,8 @@ def test_the_watch_finds_the_lapsed_medical_before_anyone_reports_it():
     assert illegal[0].suggestion_cost == 20840
     assert issues[0] is illegal[0]  # the most serious first
     assert [i.issue_id for i in scan(op)] == [i.issue_id for i in issues]  # stable ids
-    fatigue = [i for i in issues if i.kind == "fatigue"]
-    assert fatigue and len({i.crew_id for i in fatigue}) == len(fatigue)
+    # The demo roster is kept quiet: one illegal captain and one certificate running out.
+    assert [i.kind for i in issues] == ["illegal", "certificate"]
 
 
 def test_the_watch_reports_a_fatigue_block_once_against_its_worst_day():

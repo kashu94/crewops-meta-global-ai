@@ -259,8 +259,8 @@
      "KF521-2026-10-30",
      "KF522-2026-10-30"
     ],
-    "report": "2026-10-30T14:30:00Z",
-    "release": "2026-10-30T21:00:00Z"
+    "report": "2026-10-30T13:30:00Z",
+    "release": "2026-10-30T20:00:00Z"
    }
   ],
   "crew": [
@@ -497,8 +497,8 @@
      "KF521-2026-10-31",
      "KF522-2026-10-31"
     ],
-    "report": "2026-10-31T14:30:00Z",
-    "release": "2026-10-31T21:00:00Z"
+    "report": "2026-10-31T13:30:00Z",
+    "release": "2026-10-31T20:00:00Z"
    }
   ],
   "crew": [
@@ -788,8 +788,8 @@
      "KF521-2026-11-01",
      "KF522-2026-11-01"
     ],
-    "report": "2026-11-01T14:30:00Z",
-    "release": "2026-11-01T21:00:00Z"
+    "report": "2026-11-01T13:30:00Z",
+    "release": "2026-11-01T20:00:00Z"
    }
   ],
   "crew": [
@@ -1026,8 +1026,8 @@
      "KF521-2026-11-02",
      "KF522-2026-11-02"
     ],
-    "report": "2026-11-02T14:30:00Z",
-    "release": "2026-11-02T21:00:00Z"
+    "report": "2026-11-02T13:30:00Z",
+    "release": "2026-11-02T20:00:00Z"
    }
   ],
   "crew": [
@@ -1084,7 +1084,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1382",
+    "crew_id": "C-1373",
     "rank": "Purser"
    },
    {
@@ -1217,7 +1217,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1365",
+    "crew_id": "C-1382",
     "rank": "Purser"
    },
    {
@@ -1261,7 +1261,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1341",
+    "crew_id": "C-1319",
     "rank": "Purser"
    },
    {
@@ -1317,8 +1317,8 @@
      "KF521-2026-11-03",
      "KF522-2026-11-03"
     ],
-    "report": "2026-11-03T14:30:00Z",
-    "release": "2026-11-03T21:00:00Z"
+    "report": "2026-11-03T13:30:00Z",
+    "release": "2026-11-03T20:00:00Z"
    }
   ],
   "crew": [
@@ -1375,7 +1375,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1341",
+    "crew_id": "C-1373",
     "rank": "Purser"
    },
    {
@@ -1499,7 +1499,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1382",
+    "crew_id": "C-1365",
     "rank": "Purser"
    },
    {
@@ -1555,8 +1555,8 @@
      "KF521-2026-11-04",
      "KF522-2026-11-04"
     ],
-    "report": "2026-11-04T14:30:00Z",
-    "release": "2026-11-04T21:00:00Z"
+    "report": "2026-11-04T13:30:00Z",
+    "release": "2026-11-04T20:00:00Z"
    }
   ],
   "crew": [
@@ -1790,7 +1790,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1324",
+    "crew_id": "C-1373",
     "rank": "Purser"
    },
    {
@@ -1846,8 +1846,8 @@
      "KF521-2026-11-05",
      "KF522-2026-11-05"
     ],
-    "report": "2026-11-05T14:30:00Z",
-    "release": "2026-11-05T21:00:00Z"
+    "report": "2026-11-05T13:30:00Z",
+    "release": "2026-11-05T20:00:00Z"
    }
   ],
   "crew": [
@@ -1872,7 +1872,7 @@
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1843",
+    "crew_id": "C-1871",
     "rank": "Cabin Crew"
    }
   ]
@@ -1904,7 +1904,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1324",
+    "crew_id": "C-1365",
     "rank": "Purser"
    },
    {
@@ -2028,7 +2028,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1365",
+    "crew_id": "C-1324",
     "rank": "Purser"
    },
    {
@@ -2084,8 +2084,8 @@
      "KF521-2026-11-06",
      "KF522-2026-11-06"
     ],
-    "report": "2026-11-06T14:30:00Z",
-    "release": "2026-11-06T21:00:00Z"
+    "report": "2026-11-06T13:30:00Z",
+    "release": "2026-11-06T20:00:00Z"
    }
   ],
   "crew": [
@@ -2102,7 +2102,7 @@
     "rank": "Purser"
    },
    {
-    "crew_id": "C-1768",
+    "crew_id": "C-1871",
     "rank": "Cabin Crew"
    },
    {
@@ -2110,7 +2110,7 @@
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1843",
+    "crew_id": "C-1768",
     "rank": "Cabin Crew"
    }
   ]
@@ -2226,7 +2226,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1966",
+    "crew_id": "C-2003",
     "rank": "First Officer"
    },
    {
@@ -2275,7 +2275,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1357",
+    "crew_id": "C-1341",
     "rank": "Purser"
    },
    {
@@ -2319,7 +2319,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1382",
+    "crew_id": "C-1365",
     "rank": "Purser"
    },
    {
@@ -2351,7 +2351,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1977",
+    "crew_id": "C-1966",
     "rank": "First Officer"
    },
    {
@@ -2375,8 +2375,8 @@
      "KF521-2026-11-07",
      "KF522-2026-11-07"
     ],
-    "report": "2026-11-07T14:30:00Z",
-    "release": "2026-11-07T21:00:00Z"
+    "report": "2026-11-07T13:30:00Z",
+    "release": "2026-11-07T20:00:00Z"
    }
   ],
   "crew": [
@@ -2393,15 +2393,15 @@
     "rank": "Purser"
    },
    {
+    "crew_id": "C-1871",
+    "rank": "Cabin Crew"
+   },
+   {
     "crew_id": "C-1843",
     "rank": "Cabin Crew"
    },
    {
     "crew_id": "C-1810",
-    "rank": "Cabin Crew"
-   },
-   {
-    "crew_id": "C-1881",
     "rank": "Cabin Crew"
    }
   ]
@@ -2517,7 +2517,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1966",
+    "crew_id": "C-2003",
     "rank": "First Officer"
    },
    {
@@ -2557,7 +2557,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1382",
+    "crew_id": "C-1391",
     "rank": "Purser"
    },
    {
@@ -2589,7 +2589,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1977",
+    "crew_id": "C-1966",
     "rank": "First Officer"
    },
    {
@@ -2613,8 +2613,8 @@
      "KF521-2026-11-08",
      "KF522-2026-11-08"
     ],
-    "report": "2026-11-08T14:30:00Z",
-    "release": "2026-11-08T21:00:00Z"
+    "report": "2026-11-08T13:30:00Z",
+    "release": "2026-11-08T20:00:00Z"
    }
   ],
   "crew": [
@@ -2631,15 +2631,15 @@
     "rank": "Purser"
    },
    {
+    "crew_id": "C-1843",
+    "rank": "Cabin Crew"
+   },
+   {
     "crew_id": "C-1810",
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1881",
-    "rank": "Cabin Crew"
-   },
-   {
-    "crew_id": "C-1843",
+    "crew_id": "C-1871",
     "rank": "Cabin Crew"
    }
   ]
@@ -2671,7 +2671,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1357",
+    "crew_id": "C-1391",
     "rank": "Purser"
    },
    {
@@ -2727,7 +2727,7 @@
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1817",
+    "crew_id": "C-1881",
     "rank": "Cabin Crew"
    }
   ]
@@ -2755,7 +2755,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1966",
+    "crew_id": "C-2003",
     "rank": "First Officer"
    },
    {
@@ -2804,7 +2804,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1382",
+    "crew_id": "C-1357",
     "rank": "Purser"
    },
    {
@@ -2848,7 +2848,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1341",
+    "crew_id": "C-1324",
     "rank": "Purser"
    },
    {
@@ -2880,7 +2880,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1977",
+    "crew_id": "C-1966",
     "rank": "First Officer"
    },
    {
@@ -2904,8 +2904,8 @@
      "KF521-2026-11-09",
      "KF522-2026-11-09"
     ],
-    "report": "2026-11-09T14:30:00Z",
-    "release": "2026-11-09T21:00:00Z"
+    "report": "2026-11-09T13:30:00Z",
+    "release": "2026-11-09T20:00:00Z"
    }
   ],
   "crew": [
@@ -2926,11 +2926,11 @@
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1881",
+    "crew_id": "C-1843",
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1768",
+    "crew_id": "C-1817",
     "rank": "Cabin Crew"
    }
   ]
@@ -2962,7 +2962,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1357",
+    "crew_id": "C-1391",
     "rank": "Purser"
    },
    {
@@ -3010,7 +3010,7 @@
     "rank": "Purser"
    },
    {
-    "crew_id": "C-1817",
+    "crew_id": "C-1881",
     "rank": "Cabin Crew"
    },
    {
@@ -3046,7 +3046,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1966",
+    "crew_id": "C-2003",
     "rank": "First Officer"
    },
    {
@@ -3086,7 +3086,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1341",
+    "crew_id": "C-1319",
     "rank": "Purser"
    },
    {
@@ -3118,7 +3118,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1977",
+    "crew_id": "C-1966",
     "rank": "First Officer"
    },
    {
@@ -3142,8 +3142,8 @@
      "KF521-2026-11-10",
      "KF522-2026-11-10"
     ],
-    "report": "2026-11-10T14:30:00Z",
-    "release": "2026-11-10T21:00:00Z"
+    "report": "2026-11-10T13:30:00Z",
+    "release": "2026-11-10T20:00:00Z"
    }
   ],
   "crew": [
@@ -3160,15 +3160,15 @@
     "rank": "Purser"
    },
    {
+    "crew_id": "C-1817",
+    "rank": "Cabin Crew"
+   },
+   {
     "crew_id": "C-1810",
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1881",
-    "rank": "Cabin Crew"
-   },
-   {
-    "crew_id": "C-1768",
+    "crew_id": "C-1843",
     "rank": "Cabin Crew"
    }
   ]
@@ -3200,7 +3200,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1341",
+    "crew_id": "C-1319",
     "rank": "Purser"
    },
    {
@@ -3252,7 +3252,7 @@
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1817",
+    "crew_id": "C-1881",
     "rank": "Cabin Crew"
    },
    {
@@ -3284,7 +3284,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-2006",
+    "crew_id": "C-1977",
     "rank": "First Officer"
    },
    {
@@ -3333,7 +3333,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1365",
+    "crew_id": "C-1357",
     "rank": "Purser"
    },
    {
@@ -3377,7 +3377,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1324",
+    "crew_id": "C-1391",
     "rank": "Purser"
    },
    {
@@ -3409,7 +3409,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1990",
+    "crew_id": "C-2006",
     "rank": "First Officer"
    },
    {
@@ -3433,8 +3433,8 @@
      "KF521-2026-11-11",
      "KF522-2026-11-11"
     ],
-    "report": "2026-11-11T14:30:00Z",
-    "release": "2026-11-11T21:00:00Z"
+    "report": "2026-11-11T13:30:00Z",
+    "release": "2026-11-11T20:00:00Z"
    }
   ],
   "crew": [
@@ -3451,7 +3451,7 @@
     "rank": "Purser"
    },
    {
-    "crew_id": "C-1768",
+    "crew_id": "C-1817",
     "rank": "Cabin Crew"
    },
    {
@@ -3459,7 +3459,7 @@
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1843",
+    "crew_id": "C-1768",
     "rank": "Cabin Crew"
    }
   ]
@@ -3491,7 +3491,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1341",
+    "crew_id": "C-1319",
     "rank": "Purser"
    },
    {
@@ -3543,7 +3543,7 @@
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1817",
+    "crew_id": "C-1881",
     "rank": "Cabin Crew"
    },
    {
@@ -3575,7 +3575,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-2006",
+    "crew_id": "C-1977",
     "rank": "First Officer"
    },
    {
@@ -3615,7 +3615,7 @@
     "rank": "First Officer"
    },
    {
-    "crew_id": "C-1324",
+    "crew_id": "C-1382",
     "rank": "Purser"
    },
    {
@@ -3647,7 +3647,7 @@
     "rank": "Captain"
    },
    {
-    "crew_id": "C-1990",
+    "crew_id": "C-2006",
     "rank": "First Officer"
    },
    {
@@ -3671,8 +3671,8 @@
      "KF521-2026-11-12",
      "KF522-2026-11-12"
     ],
-    "report": "2026-11-12T14:30:00Z",
-    "release": "2026-11-12T21:00:00Z"
+    "report": "2026-11-12T13:30:00Z",
+    "release": "2026-11-12T20:00:00Z"
    }
   ],
   "crew": [
@@ -3689,15 +3689,15 @@
     "rank": "Purser"
    },
    {
-    "crew_id": "C-1777",
-    "rank": "Cabin Crew"
-   },
-   {
     "crew_id": "C-1768",
     "rank": "Cabin Crew"
    },
    {
-    "crew_id": "C-1843",
+    "crew_id": "C-1777",
+    "rank": "Cabin Crew"
+   },
+   {
+    "crew_id": "C-1817",
     "rank": "Cabin Crew"
    }
   ]

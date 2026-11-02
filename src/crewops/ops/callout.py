@@ -34,6 +34,7 @@ from typing import Protocol
 from pydantic import TypeAdapter
 
 from crewops.domain import Rank, Seat, Trip
+from crewops.engine.clock import IST
 from crewops.engine.cover import Choice, TripStarted, arrangements, find_cover
 from crewops.engine.operation import NotFound, Operation
 from crewops.ops.notify import DESK, Notice, Outbox
@@ -70,6 +71,8 @@ class Offer:
     """``accepted``, ``declined``, ``no answer``, ``unavailable``, ``no longer legal`` or
     ``not approved``."""
     answered_at: datetime | None = None
+    note: str = ""
+    """What the crew member said with their answer."""
 
 
 @dataclass
@@ -209,6 +212,17 @@ class CalloutDesk:
     def offers_for(self, crew_id: str) -> list[Callout]:
         return [c for c in self.all() if c.current and c.current.crew_id == crew_id]
 
+    def answered_by(self, crew_id: str) -> list[tuple[Callout, Offer]]:
+        """Offers made to ``crew_id`` that are no longer open, newest first: what they said,
+        or that the time ran out and the seat went to the next person."""
+        found = [
+            (c, o)
+            for c in self.all()
+            for o in c.offers
+            if o.crew_id == crew_id and o.answer is not None
+        ]
+        return sorted(found, key=lambda co: co[1].offered_at, reverse=True)
+
     # -- opening and offering ---------------------------------------------------------------
 
     def open(self, trip_id: str, rank: Rank, vacated_by: str, by: str) -> Callout:
@@ -294,7 +308,9 @@ class CalloutDesk:
                 body=(
                     f"{offer.name}, you are asked to fly {callout.trip_id} as {callout.rank} "
                     f"({choice.way.label.lower()}). Please accept or decline within "
-                    f"{minutes} minutes."
+                    f"{minutes} minutes, by "
+                    f"{offer.expires_at.astimezone(IST):%H:%M} IST, on your CrewOps page. "
+                    "After that the seat is offered to the next crew member."
                 ),
                 at=now,
                 ref=callout.callout_id,
@@ -325,7 +341,7 @@ class CalloutDesk:
 
     # -- answers ----------------------------------------------------------------------------
 
-    def respond(self, callout_id: str, crew_id: str, accept: bool) -> Callout:
+    def respond(self, callout_id: str, crew_id: str, accept: bool, note: str = "") -> Callout:
         with self._lock:
             self._sync()
             callout = self._get(callout_id)
@@ -338,8 +354,20 @@ class CalloutDesk:
                 self._offer_next(callout)
                 self._save(callout)
                 raise CalloutError("the offer expired and has gone to the next crew member")
+            offer.note = note.strip()
             if not accept:
                 self._answer(offer, "declined", now)
+                if offer.note:
+                    self.outbox.send(
+                        Notice(
+                            to=DESK,
+                            subject=f"Declined: {callout.rank} on {callout.trip_id}",
+                            body=f"{offer.name} ({crew_id}) declined: \u201c{offer.note}\u201d. "
+                            "The next legal crew member is being asked.",
+                            at=now,
+                            ref=callout.callout_id,
+                        )
+                    )
                 self._offer_next(callout)
             else:
                 self._fill(callout, offer, now)
@@ -418,7 +446,8 @@ class CalloutDesk:
                 callout.vacated_by,
                 offer.crew_id,
                 by=callout.opened_by,
-                note=f"{offer.name} accepted callout {callout.callout_id}",
+                note=f"{offer.name} accepted callout {callout.callout_id}"
+                + (f": \u201c{offer.note}\u201d" if offer.note else ""),
                 source=callout.callout_id,
             )
         except PlanError as err:

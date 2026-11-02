@@ -1,5 +1,6 @@
 import io
 import time
+from datetime import UTC, date, datetime, timedelta
 
 import jwt
 import pytest
@@ -15,6 +16,8 @@ from crewops.agent.advisor import Advisor
 from crewops.agent.router import Intent
 from crewops.api.app import Services, create_app
 from crewops.api.auth import caller_from_claims, verify
+from crewops.engine.clock import IST
+from crewops.engine.watch import scan
 from crewops.models import ModelError
 from crewops.models.media import Box, Transcript
 from crewops.seed import read_meta
@@ -262,7 +265,16 @@ def test_the_speaker_feed_is_public_and_says_how_each_notice_sounds(client):
         headers=CONTROLLER,
     )
     feed = client.get("/api/speaker").json()
-    assert feed["waiting"] == {"plans": 0, "decisions": 0, "resolutions": 0, "disruptions": 0}
+    assert feed["waiting"] == {
+        "plans": 0,
+        "decisions": 0,
+        "proposals": 0,
+        "resolutions": 0,
+        "disruptions": 0,
+    }
+    illegal, running = feed["summary"]
+    assert illegal.startswith("1 rostered crew member is not legal: Pooja Chowdary on T-1018")
+    assert running.startswith("Callout running for Captain on T-1018: waiting for Anjali Goud")
 
 
 def test_an_approval_needs_an_approver_through_the_api(client):
@@ -300,3 +312,83 @@ def test_only_an_admin_reads_the_security_log(client):
     assert client.get("/api/log/activity", headers=crew).status_code == 403
     admin = {"X-Demo-User": "k.menon", "X-Demo-Role": "admin"}
     assert client.get("/api/log/security", headers=admin).json() == {"entries": []}
+
+
+def test_on_the_wall_clock_the_demo_starts_today(monkeypatch):
+    monkeypatch.setattr(api_module, "draw_card", lambda *a, **k: None)
+    s = Services(load_settings({**BASE, "CREWOPS_LIVE_CLOCK": "true"}), MemoryStore())
+    today = datetime.now(IST).date()
+    assert s.days["first"] == today.isoformat()
+    op = s.store.operation()
+    assert abs((op.now - datetime.now(UTC)).total_seconds()) < 60
+    [illegal] = [i for i in scan(op) if i.kind == "illegal"]
+    assert (illegal.crew_id, illegal.trip_id) == ("C-1111", "T-1018")
+    assert illegal.day == today + timedelta(days=6), "the same problem, the same days ahead"
+    assert s.store.meta()["shifted_days"] == (today - date(2026, 10, 30)).days
+
+
+def test_a_checked_photo_is_kept_with_the_report_it_backs(client, services):
+    services.reader = Reader(defect())
+    photo = {"image": ("d.jpg", SHARP, "image/jpeg")}
+    kept = client.post(
+        "/api/intake",
+        files=photo,
+        data={"kind": "defect", "tail": "VT-SYA", "keep": "true"},
+        headers=CONTROLLER,
+    ).json()
+    fault = {
+        "kind": "aircraft_technical",
+        "tail": "VT-SYA",
+        "start": "2026-11-05T05:00",
+        "end": "2026-11-05T09:00",
+    }
+    reddy = {"X-Demo-User": "s.reddy", "X-Demo-Role": "controller"}
+    theirs = {**fault, "evidence_ids": [kept["evidence_id"]]}
+    assert (
+        "no photo"
+        in client.post("/api/tools/report_disruption", json=theirs, headers=reddy).json()["error"]
+    )
+    report = client.post("/api/tools/report_disruption", json=theirs, headers=CONTROLLER).json()
+    assert report["evidence"] == {
+        "level": "high",
+        "label": "Photo checked, high confidence",
+        "photos": 1,
+    }
+    assert report["details"]["evidence"][0]["message"].startswith("Draft defect report")
+    assert client.get(f"/api/evidence/{kept['evidence_id']}", headers=CONTROLLER).content == SHARP
+    assert client.get(f"/api/evidence/{kept['evidence_id']}", headers=ANJALI).status_code == 403
+    bare = client.post("/api/tools/report_disruption", json=fault, headers=CONTROLLER).json()
+    assert bare["evidence"]["label"] == "No photo"
+    assert "maintenance confirms" in bare["details"]["evidence_note"]
+
+
+def test_a_note_that_does_not_match_the_report_is_flagged(client, services):
+    services.reader = Reader(note())
+    kept = client.post(
+        "/api/intake",
+        files={"image": ("n.jpg", SHARP, "image/jpeg")},
+        data={"kind": "sick_note", "keep": "true"},
+        headers=CONTROLLER,
+    ).json()
+    form = services.store.get_doc("evidence", kept["evidence_id"])
+    [crew_id] = form["crew_ids"]
+    first, last = form["days"]
+
+    def sick(crew, day_one, day_two):
+        return client.post(
+            "/api/tools/report_disruption",
+            json={
+                "kind": "crew_unavailable",
+                "crew_ids": [crew],
+                "first_day": day_one,
+                "last_day": day_two,
+                "evidence_ids": [kept["evidence_id"]],
+            },
+            headers=CONTROLLER,
+        ).json()["details"]["evidence"][0]
+
+    same = sick(crew_id, first, last)
+    assert same["check"] == "The photo matches the person and the dates reported."
+    assert "Confirm to record" not in same["message"]
+    other = sick("C-1157", first, last)
+    assert other["check"].startswith(f"The photo names {crew_id}")

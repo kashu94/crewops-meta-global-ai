@@ -96,7 +96,7 @@ function Accounts() {
       {secret && <Secret user={secret.user} password={secret.password} onDone={() => setSecret(null)} />}
       <Panel title="New account" icon={<Plus size={15} />}>
         <form onSubmit={create} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_12rem_9rem_1fr_auto] lg:items-end">
-          <Input label="Username" name="username" required pattern="[a-z0-9._-]{3,40}" placeholder="j.doe" hint="lower case, 3 to 40 characters" />
+          <Input label="Username" name="username" required pattern="[a-z0-9._-]{3,40}" placeholder="j.doe" title="Lower case letters, digits, dots, dashes; 3 to 40 characters" />
           <Select label="Role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
             {assignable.map((r) => (
               <option key={r} value={r}>
@@ -106,11 +106,14 @@ function Accounts() {
           </Select>
           <Input label="Crew id" name="crew_id" placeholder="C-1234" disabled={role !== "crew"} required={role === "crew"} pattern="[Cc]-\d{4}" />
           <Input label="Email (optional)" name="email" type="email" />
-          <Button type="submit" disabled={creating} className="lg:mb-[18px]">
+          <Button type="submit" disabled={creating}>
             {creating ? <Spinner /> : <Plus size={15} />} Create
           </Button>
         </form>
-        {!superAdmin && <p className="mt-3 text-xs text-faint">Admin accounts are managed by a super admin.</p>}
+        <p className="mt-3 text-xs text-faint">
+          Usernames are lower case, 3 to 40 characters. The new person gets a temporary password to change at first sign-in.
+          {!superAdmin && " Admin accounts are managed by a super admin."}
+        </p>
       </Panel>
       <Panel flush title="Team accounts" icon={<Users size={15} />} action={data ? plural(list.length, "account") : undefined}>
         {error ? (

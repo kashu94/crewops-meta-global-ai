@@ -107,7 +107,7 @@ export default function OperationsPage() {
       <Kpis>
         <Kpi icon={<Plane size={13} />} label="Flights, next 24h" value={n?.flights ?? "–"} />
         <Kpi icon={<Users size={13} />} label="Passengers" value={(n?.passengers ?? 0).toLocaleString("en-IN")} />
-        <Kpi icon={<UserX size={13} />} label="Crew out" value={n?.crew_out ?? "–"} tone={n?.crew_out ? "pending" : undefined} />
+        <Kpi icon={<UserX size={13} />} label="Crew out today or tomorrow" value={n?.crew_out ?? "–"} tone={n?.crew_out ? "pending" : undefined} />
         <Kpi icon={<TriangleAlert size={13} />} label="Crew over a limit" value={n?.illegal ?? "–"} tone={n?.illegal ? "critical" : "ok"} />
         <Kpi icon={<ListChecks size={13} />} label="Your open reports" value={open} tone={open ? "pending" : undefined} />
       </Kpis>

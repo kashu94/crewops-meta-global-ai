@@ -81,6 +81,9 @@ export type Choice = {
   departure_late_hours?: number;
   risk?: Risk;
   reason?: string;
+  cost_breakdown?: Record<string, number>;
+  minutes_to_airport?: number;
+  note?: string;
 };
 
 export type CoverResult = {
@@ -243,7 +246,10 @@ export type ReportSummary = {
   severity: { level: Level; reasons?: string[] } | null;
   seats_open?: number;
   plans_waiting?: number;
+  evidence?: { level: "high" | "medium" | "low" | "read" | "none"; label: string; photos?: number };
 };
+
+export type EvidenceItem = { evidence_id: string; kind: string; message: string; confidence?: string | null; at: string; check?: string };
 
 export type Seat = { trip_id: string; day: string; rank: string; replacing: string; name: string; reports_at: string };
 export type Fill = {
@@ -327,6 +333,7 @@ export type Board = {
 export type SpeakerFeed = {
   clock: string;
   waiting: { plans: number; decisions: number };
+  summary?: string[];
   items: { id: string; at: string; to: string; tone: "critical" | "pending" | "ok" | "info"; subject: string; body: string }[];
 };
 
@@ -340,6 +347,6 @@ export type Answer = {
   blocked: string | null;
   route: { intent: string; by: string; effort: string; tools: string[] } | null;
   steps: { tool: string; arguments: unknown; result: unknown }[];
-  tokens: number;
+  tokens: { prompt: number; completion: number; reasoning: number; cached: number };
   calls: { model: string; purpose: string; effort?: string; prompt: number; completion: number; cached: number; seconds: number }[];
 };

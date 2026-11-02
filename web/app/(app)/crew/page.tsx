@@ -1,13 +1,13 @@
 "use client";
 
-import { BadgeCheck, CalendarDays, Gauge, Inbox, ListChecks, Plane, Timer, UserX } from "lucide-react";
+import { BadgeCheck, CalendarDays, Check, Gauge, Inbox, ListChecks, Plane, Radio, Timer, UserX, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { Modal } from "@/components/modal";
 import { NoticeList, ReportRows, RiskDetail } from "@/components/ops";
 import { Part } from "@/components/part";
 import { useSession } from "@/components/session";
-import { Button, Chips, cx, Empty, Input, Loading, Meter, Mono, Notice, PageHeader, Panel, Pill, Spinner, Table } from "@/components/ui";
+import { Button, Chips, cx, Empty, Input, Loading, Meter, Mono, Notice, PageHeader, Panel, Pill, Spinner, StatusPill, Table } from "@/components/ui";
 import { api, message, missing, tool } from "@/lib/api";
 import { addDays, opDay, workDay } from "@/lib/clock";
 import { plural, short, words } from "@/lib/format";
@@ -15,17 +15,28 @@ import { settle } from "@/lib/settle";
 import type { Callout, Notice as NoticeT, Profile, Report, ReportSummary, Trip } from "@/lib/types";
 import { useAction, useLoad } from "@/lib/use-load";
 
-const START = "2026-10-30";
 const DAYS = 14;
 
-function Calendar({ trips, p, today }: { trips: Trip[]; p: Profile; today: string }) {
+type Earlier = { callout_id: string; trip_id: string; seat: string; offered_at: string; answer_by: string; outcome: string; answered_at?: string; your_remark?: string; seat_now: string };
+
+const OUTCOME: Record<string, string> = {
+  accepted: "You accepted",
+  declined: "You declined",
+  "no answer": "No answer in time: offered to the next crew member",
+  unavailable: "Withdrawn: you reported you cannot fly",
+  "no longer legal": "Withdrawn: you were no longer legal for it",
+  "not approved": "You accepted, but the approver did not approve it",
+  "no longer needed": "No longer needed",
+};
+
+function Calendar({ trips, p, today, start }: { trips: Trip[]; p: Profile; today: string; start: string }) {
   const duty = new Map<string, string>();
   for (const t of trips) for (const d of t.days) duty.set(d, t.trip_id);
   const standby = new Set(p.standby_days ?? []);
   const out = new Set<string>();
   for (const u of p.unavailable ?? []) for (let d = u.from; d <= u.to; d = addDays(d, 1)) out.add(d);
-  const lead = (new Date(`${START}T00:00:00Z`).getUTCDay() + 6) % 7;
-  const cells = Array.from({ length: DAYS }, (_, i) => addDays(START, i));
+  const lead = (new Date(`${start}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const cells = Array.from({ length: DAYS }, (_, i) => addDays(start, i));
   return (
     <div>
       <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
@@ -46,16 +57,20 @@ function Calendar({ trips, p, today }: { trips: Trip[]; p: Profile; today: strin
             <div
               key={iso}
               className={cx(
-                "flex min-h-16 flex-col gap-0.5 rounded-md p-1.5 text-[11px] sm:p-2",
+                "relative flex min-h-16 flex-col gap-0.5 rounded-md p-1.5 text-[11px] sm:p-2",
                 away ? "hatch-out border border-[#f3c4c0]" : trip ? "bg-accent text-white" : sb ? "bg-accent-soft text-accent-ink" : "bg-sunken",
-                iso === today && "outline-2 -outline-offset-2 outline-foreground",
+                iso === today && "ring-2 ring-foreground ring-offset-2 ring-offset-surface",
+                iso < today && "opacity-55",
               )}
+              aria-current={iso === today ? "date" : undefined}
             >
+              {iso === today && <span className="absolute -top-2 right-1.5 rounded bg-foreground px-1 text-[9px] font-semibold uppercase tracking-wide text-white">today</span>}
               <span className={cx("font-mono", trip && !away ? "text-white/80" : "text-muted")}>
                 {d.getUTCDate()} {d.toLocaleString("en", { month: "short", timeZone: "UTC" })}
               </span>
               {trip && <span className={cx("font-mono font-semibold", away && "text-critical-ink line-through")}>{trip}</span>}
               {!trip && sb && <span>standby</span>}
+              {!trip && !sb && !away && <span className="hidden text-faint sm:inline">day off</span>}
               {away && <span className="font-medium text-critical-ink">can&apos;t fly</span>}
             </div>
           );
@@ -65,9 +80,47 @@ function Calendar({ trips, p, today }: { trips: Trip[]; p: Profile; today: strin
         <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm bg-accent" />flying</span>
         <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm bg-accent-soft" />standby</span>
         <span className="flex items-center gap-1.5"><i className="hatch-out h-3 w-3 rounded-sm border border-[#f3c4c0]" />can&apos;t fly</span>
-        <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm outline-2 -outline-offset-2 outline-foreground" />today</span>
+        <span className="flex items-center gap-1.5"><i className="h-3 w-3 rounded-sm ring-2 ring-foreground ring-offset-1" />today</span>
       </div>
     </div>
+  );
+}
+
+/** A seat crew control is asking this person to fly, answered here with an optional remark. */
+function OfferCard({ c, busy, answer }: { c: Callout; busy: boolean; answer: (accept: boolean, note: string) => void }) {
+  const [note, setNote] = useState("");
+  return (
+    <section className="mb-5 overflow-hidden rounded-xl border border-[#f6dc9c] bg-pending-soft">
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-pending text-white">
+          <Radio size={17} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold text-pending-ink">
+            Callout: fly <Mono>{c.trip_id}</Mono> as {c.seat}
+          </p>
+          <p className="text-[13px] text-pending-ink/80">
+            Crew control asks you to cover this seat{c.answer_by ? <>; please answer by <b>{short(c.answer_by)}</b>, after that it goes to the next crew member</> : ""}.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-end gap-2 border-t border-[#f6dc9c] bg-surface/70 px-4 py-3 sm:px-5">
+        <Input
+          label="Remark for the desk (optional)"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={200}
+          placeholder="Such as: can report by 06:15, or: at a family function"
+          className="min-w-56 flex-1"
+        />
+        <Button tone="accent" disabled={busy} onClick={() => answer(true, note)}>
+          <Check size={15} /> Accept
+        </Button>
+        <Button tone="secondary" disabled={busy} onClick={() => answer(false, note)}>
+          <X size={15} /> Decline
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -142,7 +195,7 @@ export default function CrewPage() {
     const [p, trips, offers, inbox, reports] = await Promise.all([
       tool<Profile>("crew_profile", { crew_id: id }),
       settle(tool<{ trips: Trip[] }>("find_trips", { crew_id: id, limit: 30 })),
-      settle(tool<{ offers_to_me: Callout[] }>("callout_status", {})),
+      settle(tool<{ offers_to_me: Callout[]; earlier_offers?: Earlier[] }>("callout_status", {})),
       settle(api<{ notices: NoticeT[] }>("/api/notices?limit=10")),
       settle(tool<{ disruptions: ReportSummary[] }>("my_reports")),
     ]);
@@ -155,6 +208,9 @@ export default function CrewPage() {
   const { p } = data;
   const trips = data.trips.ok ? data.trips.value.trips ?? [] : [];
   const offers = data.offers.ok ? data.offers.value.offers_to_me ?? [] : [];
+  const earlier = data.offers.ok ? data.offers.value.earlier_offers ?? [] : [];
+  const start = me.days?.first ?? today;
+  const next = trips.find((t) => t.days.some((d) => d >= today));
 
   return (
     <div className="animate-rise">
@@ -165,7 +221,19 @@ export default function CrewPage() {
           </>
         }
         title={`Good to see you, ${p.name.split(" ")[0]}`}
-        lede={p.rest_until ? <>Resting until {short(p.rest_until)}.</> : "Your roster, your limits and anything crew control has sent you."}
+        lede={
+          <>
+            {p.rest_until ? <>Resting until {short(p.rest_until)}. </> : null}
+            {next ? (
+              <>
+                Next duty: <Mono>{next.trip_id}</Mono> reporting {short(next.report)} ({next.route}).
+              </>
+            ) : (
+              "Nothing rostered in the next two weeks."
+            )}{" "}
+            Your roster, your limits and anything crew control has sent you.
+          </>
+        }
         actions={
           <Button tone="danger-quiet" onClick={() => setDialog(true)}>
             <UserX size={15} /> I can&apos;t fly
@@ -173,40 +241,18 @@ export default function CrewPage() {
         }
       />
 
-      {offers.length > 0 && (
-        <div className="mb-5 flex flex-col gap-2">
-          {offers.map((c) => (
-            <Notice key={c.callout_id} tone="pending" icon={<Plane size={15} />}>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="min-w-0 flex-1 basis-64">
-                  <b>Callout offer:</b> <Mono>{c.trip_id}</Mono> as {c.seat}
-                  {c.answer_by ? `, answer by ${short(c.answer_by)}` : ""}.
-                </span>
-                <Button
-                  size="sm"
-                  disabled={busy !== null}
-                  onClick={() => run(c.callout_id, () => tool("answer_callout", { callout_id: c.callout_id, accept: true }), () => "Accepted. The desk confirms once an approver approves.")}
-                >
-                  Accept
-                </Button>
-                <Button
-                  size="sm"
-                  tone="secondary"
-                  disabled={busy !== null}
-                  onClick={() => run(c.callout_id, () => tool("answer_callout", { callout_id: c.callout_id, accept: false }), () => "Declined. The next crew member is being asked.")}
-                >
-                  Decline
-                </Button>
-              </div>
-            </Notice>
-          ))}
-        </div>
-      )}
+      {offers.map((c) => (
+        <OfferCard key={c.callout_id} c={c} busy={busy !== null} answer={(accept, note) =>
+          run(c.callout_id, () => tool("answer_callout", { callout_id: c.callout_id, accept, ...(note ? { note } : {}) }), () =>
+            accept ? "Accepted. The desk confirms once an approver approves." : "Declined. The next crew member is being asked.",
+          )
+        } />
+      ))}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="flex min-w-0 flex-col gap-5">
-          <Panel title="My calendar" icon={<CalendarDays size={15} />} action="30 Oct – 12 Nov">
-            <Calendar trips={trips} p={p} today={today} />
+          <Panel title="My calendar" icon={<CalendarDays size={15} />} action={`${short(start)} – ${short(addDays(start, DAYS - 1))}`}>
+            <Calendar trips={trips} p={p} today={today} start={start} />
           </Panel>
           <Panel flush title="My flights" icon={<Plane size={15} />} action={plural(trips.length, "trip")}>
             <Part of={data.trips}>
@@ -279,7 +325,7 @@ export default function CrewPage() {
                 {p.certificates.map((c) => (
                   <tr key={c.kind}>
                     <td className="capitalize">{words(c.kind)}</td>
-                    <td className="font-mono text-xs">{short(c.expires)}</td>
+                    <td className="font-mono text-xs">{short(c.expires)} {c.expires.slice(0, 4)}</td>
                     <td className="text-right">
                       <Pill tone={c.days_left < 15 ? "critical" : c.days_left < 60 ? "pending" : "ok"}>{c.days_left} days</Pill>
                     </td>
@@ -287,6 +333,34 @@ export default function CrewPage() {
                 ))}
               </tbody>
             </Table>
+          </Panel>
+          <Panel flush title="Callouts offered to me" icon={<Radio size={15} />} action={earlier.length ? plural(earlier.length, "earlier offer") : undefined}>
+            {offers.length === 0 && earlier.length === 0 ? (
+              <Empty>No callout has been offered to you.</Empty>
+            ) : (
+              <ul className="divide-y divide-rule">
+                {offers.map((c) => (
+                  <li key={c.callout_id} className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm sm:px-5">
+                    <StatusPill value="offered" />
+                    <Mono>{c.trip_id}</Mono> as {c.seat}
+                    <span className="ml-auto text-xs text-muted">answer by {c.answer_by ? short(c.answer_by) : "–"}</span>
+                  </li>
+                ))}
+                {earlier.map((e) => (
+                  <li key={e.callout_id + e.offered_at} className="px-4 py-3 text-sm sm:px-5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Mono className="font-semibold">{e.trip_id}</Mono> <span>as {e.seat}</span>
+                      <span className="ml-auto font-mono text-xs text-faint">offered {short(e.offered_at)}</span>
+                    </div>
+                    <p className={cx("mt-1 text-xs", e.outcome === "accepted" ? "text-ok-ink" : e.outcome === "no answer" ? "text-pending-ink" : "text-muted")}>
+                      {OUTCOME[e.outcome] ?? e.outcome}
+                      {e.answered_at && e.outcome !== "no answer" ? ` at ${short(e.answered_at)}` : e.outcome === "no answer" ? ` (answer was due by ${short(e.answer_by)})` : ""}. Seat now {e.seat_now.replace("_", " ")}.
+                    </p>
+                    {e.your_remark && <p className="mt-1 text-xs italic text-muted">“{e.your_remark}”</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
           </Panel>
           <Panel flush title="Messages" icon={<Inbox size={15} />}>
             <Part of={data.inbox}>{(v) => <NoticeList notices={(v.notices ?? []).slice(0, 5)} />}</Part>

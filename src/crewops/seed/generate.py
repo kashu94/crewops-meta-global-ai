@@ -54,7 +54,7 @@ DAYS = 14
 AS_OF = datetime(2026, 10, 29, 18, 0, tzinfo=UTC)
 HISTORY_DAYS = 28
 HUB = "HYD"
-DATA_VERSION = 3
+DATA_VERSION = 4
 """Raised whenever the generated data changes shape, so a deployed store reloads it."""
 
 HUB_GATES = (("21", "22", "23", "24", "25"), ("R1", "R2"), ("E1",))
@@ -132,7 +132,7 @@ ROTATIONS = (
     ),
     Rotation("VT-SYT", 241, ((time(2, 0), ("HYD", "VGA", "HYD", "TIR", "HYD")),)),
     Rotation("VT-KFA", 501, ((time(1, 45), ("HYD", "BOM", "HYD", "GOI", "HYD")),)),
-    Rotation("VT-KFB", 521, ((time(15, 30), ("HYD", "DEL", "HYD")),)),
+    Rotation("VT-KFB", 521, ((time(14, 30), ("HYD", "DEL", "HYD")),)),
     Rotation("VT-GLT", 701, ((time(1, 45), ("HYD", "RJA", "HYD", "VTZ", "HYD")),)),
     Rotation("VT-GLU", 721, ((time(7, 30), ("HYD", "VGA", "HYD", "TIR", "HYD")),)),
 )
@@ -466,9 +466,14 @@ class Generator:
         for crew, status in zip(self.rng.sample(self.crew, 3), statuses, strict=True):
             self.crew[self.crew.index(crew)] = crew.model_copy(update={"status": status})
         # Certificates that lapse inside the fortnight, so some candidates fail on them.
-        for crew in self.rng.sample(self.crew, 6):
-            kind = self.rng.choice(list(CertKind))
-            self._set_expiry(crew.crew_id, kind, START + timedelta(days=self.rng.randint(2, 11)))
+        # Only one is planted here (beside the captain in ``plant_known_issue``); the other draws
+        # are still made, so the rest of the operation comes out the same.
+        lapses = [
+            (crew.crew_id, self.rng.choice(list(CertKind)), self.rng.randint(2, 11))
+            for crew in self.rng.sample(self.crew, 6)
+        ]
+        crew_id, kind, days = max(lapses, key=lambda x: x[2])
+        self._set_expiry(crew_id, kind, START + timedelta(days=days))
 
     def _fleet(self, code: str) -> tuple[Aircraft, ...]:
         return next(a.fleet for a in AIRLINES if a.code == code)

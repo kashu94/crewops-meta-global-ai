@@ -1,33 +1,34 @@
 "use client";
 
-import { Camera, ChevronDown, ImageUp } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { CheckCircle2, ImageUp, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-import { api, message } from "@/lib/api";
+import { api, apiUrl, headers, message } from "@/lib/api";
 
-import { Button, control, cx, Input, Label, Notice, Pill, Spinner } from "./ui";
+import { Button, cx, Pill, Spinner } from "./ui";
 
 type Box = { x1: number; y1: number; x2: number; y2: number; width: number; height: number; confidence: number };
-type Intake = {
+export type Intake = {
   status: "rejected" | "reshoot" | "confirm" | "draft";
   message: string;
-  confidence?: string;
-  quality?: { width: number; height: number; sharpness: number; brightness: number };
-  form?: Record<string, unknown>;
-  signals?: Record<string, unknown>;
-  proposal?: { tool?: string; arguments?: unknown; calls?: { tool: string; arguments: unknown }[] } | null;
+  confidence?: string | null;
   box?: Box | null;
+  evidence_id?: string;
 };
 
-const KINDS = [
-  ["sick_note", "Sick note"],
-  ["disruption", "Departures board or delay notice"],
-  ["defect", "Aircraft defect"],
-  ["roster_swap", "Roster swap request"],
-  ["certificate", "Certificate"],
-] as const;
+/** What each kind of report is backed up by, and whether it must be. */
+export const PHOTO: Record<string, { kind: string; label: string; hint: string; required?: boolean }> = {
+  crew_unavailable: { kind: "sick_note", label: "Sick note or medical report", hint: "Optional. Read for the name and the dates." },
+  certification_lapse: { kind: "certificate", label: "Photo of the certificate", hint: "Optional. Read for the holder and the expiry date." },
+  flight_delay: { kind: "disruption", label: "Departures board or delay notice", hint: "Optional. The flights and times on it are checked against the schedule." },
+  gate_change: { kind: "disruption", label: "Gate screen or departures board", hint: "Optional. The new gate is checked against who holds it." },
+  aircraft_technical: { kind: "defect", label: "Photo of the fault", hint: "Required. The damage is located and the registration checked." , required: true },
+  station_disruption: { kind: "scene", label: "Photo of the conditions", hint: "Optional. Fog, flooding, snow or a storm on the airfield." },
+  gate_closure: { kind: "scene", label: "Photo of the closed gate", hint: "Optional. The gate, jet bridge or barrier." },
+};
 
-const TONE = { rejected: "error", reshoot: "pending", confirm: "pending", draft: "ok" } as const;
+const TONE = { rejected: "critical", reshoot: "pending", confirm: "pending", draft: "ok" } as const;
+const WORD = { rejected: "Not accepted", reshoot: "Take it again", confirm: "Check this", draft: "Checked" } as const;
 
 function Marked({ file, box }: { file: File; box?: Box | null }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -56,30 +57,46 @@ function Marked({ file, box }: { file: File; box?: Box | null }) {
     img.src = url;
     return () => URL.revokeObjectURL(url);
   }, [file, box]);
-  return <canvas ref={canvas} className="h-auto max-w-full rounded-md border border-line" />;
+  return <canvas ref={canvas} className="max-h-56 w-auto max-w-full rounded-md border border-line object-contain" />;
 }
 
-/** A photo of a sick note, a board, a defect or a certificate, checked in fixed steps:
- * picture quality, then a model fills a fixed form, then the rules in code. Nothing changes
- * until a person confirms. */
-export function PhotoIntake() {
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<Intake | null>(null);
+/** A photo for a report, checked the moment it is chosen: picture quality first, then a model
+ * reads it into a fixed form, then the rules in code decide. One that passes is kept with the
+ * report; one that does not says why, and can be replaced. */
+export function EvidenceField({
+  reportKind,
+  tail,
+  onChange,
+}: {
+  reportKind: string;
+  /** For a fault: the aircraft named in the form, to check the registration against. */
+  tail?: () => string;
+  onChange: (evidenceId: string | null) => void;
+}) {
+  const spec = PHOTO[reportKind];
   const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState<Intake | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  if (!spec) return null;
 
-  async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const image = f.get("image");
-    if (!(image instanceof File) || !image.size) return setError("Choose a photo first.");
-    if (!f.get("tail")) f.delete("tail");
-    setBusy(true);
-    setError(null);
+  async function check(f: File) {
+    setFile(f);
     setResult(null);
+    setError(null);
+    onChange(null);
+    setBusy(true);
+    const form = new FormData();
+    form.set("image", f);
+    form.set("kind", spec.kind);
+    form.set("keep", "true");
+    const t = tail?.().trim();
+    if (t) form.set("tail", t.toUpperCase());
     try {
-      setResult(await api<Intake>("/api/intake", { method: "POST", form: f }));
-      setFile(image);
+      const r = await api<Intake>("/api/intake", { method: "POST", form });
+      setResult(r);
+      onChange(r.evidence_id ?? null);
     } catch (err) {
       setError(message(err));
     } finally {
@@ -87,82 +104,104 @@ export function PhotoIntake() {
     }
   }
 
-  const calls = result?.proposal ? (result.proposal.calls ?? [result.proposal as { tool: string; arguments: unknown }]) : [];
+  function clear() {
+    setFile(null);
+    setResult(null);
+    setError(null);
+    onChange(null);
+    if (input.current) input.current.value = "";
+  }
 
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <form onSubmit={submit} className="flex flex-col gap-4">
-        <Label label="What it shows">
-          <select name="kind" className={control}>
-            {KINDS.map(([v, l]) => (
-              <option key={v} value={v}>
-                {l}
-              </option>
-            ))}
-          </select>
-        </Label>
-        <Input label="Aircraft (for a defect)" name="tail" placeholder="VT-SYB" />
-        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-control bg-sunken px-4 py-6 text-center text-sm text-muted hover:border-accent">
-          <ImageUp size={22} className="text-faint" />
-          <span>
-            <b className="text-foreground">Choose a photo</b> or take one (JPEG, PNG or WebP, under 8 MB)
+    <div className="flex flex-col gap-1.5 text-[13px]">
+      <span className="flex items-center gap-2 font-medium">
+        {spec.label}
+        {spec.required ? <Pill tone="critical">required</Pill> : <Pill>optional</Pill>}
+      </span>
+      <input
+        ref={input}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        className="sr-only"
+        id={`photo-${reportKind}`}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) check(f);
+        }}
+      />
+      {!file ? (
+        <label
+          htmlFor={`photo-${reportKind}`}
+          className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-control bg-sunken px-4 py-4 transition-colors hover:border-accent hover:bg-accent-soft/40"
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface text-accent ring-1 ring-line">
+            <ImageUp size={18} />
           </span>
-          <input name="image" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="max-w-full text-xs" required />
+          <span className="min-w-0">
+            <b className="block text-sm text-foreground">Add a photo</b>
+            <span className="block text-xs text-muted">{spec.hint} JPEG, PNG or WebP under 8 MB.</span>
+          </span>
         </label>
-        <p className="text-xs text-faint">Checked in fixed steps: picture quality, then a model reads it into a fixed form, then the rules in code. Defect photos get the damage marked. Nothing changes until a person confirms.</p>
-        <div>
-          <Button type="submit" disabled={busy}>
-            {busy ? <Spinner /> : <Camera size={15} />} Check photo
-          </Button>
+      ) : (
+        <div className="grid gap-3 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[auto_1fr]">
+          <Marked file={file} box={result?.box} />
+          <div className="flex min-w-0 flex-col gap-2">
+            {busy && (
+              <p className="flex items-center gap-2 text-sm text-muted">
+                <Spinner /> Checking the photo…
+              </p>
+            )}
+            {error && <p className="text-sm text-critical">{error}</p>}
+            {result && (
+              <>
+                <p className="flex flex-wrap items-center gap-2">
+                  <Pill tone={TONE[result.status]}>
+                    {result.status === "draft" ? <CheckCircle2 size={12} /> : <ShieldAlert size={12} />}
+                    {WORD[result.status]}
+                  </Pill>
+                  {result.confidence && (
+                    <Pill tone={result.confidence === "high" ? "ok" : result.confidence === "low" ? "critical" : "pending"}>{result.confidence} confidence</Pill>
+                  )}
+                </p>
+                <p className={cx("text-sm leading-relaxed", result.status === "rejected" ? "text-critical-ink" : "text-foreground")}>{result.message}</p>
+                {!result.evidence_id && <p className="text-xs text-muted">This photo is not attached. Take another, or file without one{spec.required ? " (not for a fault)" : ""}.</p>}
+              </>
+            )}
+            <div className="mt-auto flex flex-wrap gap-2">
+              <label htmlFor={`photo-${reportKind}`} className="inline-flex min-h-7 cursor-pointer items-center gap-1.5 rounded-md border border-control px-2.5 text-[13px] font-medium hover:bg-sunken">
+                <RefreshCw size={13} /> Another photo
+              </label>
+              <Button size="sm" tone="ghost" type="button" onClick={clear}>
+                <Trash2 size={13} /> Remove
+              </Button>
+            </div>
+          </div>
         </div>
-      </form>
-      <div className="flex min-w-0 flex-col gap-3">
-        {error && <Notice tone="error">{error}</Notice>}
-        {busy && (
-          <p className="flex items-center gap-2 text-sm text-muted">
-            <Spinner /> Reading the photo…
-          </p>
-        )}
-        {result && (
-          <>
-            <Notice tone={TONE[result.status] ?? "info"}>
-              <b className="mr-1 capitalize">{result.status}</b> {result.message}
-            </Notice>
-            {result.confidence && (
-              <p className="text-sm">
-                Confidence: <Pill tone={result.confidence === "high" ? "ok" : result.confidence === "low" ? "critical" : "pending"}>{result.confidence}</Pill>
-              </p>
-            )}
-            {file && <Marked file={file} box={result.box} />}
-            {result.quality && (
-              <p className="text-xs text-muted">
-                Picture {result.quality.width}×{result.quality.height}, sharpness {result.quality.sharpness}, brightness {result.quality.brightness}
-              </p>
-            )}
-            {[
-              ["What the model read", result.form],
-              ["Signals behind the confidence", result.signals],
-            ].map(([title, body]) =>
-              body && Object.keys(body as object).length ? (
-                <details key={String(title)} className="rounded-md border border-line">
-                  <summary className="flex items-center gap-2 px-3 py-2 text-sm">
-                    <ChevronDown size={14} className="text-faint" /> {String(title)}
-                  </summary>
-                  <pre className="max-h-72 overflow-auto border-t border-rule bg-sunken p-3 font-mono text-xs">{JSON.stringify(body, null, 2)}</pre>
-                </details>
-              ) : null,
-            )}
-            {calls.map((c, i) => (
-              <p key={i} className={cx("rounded-md bg-sunken px-3 py-2 text-xs")}>
-                Next step: <code className="font-mono font-semibold">{c.tool}</code> <span className="font-mono text-muted">{JSON.stringify(c.arguments)}</span>
-              </p>
-            ))}
-          </>
-        )}
-        {!result && !busy && !error && (
-          <div className="flex flex-1 items-center justify-center rounded-lg border border-line bg-sunken p-8 text-center text-sm text-muted">The reading of the photo shows here.</div>
-        )}
-      </div>
+      )}
     </div>
   );
+}
+
+/** A photo kept with a report, fetched with the viewer's sign-in. */
+export function EvidencePhoto({ id, alt }: { id: string; alt: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let made: string | null = null;
+    fetch(apiUrl(`/api/evidence/${encodeURIComponent(id)}`), { headers: headers() })
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+      .then((b) => {
+        made = URL.createObjectURL(b);
+        setUrl(made);
+      })
+      .catch(() => setFailed(true));
+    return () => {
+      if (made) URL.revokeObjectURL(made);
+    };
+  }, [id]);
+  if (failed) return <div className="grid h-32 place-items-center rounded-md bg-sunken text-xs text-muted">Photo not available to you</div>;
+  if (!url) return <div className="grid h-32 place-items-center rounded-md bg-sunken"><Spinner /></div>;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt={alt} className="max-h-64 w-auto max-w-full rounded-md border border-line object-contain" />;
 }

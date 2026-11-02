@@ -159,6 +159,8 @@ class OperationCache:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._cached: tuple[int, Operation] | None = None
+        self.live = False
+        """Judge the roster at the wall clock when no moment is given."""
 
     def roster_version(self) -> int:
         raise NotImplementedError
@@ -191,6 +193,8 @@ class OperationCache:
                 )
                 self._cached = (version, op)
             op = self._cached[1]
+        if now is None and self.live:
+            now = datetime.now(UTC)
         if now is not None and now > op.now:
             op = replace(op, now=now)
         return op

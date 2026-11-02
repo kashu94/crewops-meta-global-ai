@@ -10,7 +10,7 @@ import type { Answer, SpeakerFeed } from "@/lib/types";
 import { LANGUAGES, Recorder, say, transcribe } from "@/lib/voice";
 
 type Item = SpeakerFeed["items"][number];
-type Waiting = SpeakerFeed["waiting"] & { resolutions?: number; disruptions?: number };
+type Waiting = SpeakerFeed["waiting"] & { resolutions?: number; disruptions?: number; proposals?: number };
 
 const HEARD = "crewops.speaker.heard";
 const REPEAT_EVERY = 120_000;
@@ -162,19 +162,9 @@ export default function SpeakerPage() {
 
   async function waiting() {
     if (!feed) return;
-    const w = feed.waiting as Waiting;
-    const parts = [
-      w.plans ? `${w.plans} roster ${w.plans === 1 ? "change waits" : "changes wait"} for an approver.` : "No roster change waits for approval.",
-    ];
-    if (w.decisions) parts.push(`${w.decisions} ${w.decisions === 1 ? "callout has" : "callouts have"} nobody left to ask.`);
-    if (w.resolutions) parts.push(`${w.resolutions} ${w.resolutions === 1 ? "resolution waits" : "resolutions wait"} for sign-off.`);
-    if (w.disruptions) parts.push(`${w.disruptions} ${w.disruptions === 1 ? "disruption is" : "disruptions are"} open.`);
-    feed.items
-      .filter((i) => i.tone === "critical")
-      .slice(0, 2)
-      .forEach((i) => parts.push(`${i.subject}.`));
-    const text = parts.join(" ");
-    setAnswer({ q: "What's waiting?", text });
+    const lines = feed.summary ?? [];
+    const text = lines.length ? lines.join(" ") : "Nothing is waiting on the desk.";
+    setAnswer({ q: "What's waiting?", text: lines.length ? lines.map((l) => `• ${l}`).join("\n") : text });
     audio.current ??= new AudioContext();
     await say(text, lang);
   }
@@ -227,7 +217,7 @@ export default function SpeakerPage() {
   }
 
   const w = (feed?.waiting ?? { plans: 0, decisions: 0 }) as Waiting;
-  const count = w.plans + w.decisions + (w.resolutions ?? 0);
+  const count = w.plans + w.decisions + (w.resolutions ?? 0) + (w.proposals ?? 0);
   const critical = (feed?.items ?? []).some((i) => i.tone === "critical" && unack.has(i.id));
   const ring = !on ? "off" : speaking ? "speaking" : critical || w.decisions ? "critical" : count ? "pending" : "ok";
   const ringColor = { off: "#2a3542", speaking: "#6fb6ff", critical: "#ff6b6b", pending: "#f5b94a", ok: "#4fd18b" }[ring];

@@ -81,3 +81,29 @@ what would have helped.
   the damage type, and keep the most confident box that covers less than 60% of the photo.
 - **Would help:** Guidance on phrasing for surface defects (dents, cracks, scratches), which
   are not "objects" in the usual sense.
+
+### 2026-11-01 · Muse Spark · A passing 404 on a valid chat request
+
+- **Tried:** A routine planning call from the deployed assistant: the same model, key and
+  request shape that had answered moments earlier and answered again right after.
+- **Happened:** The Model API returned HTTP 404 once. A 404 reads as "no such model" or "wrong
+  path", so the client did not retry and the person asking saw the error.
+- **Cost:** One failed answer in front of a user, and time spent checking the model name and
+  base URL, which were correct.
+- **Workaround:** The client now retries a 404 once with backoff, like a 429 or 503, and the
+  assistant asks the person to try again if it still fails.
+- **Would help:** Status codes that keep their meaning (a 503 or 429 for a passing fault), or
+  a request id in error bodies to quote when asking what happened.
+
+### 2026-11-02 · Muse Spark vision · Weather judged as a blurred photo
+
+- **Tried:** Reading a sharp photo of an apron in thick fog into a form that includes whether
+  the photo is clear enough to judge.
+- **Happened:** The model answered that the view was unclear, mixing up the fog in the scene
+  with the quality of the photo, and the photo was sent back for a retake.
+- **Cost:** A correct weather photo refused until the instructions were changed.
+- **Workaround:** The instructions now say that clarity is about the photo, not the weather,
+  and that a sharp photo of thick fog is clear. Picture quality is also measured from the
+  pixels in code, so the model's view is one signal of several.
+- **Would help:** Guidance in the vision documentation on separating image quality from scene
+  content in structured answers.

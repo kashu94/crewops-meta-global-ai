@@ -89,7 +89,7 @@ function Nav({ onPick }: { onPick?: () => void }) {
     <nav aria-label="Pages" className="mt-2 flex flex-col">
       {navFor(me.role).map((g) => (
         <div key={g.group} className="mb-1">
-          <div className="px-2.5 pb-1 pt-3 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">{g.group}</div>
+          <div className="px-2.5 pb-1 pt-2.5 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">{g.group}</div>
           {g.items.map((item) => {
             const Icon = ICONS[item.icon] ?? LayoutDashboard;
             const active = !item.external && matches(path, item);
@@ -275,7 +275,7 @@ function MenuSheet({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
       <button className="absolute inset-0 bg-black/30" aria-label="Close the menu" onClick={onClose} />
-      <div className="animate-rise absolute inset-y-0 left-0 flex w-[280px] flex-col overflow-y-auto bg-background px-3 pb-3 shadow-xl">
+      <div className="animate-rise quiet-scroll absolute inset-y-0 left-0 flex w-[280px] flex-col overflow-y-auto bg-background px-3 pb-3 shadow-xl">
         <div className="flex items-center justify-between">
           <Brand />
           <button className="rounded-md p-1.5 text-muted hover:bg-active" onClick={onClose} aria-label="Close">
@@ -293,7 +293,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState(false);
   return (
     <div className="flex min-h-screen overflow-x-clip bg-background">
-      <aside className="sticky top-0 hidden h-screen w-[236px] shrink-0 flex-col overflow-y-auto px-3 pb-3 lg:flex">
+      <aside className="quiet-scroll sticky top-0 hidden h-screen w-[236px] shrink-0 flex-col overflow-y-auto px-3 pb-3 lg:flex">
         <Brand />
         <Nav />
         <Account />

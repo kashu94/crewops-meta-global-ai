@@ -26,7 +26,8 @@ from pydantic import BaseModel, ValidationError
 from crewops.settings import Settings
 
 EFFORTS = ("minimal", "low", "medium", "high", "xhigh")
-RETRY_STATUSES = frozenset({408, 429, 500, 502, 503, 504})
+RETRY_STATUSES = frozenset({404, 408, 429, 500, 502, 503, 504})
+"""404 included: the model API has answered a valid request with a passing 404."""
 MAX_RETRY_WAIT = 20.0
 
 

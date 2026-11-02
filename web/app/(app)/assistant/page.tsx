@@ -6,19 +6,29 @@ import { useRef, useState } from "react";
 import { useSession } from "@/components/session";
 import { Button, control, cx, Mono, Notice, PageHeader, Panel, Pill, Spinner, Table } from "@/components/ui";
 import { api, message } from "@/lib/api";
+import { opDay } from "@/lib/clock";
 import { plural } from "@/lib/format";
 import type { Answer } from "@/lib/types";
 import { LANGUAGES, Recorder, say, transcribe } from "@/lib/voice";
 
+/** "8 November", a number of days into the demo roster. */
+function onDay(first: string, n: number) {
+  const d = new Date(`${first}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return `${d.getUTCDate()} ${d.toLocaleString("en-GB", { month: "long", timeZone: "UTC" })}`;
+}
+
+// The demo's trips sit at the same days into its roster, whichever day it starts.
+const deskSuggestions = (first: string) => [
+  `Pooja Chowdary is unwell from ${onDay(first, 6)} to ${onDay(first, 9)}. How should we cover it?`,
+  "Anything I should worry about in the next few days?",
+  `Gates 21 and 22 at Hyderabad are closed 6 to 9 am on ${onDay(first, 3)}. What happens?`,
+  `VT-SYB is out of service until 11 am on ${onDay(first, 6)}.`,
+];
+
 const SUGGEST = {
-  desk: [
-    "Pooja Chowdary is unwell from 5 to 8 November. How should we cover it?",
-    "Anything I should worry about in the next few days?",
-    "Gates 21 and 22 at Hyderabad are closed 6 to 9 am on 5 November. What happens?",
-    "VT-SYB is out of service until 11 am on 5 November.",
-  ],
-  crew: ["Am I legal for my next trip?", "How many duty hours have I done this week?", "Do I have any callout offers?"],
-  reporter: ["Who do I call about a gate problem at Hyderabad?", "What departs Hyderabad in the next few hours?", "Where does my last report stand?"],
+  crew: ["Who am I, and what should I do today?", "Am I legal for my next trip?", "How many duty hours have I done this week?", "Do I have any callout offers?"],
+  reporter: ["What is my role here?", "Who do I call about a gate problem at Hyderabad?", "What departs Hyderabad in the next few hours?", "Where does my last report stand?"],
 };
 
 type Turn = { q: string; a?: Answer; error?: string };
@@ -90,7 +100,10 @@ function Trace({ a }: { a: Answer }) {
       </section>
       {a.calls.length > 0 && (
         <section>
-          <h3 className="mb-1 text-[13px] font-semibold">Model calls · {a.tokens.toLocaleString("en-IN")} tokens</h3>
+          <h3 className="mb-1 text-[13px] font-semibold">
+            Model calls · {(a.tokens.prompt + a.tokens.completion).toLocaleString("en-IN")} tokens
+            {a.tokens.cached > 0 && <span className="font-normal text-muted"> ({a.tokens.cached.toLocaleString("en-IN")} from the cache)</span>}
+          </h3>
           <div className="rounded-md border border-line">
             <Table className="text-xs">
               <thead>
@@ -133,7 +146,8 @@ export default function AssistantPage() {
   const [micNote, setMicNote] = useState("");
   const [shown, setShown] = useState<number | null>(null);
   const recorder = useRef(new Recorder());
-  const suggestions = me.role === "crew" ? SUGGEST.crew : me.role === "reporter" ? SUGGEST.reporter : SUGGEST.desk;
+  const suggestions =
+    me.role === "crew" ? SUGGEST.crew : me.role === "reporter" ? SUGGEST.reporter : deskSuggestions(me.days?.first ?? opDay(me.clock));
 
   async function ask(q: string) {
     if (!q.trim() || busy) return;
@@ -264,7 +278,7 @@ export default function AssistantPage() {
               <Button type="button" tone={mic === "listening" ? "danger" : "secondary"} onClick={toggleMic} disabled={mic === "working"}>
                 {mic === "listening" ? <Square size={14} /> : <Mic size={14} />} {mic === "listening" ? "Stop" : "Speak"}
               </Button>
-              <select aria-label="Spoken language" value={lang} onChange={(e) => setLang(e.target.value)} className={cx(control, "h-9 w-28")}>
+              <select aria-label="Spoken language" value={lang} onChange={(e) => setLang(e.target.value)} className={cx(control.replace("w-full", ""), "w-32")}>
                 {LANGUAGES.map((l) => (
                   <option key={l.value} value={l.value}>
                     {l.label}

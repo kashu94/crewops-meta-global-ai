@@ -83,5 +83,6 @@ async def test_a_crew_member_sees_only_their_own_tools_and_record(mem):
         "show_disruption",
         "crew_risk",
         "my_queue",
+        "about_me",
     }
     assert other.is_error

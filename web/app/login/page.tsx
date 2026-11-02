@@ -3,7 +3,7 @@
 import { ArrowRight, Eye, EyeOff, KeyRound, Lock, LogOut } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
-import { RouteMap } from "@/components/login-art";
+import { RunwayAtNight } from "@/components/login-art";
 import { Logo } from "@/components/shell";
 import { Button, control, cx, Label, Notice, Spinner } from "@/components/ui";
 import { api, hasSession, loadConfig, message, setDemoIdentity, signOut, type Config, type DemoAccount } from "@/lib/api";
@@ -32,11 +32,17 @@ const AIRLINES = [
   ["Godavari Link", "#2a9d6f"],
 ] as const;
 
-const WHO = [
-  ["Controllers", "see problems ranked by urgency, call out cover and work the disruptions on their desk."],
-  ["Approvers", "are the second pair of eyes on every roster change and every resolution."],
-  ["Station reporters", "file a sick call, a delay or a closed gate and follow it to the end."],
-  ["Crew", "see their roster and duty limits, answer callouts and report when they cannot fly."],
+// The duty rules every cover is checked against (data/seed/rules.json), in short.
+const RULES = [
+  ["Duty period", "13 h, less 30 min per sector after the second"],
+  ["Night duty", "10 h at most through 00:00–06:00, two landings"],
+  ["Duty", "60 h in any 7 days"],
+  ["Flying", "100 block hours in any 28 days"],
+  ["Rest", "12 h, and at least the duty before it"],
+  ["Weekly rest", "Two clear days in a row every 7 days"],
+  ["Rating", "Rated on the type, flying for their own airline"],
+  ["Certificates", "Every certificate valid on each duty date"],
+  ["Base", "From home base, or positioned in that day"],
 ] as const;
 
 function PasswordInput({ name, autoComplete, label }: { name: string; autoComplete: string; label: string }) {
@@ -134,30 +140,31 @@ export default function Login() {
 
   return (
     <main className="grid min-h-screen flex-1 bg-surface lg:grid-cols-[1.08fr_1fr]">
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#050c18] px-12 py-10 text-white lg:flex">
-        <RouteMap />
+      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#040a18] px-12 py-10 text-white lg:flex">
+        <RunwayAtNight />
         <div className="relative flex items-center gap-2.5">
           <Logo size={30} />
           <span className="text-[15px] font-semibold">CrewOps</span>
           <span className="text-sm text-[#a9bbd0]">Crew control</span>
         </div>
-        <div className="relative max-w-lg">
-          <h2 className="text-[34px] font-semibold leading-[1.15] tracking-[-0.015em]">Every seat legally crewed, before the flight is at risk.</h2>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[#cdd9e6]">
-            A sick call, a late departure or a closed gate becomes a report with legal cover, the teams to tell and a plan a
-            second person approves. The rules engine decides who is legal and what it costs.
+        <div className="relative max-w-xl">
+          <h2 className="text-[34px] font-semibold leading-tight tracking-[-0.01em]">Crew control for three airlines</h2>
+          <p className="mt-3 max-w-md text-base leading-relaxed text-[#d4dde8]">
+            A sick call, a late departure or a closed gate becomes ranked, legal cover within seconds, on the desk, on the
+            ops-room speaker and on the wall. A second person approves every roster change.
           </p>
-          <dl className="mt-8 grid gap-2.5 rounded-lg bg-[#050c18]/60 p-4 text-sm ring-1 ring-white/10 backdrop-blur-[2px]">
-            {WHO.map(([who, what]) => (
-              <div key={who} className="flex gap-2">
-                <dt className="shrink-0 font-semibold text-white">{who}</dt>
-                <dd className="text-[#c3d1e0]">{what}</dd>
+          <p className="mt-10 text-sm font-medium text-white">Every cover is checked against {RULES.length} rules</p>
+          <dl className="mt-3 grid grid-cols-[7.5rem_1fr] gap-x-4 gap-y-2 rounded-lg bg-[#040a18]/55 p-4 text-sm ring-1 ring-white/10">
+            {RULES.map(([name, text]) => (
+              <div key={name} className="contents">
+                <dt className="text-[#b9c6d6]">{name}</dt>
+                <dd className="text-[#eef2f7]">{text}</dd>
               </div>
             ))}
           </dl>
         </div>
-        <div className="relative flex flex-wrap items-center justify-between gap-4 text-sm text-[#c3d1e0]">
-          <ul className="flex flex-wrap gap-x-5 gap-y-2">
+        <div className="relative flex flex-wrap items-center justify-between gap-4 text-sm text-[#d4dde8]">
+          <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {AIRLINES.map(([name, color]) => (
               <li key={name} className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -165,7 +172,7 @@ export default function Login() {
               </li>
             ))}
           </ul>
-          <span className="text-xs text-[#8ea3ba]">Demo operation, 30 Oct – 12 Nov 2026. All names are made up.</span>
+          <span className="text-xs text-[#8ea3ba]">A demo operation: every name in it is made up.</span>
         </div>
       </section>
 

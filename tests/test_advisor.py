@@ -163,7 +163,7 @@ def test_an_answer_that_fails_verification_is_repaired_once(mem, seed):
 def test_an_unreachable_model_gives_an_honest_reply(mem, seed):
     planner = Script(ModelError("meta models returned 503", status=503))
     answer = advisor(mem, seed, planner).ask("Is C-1157 legal?", CONTROLLER)
-    assert "unavailable" in answer.text and answer.verified is False
+    assert "could not reach the model" in answer.text and answer.verified is False
 
 
 @pytest.mark.parametrize(
@@ -180,6 +180,21 @@ def test_an_unreachable_model_gives_an_honest_reply(mem, seed):
 )
 def test_keyword_routing(question, intent):
     assert route_by_keywords(question).intent is intent
+
+
+def test_questions_about_the_asker_are_never_off_topic():
+    assert route_by_keywords("Who am I?").intent is Intent.LOOKUP
+    assert route_by_keywords("what should I do now").intent is Intent.LOOKUP
+    assert "about_me" in route_by_keywords("what is my role").tools
+
+    class SaysOther:
+        def parse(self, *args, **kwargs):
+            from crewops.agent.router import RouteChoice
+
+            return RouteChoice(intent=Intent.OTHER, attack=False), None
+
+    assert Router(SaysOther()).route("who am i?").intent is Intent.LOOKUP
+    assert Router(SaysOther()).route("write me a poem").intent is Intent.OTHER
 
 
 def test_the_router_falls_back_to_keywords_when_the_model_fails():

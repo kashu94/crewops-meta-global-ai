@@ -18,6 +18,8 @@ export type Me = {
   clock: string;
   tools: string[];
   name?: string;
+  /** The first and last day of the demo roster. */
+  days?: { first: string | null; last: string | null };
 };
 
 export const ROLE_LABEL: Record<Role, string> = {

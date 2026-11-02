@@ -58,7 +58,7 @@ export default function BoardPage() {
     ? [
         ["Flights next 24h", n.flights],
         ["Passengers", n.passengers.toLocaleString("en-IN")],
-        ["Crew out", n.crew_out, n.crew_out ? "warn" : ""],
+        ["Crew out today/tomorrow", n.crew_out, n.crew_out ? "warn" : ""],
         ["Open callouts", n.open_callouts, n.open_callouts ? "warn" : ""],
         ["Illegal", n.illegal, n.illegal ? "bad" : "good"],
         ["Fatigue", n.fatigue, n.fatigue ? "warn" : ""],
