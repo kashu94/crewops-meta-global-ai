@@ -55,6 +55,7 @@ from crewops.engine.severity import for_issue
 from crewops.engine.watch import scan
 from crewops.ops.callout import Callout, CalloutDesk, CalloutError, Status
 from crewops.ops.governance import LimitError, limits, log, set_limit
+from crewops.ops.notify import DESK, Notice
 from crewops.ops.plans import Plan, PlanDesk, PlanError
 from crewops.store.roster import RosterChange, StaleTrip
 
@@ -965,7 +966,52 @@ def clear_unavailable(ctx: Context, args: ClearUnavailable) -> dict[str, Any]:
         if args.report_id not in mine:
             raise Forbidden("crew members can only withdraw their own reports")
     report = ctx.store.clear_unavailable(args.report_id)
-    return {**_unavailability(report), "crew_id": report.crew_id, "cleared": True}
+    out: dict[str, Any] = {**_unavailability(report), "crew_id": report.crew_id, "cleared": True}
+    out["stood_down"] = _back_on_duty(ctx, report)
+    return out
+
+
+def _back_on_duty(ctx: Context, cleared: Unavailability) -> list[str]:
+    """Someone who said they could not fly says they can: stop finding cover for them, tell
+    the desk, and close a disruption that has nobody left out."""
+    op = ctx.operation()
+    name = op.state(cleared.crew_id).name
+    why = f"{name} can fly after all"
+    done: list[str] = []
+    if ctx.desk is not None:
+        for trip_id in {
+            d.trip_id
+            for d in op.state(cleared.crew_id).duties
+            if cleared.first_day <= d.day <= cleared.last_day
+        }:
+            done += [c.callout_id for c in ctx.desk.stand_down(trip_id, cleared.crew_id, why)]
+            if ctx.desk.plans is not None:
+                done += [
+                    p.plan_id
+                    for p in ctx.desk.plans.stand_down(
+                        trip_id, cleared.crew_id, ctx.caller.user, why
+                    )
+                ]
+    if ctx.reports is not None:
+        still_out = {u.report_id for u in ctx.store.unavailability()}
+        for r in ctx.reports.all():
+            active = str(r.status) in ("open", "in_progress", "resolved")
+            mine = cleared.report_id in r.unavailability_ids
+            if active and mine and not set(r.unavailability_ids) & still_out:
+                ctx.reports.revoke(r.report_id, ctx.caller.user, f"withdrawn: {why}")
+                done.append(r.report_id)
+        ctx.reports.outbox.send(
+            Notice(
+                to=DESK,
+                subject=f"Back on duty: {name}",
+                body=f"{name} ({cleared.crew_id}) withdrew the report that they could not fly "
+                f"{cleared.first_day:%d %b} to {cleared.last_day:%d %b}."
+                + (f" Closed or withdrawn: {', '.join(done)}." if done else ""),
+                at=datetime.now(UTC),
+                ref=cleared.report_id,
+            )
+        )
+    return done
 
 
 @dataclass(frozen=True, slots=True)

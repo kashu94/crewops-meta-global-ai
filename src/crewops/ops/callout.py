@@ -482,7 +482,7 @@ class CalloutDesk:
         """An approver decided a plan a callout made: fill the seat, or ask the next."""
         self._sync()
         callout = self._callouts.get(plan.source)
-        if callout is None or callout.plan_id != plan.plan_id:
+        if callout is None or callout.plan_id != plan.plan_id or callout.status is Status.CLOSED:
             return
         if plan.status is PlanStatus.APPROVED:
             callout.status = Status.FILLED
@@ -542,6 +542,37 @@ class CalloutDesk:
                 moved.append(callout)
             self._save(*moved)
         return moved
+
+    def stand_down(self, trip_id: str, vacated_by: str, why: str) -> list[Callout]:
+        """Close every callout still working on this seat: the person who left it is back."""
+        closed = []
+        with self._lock:
+            self._sync()
+            now = self.clock()
+            for c in self._callouts.values():
+                if (c.trip_id, c.vacated_by) != (trip_id, vacated_by) or c.status in (
+                    Status.FILLED,
+                    Status.CLOSED,
+                ):
+                    continue
+                offer = c.current
+                if offer is not None:
+                    self._answer(offer, "no longer needed", now)
+                    self.outbox.send(
+                        Notice(
+                            to=offer.crew_id,
+                            subject=f"Offer withdrawn: {c.rank} on {c.trip_id}",
+                            body=f"The callout for {c.trip_id} is no longer needed ({why}). "
+                            "Nothing for you to do.",
+                            at=now,
+                            ref=c.callout_id,
+                        )
+                    )
+                c.status = Status.CLOSED
+                c.reason = why
+                closed.append(c)
+            self._save(*closed)
+        return closed
 
     def tick(self) -> list[Callout]:
         """Move every offer that ran out of time to the next crew member. Run on a schedule."""

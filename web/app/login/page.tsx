@@ -3,7 +3,7 @@
 import { ArrowRight, Eye, EyeOff, KeyRound, Lock, LogOut } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 
-import { RunwayAtNight } from "@/components/login-art";
+import { NightApproach } from "@/components/login-art";
 import { Logo } from "@/components/shell";
 import { Button, control, cx, Label, Notice, Spinner } from "@/components/ui";
 import { api, hasSession, loadConfig, message, setDemoIdentity, signOut, type Config, type DemoAccount } from "@/lib/api";
@@ -30,6 +30,14 @@ const AIRLINES = [
   ["Sahyadri Air", "#1d5c96"],
   ["Kaveri Flyers", "#e08a1e"],
   ["Godavari Link", "#2a9d6f"],
+] as const;
+
+// The Meta models behind CrewOps, and what each does here.
+const MODELS = [
+  ["Muse Spark", "Plans every answer with tool calls, and reads photos into fixed forms"],
+  ["Muse Spark Open", "Routes each question and screens out attacks on the assistant"],
+  ["Muse Voice Transcribe", "Hears questions in English, Hindi and Telugu"],
+  ["SAM 3.1", "Finds the damage in an aircraft photo"],
 ] as const;
 
 // The duty rules every cover is checked against (data/seed/rules.json), in short.
@@ -141,11 +149,21 @@ export default function Login() {
   return (
     <main className="grid min-h-screen flex-1 bg-surface lg:grid-cols-[1.08fr_1fr]">
       <section className="relative hidden flex-col justify-between overflow-hidden bg-[#040a18] px-12 py-9 text-white lg:sticky lg:top-0 lg:h-screen lg:flex">
-        <RunwayAtNight />
-        <div className="relative flex items-center gap-2.5">
-          <Logo size={30} />
-          <span className="text-[15px] font-semibold">CrewOps</span>
-          <span className="text-sm text-[#a9bbd0]">Crew control</span>
+        <NightApproach />
+        <div className="relative">
+          <div className="flex items-center gap-2.5">
+            <Logo size={30} />
+            <span className="text-[15px] font-semibold">CrewOps</span>
+            <span className="text-sm text-[#b9c6d6]">on Meta&apos;s Muse models</span>
+          </div>
+          <ul className="mt-5 grid max-w-xl grid-cols-2 gap-x-5 gap-y-2.5 text-[13px]">
+            {MODELS.map(([model, job]) => (
+              <li key={model} className="leading-snug">
+                <b className="block font-semibold text-white">{model}</b>
+                <span className="text-[#b9c6d6]">{job}</span>
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="relative max-w-xl">
           <h2 className="text-[34px] font-semibold leading-tight tracking-[-0.01em]">Crew control for three airlines</h2>

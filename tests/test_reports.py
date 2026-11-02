@@ -133,7 +133,9 @@ def test_a_report_runs_from_plan_to_sign_off(box, ctx, mem):
 
 
 def test_who_may_file_what(box, ctx, mem):
-    mine = box.call("report_disruption", sick(), ctx(ANJALI))
+    mine = box.call(
+        "report_disruption", sick(first_day="2026-11-09", last_day="2026-11-10"), ctx(ANJALI)
+    )
     assert mine["crew_ids"] == ["C-1157"]
     someone = box.call("report_disruption", sick(CAPTAIN), ctx(ANJALI))
     assert "only report themselves" in someone["error"]
@@ -294,14 +296,65 @@ def test_crew_answer_a_callout_with_a_remark_and_see_what_became_of_it(box, ctx,
 
 
 def test_the_person_filing_can_raise_the_severity_but_not_lower_it(box, ctx):
-    delay = {"kind": "flight_delay", "trip_id": TRIP, "hours": 0.5}
-    worked_out = box.call("report_disruption", delay, ctx(STATION))["severity"]["level"]
-    higher = box.call("report_disruption", {**delay, "severity": "high"}, ctx(STATION))
+    delay = {"kind": "flight_delay", "trip_id": TRIP, "hours": 3}
+    worked_out = box.call("report_disruption", delay, ctx(STATION))
+    assert worked_out["severity"]["level"] != "low"
+    box.call("revoke_report", {"report_id": worked_out["report_id"], "reason": "test"}, ctx(MENON))
+    lower = box.call("report_disruption", {**delay, "severity": "low"}, ctx(STATION))
+    assert lower["severity"]["level"] == worked_out["severity"]["level"]
+    assert lower["severity"]["reasons"][-1].startswith("reported as low by imran.sheikh")
+    small = {"kind": "flight_delay", "trip_id": "T-1009", "hours": 0.25, "severity": "high"}
+    higher = box.call("report_disruption", small, ctx(STATION))
     assert higher["severity"]["level"] == "high"
     assert higher["severity"]["reasons"][0] == "reported as high by imran.sheikh"
-    if worked_out != "low":
-        lower = box.call("report_disruption", {**delay, "severity": "low"}, ctx(STATION))
-        assert lower["severity"]["level"] == worked_out
+
+
+def test_the_same_thing_is_not_reported_twice(box, ctx):
+    first = box.call("report_disruption", sick(CAPTAIN), ctx(STATION))
+    again = box.call("report_disruption", sick(CAPTAIN, FIRST_OFFICER), ctx(STATION))
+    assert first["report_id"] in again["error"] and "already reported out" in again["error"]
+    gates = {
+        "kind": "gate_closure",
+        "station": "HYD",
+        "gates": ["21"],
+        "start": "2026-11-05T06:00",
+        "end": "2026-11-05T09:00",
+    }
+    filed = box.call("report_disruption", gates, ctx(STATION))
+    twice = box.call("report_disruption", {**gates, "gates": ["21", "22"]}, ctx(STATION))
+    assert filed["report_id"] in twice["error"]
+
+
+def test_crew_back_on_duty_closes_their_disruption_and_its_callouts(box, ctx, mem, outbox):
+    report = box.call(
+        "report_disruption",
+        sick("C-1157", first_day="2026-11-08", last_day="2026-11-08"),
+        ctx(ANJALI),
+    )
+    filed = box.call("report_disruption", sick(CAPTAIN), ctx(STATION))
+    started = box.call(
+        "start_callout",
+        {"trip_id": TRIP, "replace_crew_id": CAPTAIN, "report_id": filed["report_id"]},
+        ctx(REDDY),
+    )
+    [mine] = [u for u in mem.unavailability() if u.crew_id == CAPTAIN]
+    pooja = Caller("c1111.nair", Role.CREW, CAPTAIN)
+    back = box.call("clear_unavailable", {"report_id": mine.report_id}, ctx(pooja))
+    assert "callout_id" in started, started
+    assert filed["report_id"] in back["stood_down"] and started["callout_id"] in back["stood_down"]
+    assert (
+        box.call("show_disruption", {"report_id": filed["report_id"]}, ctx(IYER))["status"]
+        == "revoked"
+    )
+    assert (
+        box.call("callout_status", {"callout_id": started["callout_id"]}, ctx(IYER))["status"]
+        == "closed"
+    )
+    assert outbox.sent(DESK)[-1].subject == "Back on duty: A. Nair"
+    assert (
+        box.call("show_disruption", {"report_id": report["report_id"]}, ctx(IYER))["status"]
+        == "open"
+    )
 
 
 def test_crew_on_different_flights_are_separate_disruptions(box, ctx, mem):
@@ -355,3 +408,18 @@ def test_a_plan_from_an_accepted_callout_belongs_to_its_report(box, ctx):
     )
     listed = box.call("disruptions", {"status": "active"}, ctx(IYER))["disruptions"]
     assert next(r for r in listed if r["report_id"] == rid)["plans_waiting"] == 1
+
+
+def test_a_crew_member_back_on_duty_leaves_only_the_others_seats(box, ctx, mem):
+    filed = box.call("report_disruption", sick(CAPTAIN, FIRST_OFFICER), ctx(STATION))
+    [fo] = [u for u in mem.unavailability() if u.crew_id == FIRST_OFFICER]
+    box.call(
+        "clear_unavailable",
+        {"report_id": fo.report_id},
+        ctx(Caller("c1191.nair", Role.CREW, FIRST_OFFICER)),
+    )
+    report = box.call("show_disruption", {"report_id": filed["report_id"]}, ctx(IYER))
+    assert report["status"] == "open", "the captain is still out"
+    assert {s["replacing"] for s in report["analysis"]["seats"]} == {CAPTAIN}
+    assert [c.get("back_on_duty", False) for c in report["analysis"]["crew"]] == [False, True]
+    assert [len(s["choices"]) > 0 for s in report["analysis"]["seats"]] == [True]

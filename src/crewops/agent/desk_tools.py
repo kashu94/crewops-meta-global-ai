@@ -43,8 +43,9 @@ from crewops.agent.tools import (
 )
 from crewops.domain import Rank
 from crewops.engine import NotFound, Operation
+from crewops.engine.aircraft import aircraft_options
 from crewops.engine.clock import IST
-from crewops.engine.cover import Way
+from crewops.engine.cover import TripStarted, Way, find_cover
 from crewops.engine.impact import absence_gaps, joint_cover
 from crewops.engine.risk import crew_risk, risk_json
 from crewops.engine.severity import Level, for_trip
@@ -170,6 +171,10 @@ def _evidence(ctx: Context, args: FileReport) -> list[dict[str, Any]]:
         # A note's own next step ("confirm to record them") is the report itself here.
         item["message"] = item["message"].replace(" Confirm to record them as unavailable.", "")
         if check := _photo_matches(args, doc):
+            if check.startswith("The photo names"):
+                raise ToolError(
+                    check + " Add their own note or certificate, or file without a photo."
+                )
             item["check"] = check
         found.append(item)
     return found
@@ -257,8 +262,17 @@ def _absence_analysis(ctx: Context, report: Report) -> tuple[dict[str, Any], Any
     last = date.fromisoformat(report.details["last_day"])
     since = report.details.get("since_utc")
     since_at = datetime.fromisoformat(since) if since else None
+    # Someone who withdrew their absence is back on duty: their seats need no cover.
+    live = {u.report_id for u in ctx.store.unavailability()}
+    back = {
+        crew_id
+        for crew_id, uid in zip(report.crew_ids, report.unavailability_ids, strict=False)
+        if uid not in live
+    }
     gaps = []
     for crew_id in report.crew_ids:
+        if crew_id in back:
+            continue
         for gap in absence_gaps(op, crew_id, first, last):
             if since_at is not None and all(d.release <= since_at for d in op.days_of(gap.trip_id)):
                 continue  # finished before they fell ill
@@ -298,13 +312,19 @@ def _absence_analysis(ctx: Context, report: Report) -> tuple[dict[str, Any], Any
             "reports_at": _when(op.days_of(g.trip_id)[0].report),
             "passengers": g.passengers,
             "started": g.started,
+            "choices": [] if g.started else _seat_choices(op, g, reports),
         }
         for g in gaps
     ]
     return (
         {
             "crew": [
-                {"crew_id": c, "name": op.state(c).name, "rank": str(op.state(c).rank)}
+                {
+                    "crew_id": c,
+                    "name": op.state(c).name,
+                    "rank": str(op.state(c).rank),
+                    **({"back_on_duty": True} if c in back else {}),
+                }
                 for c in report.crew_ids
             ],
             "seats": seats,
@@ -331,6 +351,26 @@ def _absence_analysis(ctx: Context, report: Report) -> tuple[dict[str, Any], Any
     )
 
 
+SEAT_CHOICES = 4
+
+
+def _seat_choices(op: Operation, gap: Any, reports: list) -> list[dict[str, Any]]:
+    """The best few ways to fill one seat, cheapest first, with each person's risk."""
+    try:
+        cover = find_cover(op, gap.trip_id, gap.rank, gap.vacated_by)
+    except (NotFound, TripStarted):
+        return []
+    out = []
+    for c in cover.choices:
+        if not c.crew_id:
+            continue
+        row = {**_choice(c), "risk": risk_json(crew_risk(op, c.crew_id, reports))}
+        out.append(row)
+        if len(out) == SEAT_CHOICES:
+            break
+    return out
+
+
 def _ops_analysis(ctx: Context, kind: Kind, d: dict[str, Any]) -> dict[str, Any]:
     """Rerun the engine for an operational report: the same answer as its own tool."""
     match kind:
@@ -348,9 +388,29 @@ def _ops_analysis(ctx: Context, kind: Kind, d: dict[str, Any]) -> dict[str, Any]
                 out["gates"] = late_at_gate(ctx, LateAtGate(leg_id=first_leg, minutes=minutes))
             return out
         case Kind.AIRCRAFT_TECHNICAL:
-            return aircraft_out_tool(
+            out = aircraft_out_tool(
                 ctx, AircraftOut(tail=d["tail"], start=d["start"], back=d["end"])
             )
+            start = datetime.fromisoformat(str(d["start"]))
+            back = datetime.fromisoformat(str(d["end"]))
+            if start.tzinfo is None:
+                start, back = start.replace(tzinfo=IST), back.replace(tzinfo=IST)
+            hold_cost = sum(int(t.get("delay_cost_inr") or 0) for t in out.get("trips", []))
+            flights, options = aircraft_options(
+                ctx.operation(), d["tail"], start, back, hold_cost, crew_over(out)
+            )
+            out["flights_taken"] = flights
+            out["options"] = [
+                {
+                    "way": o.way,
+                    "summary": o.summary,
+                    "cost_inr": o.cost,
+                    **({"tail": o.tail} if o.tail else {}),
+                    **({"note": o.note} if o.note else {}),
+                }
+                for o in options
+            ]
+            return out
         case Kind.STATION_DISRUPTION:
             return station_closure_tool(
                 ctx, StationClosure(station=d["station"], start=d["start"], end=d["end"])
@@ -398,6 +458,10 @@ def _ops_severity(ctx: Context, kind: Kind, a: dict[str, Any]) -> tuple[str, lis
         return "high", reasons + ["a trip reports within hours"]
     if over or passengers >= 300:
         return "medium", reasons
+    held = len(a.get("flights_held") or [])
+    if kind is Kind.AIRCRAFT_TECHNICAL and held:
+        # An aircraft that cannot fly takes its flights with it until the desk acts.
+        return "medium", [f"{held} flight{'s' if held != 1 else ''} without an aircraft", *reasons]
     return "low", reasons
 
 
@@ -442,10 +506,49 @@ def _by_flight(op: Operation, args: FileReport, crew_ids: list[str]) -> list[lis
     return sorted((sorted(g[1], key=order.get) for g in grounded), key=lambda g: order[g[0]])
 
 
+def _already_reported(ctx: Context, args: FileReport, crew_ids: list[str]) -> None:
+    """Refuse a second report for the same thing: the desk would work it twice."""
+    op = ctx.operation()
+    active = [r for r in _reports(ctx).all() if r.status in ACTIVE]
+    if args.kind in ABSENCES:
+        first, last = _span(op, args)
+        for r in active:
+            if r.kind not in ABSENCES:
+                continue
+            r_first = date.fromisoformat(r.details["first_day"])
+            r_last = date.fromisoformat(r.details["last_day"])
+            both = set(crew_ids) & set(r.crew_ids)
+            if both and r_first <= last and first <= r_last:
+                who = ", ".join(op.state(c).name for c in sorted(both))
+                raise ToolError(
+                    f"{who} is already reported out {_days(r_first, r_last)} in {r.report_id} "
+                    f"({r.title}); add to that report's note instead of filing again"
+                )
+        return
+    for r in active:
+        if r.kind is not args.kind:
+            continue
+        d = r.details
+        same = {
+            Kind.FLIGHT_DELAY: d.get("trip_id") == args.trip_id,
+            Kind.GATE_CHANGE: d.get("leg_id") == args.leg_id,
+            Kind.AIRCRAFT_TECHNICAL: d.get("tail") == args.tail,
+            Kind.STATION_DISRUPTION: d.get("station") == args.station,
+            Kind.GATE_CLOSURE: d.get("station") == args.station
+            and bool({g.upper() for g in d.get("gates") or []} & {g.upper() for g in args.gates}),
+        }.get(args.kind, False)
+        if same:
+            raise ToolError(
+                f"this is already reported as {r.report_id} ({r.title}); follow that report "
+                "instead of filing again"
+            )
+
+
 def report_disruption(ctx: Context, args: FileReport) -> dict[str, Any]:
     desk = _reports(ctx)
     crew_ids = _who_may_file(ctx, args)
     op = ctx.operation()
+    _already_reported(ctx, args, crew_ids)
     if args.kind is Kind.CREW_UNAVAILABLE and len(crew_ids) > 1:
         groups = _by_flight(op, args, crew_ids)
         if len(groups) > 1:
@@ -620,13 +723,13 @@ def _ops_where(op: Operation, args: FileReport, a: dict[str, Any]) -> tuple[list
 # -- reading ----------------------------------------------------------------------------------
 
 
-def _can(ctx: Context, report: Report) -> dict[str, bool]:
+def _can(ctx: Context, report: Report, seats_open: int = 0) -> dict[str, bool]:
     role, user = ctx.caller.role, ctx.caller.user
     owner = next(d for d in DESKS if d.desk_id == report.desk_id)
     working = report.status in WORKING
     mine = role is Role.CONTROLLER and owner.controller == user
     return {
-        "plan": mine and working,
+        "plan": mine and working and report.kind in ABSENCES and seats_open > 0,
         "close": mine and working,
         "confirm": role in APPROVE_ROLES and report.status is ReportStatus.RESOLVED,
         "return": role in APPROVE_ROLES and report.status is ReportStatus.RESOLVED,
@@ -676,7 +779,7 @@ def _report_json(ctx: Context, report: Report) -> dict[str, Any]:
     out["plans_waiting"] = sum(p["status"] == "submitted" for p in plans)
     out["history"] = [{**h, "at": _when(datetime.fromisoformat(h["at"]))} for h in report.history]
     out["resolution_note"] = report.resolution_note
-    out["can"] = _can(ctx, report)
+    out["can"] = _can(ctx, report, out.get("seats_open", 0))
     return out
 
 

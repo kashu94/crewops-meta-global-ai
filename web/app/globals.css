@@ -127,54 +127,120 @@ details > summary::-webkit-details-marker {
   background: repeating-linear-gradient(135deg, var(--critical-soft) 0 6px, var(--surface) 6px 9px);
 }
 
-/* -- sign-in artwork: short final at night ------------------------------------------- */
-@keyframes runway-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1.02);
-  }
-  50% {
-    transform: translate3d(-1.2%, 0.8%, 0) scale(1.05);
-  }
-}
-@keyframes sky-glow {
+/* -- sign-in backdrop: a night runway on final approach; slow, so it never pulls focus -- */
+@keyframes aurora-a {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.85;
   }
   50% {
-    transform: translate3d(5%, -4%, 0) scale(1.12);
+    transform: translate3d(8%, 6%, 0) scale(1.12);
+  }
+}
+@keyframes aurora-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-10%, 8%, 0) scale(0.95);
+  }
+}
+@keyframes aurora-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate3d(6%, -6%, 0);
     opacity: 1;
   }
 }
-@keyframes strobe {
+@keyframes drift {
   0%,
-  8% {
-    opacity: 0.95;
-  }
-  14%,
   100% {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.06) translate3d(0, -1%, 0);
+  }
+}
+@keyframes bokeh {
+  0% {
+    transform: translate3d(0, 12px, 0) scale(0.92);
+    opacity: 0;
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-28px, -46px, 0) scale(1.08);
     opacity: 0;
   }
 }
-.runway-drift {
-  animation: runway-drift 40s ease-in-out infinite;
+@keyframes lead-in {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  6% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 0.18;
+  }
 }
-.sky-glow {
-  animation: sky-glow 32s ease-in-out infinite;
+@keyframes city {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
 }
-.strobe {
-  opacity: 0;
-  animation: strobe 1.6s linear infinite;
+.aurora-a {
+  animation: aurora-a 28s ease-in-out infinite;
+}
+.aurora-b {
+  animation: aurora-b 36s ease-in-out infinite;
+}
+.aurora-c {
+  animation: aurora-c 42s ease-in-out infinite;
+}
+.approach-drift {
+  animation: drift 30s ease-in-out infinite;
+}
+.bokeh {
+  animation: bokeh linear infinite;
+}
+.lead-in {
+  animation: lead-in 3.2s ease-out infinite;
+  opacity: 0.18;
+}
+.city-light {
+  animation: city 5s ease-in-out infinite;
+}
+.city-light:nth-of-type(3n) {
+  animation-delay: -1.7s;
+}
+.city-light:nth-of-type(3n + 1) {
+  animation-delay: -3.1s;
 }
 @media (prefers-reduced-motion: reduce) {
-  .runway-drift,
-  .sky-glow {
+  .aurora,
+  .approach-drift,
+  .bokeh,
+  .lead-in,
+  .city-light {
     animation: none;
   }
-  .strobe {
-    animation: none;
+  .bokeh {
+    opacity: 0.7;
+  }
+  .lead-in {
     opacity: 0.6;
   }
 }

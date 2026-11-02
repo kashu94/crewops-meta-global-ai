@@ -12,10 +12,8 @@ import {
   ListChecks,
   Phone,
   Radio,
-  Send,
   Shuffle,
   Undo2,
-  UserPlus,
   Users,
   XCircle,
 } from "lucide-react";
@@ -24,6 +22,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { CalloutList, DelayView, EvidenceBadge, GateChangeView, GatePlanView, HoldView, PlanList, RiskBadge } from "@/components/ops";
+import { DeskSolution } from "@/components/desk-solution";
 import { EvidencePhoto } from "@/components/photo-intake";
 import { useSession } from "@/components/session";
 import { Button, cx, Dl, Empty, Kpi, Kpis, Loading, Mono, Notice, PageHeader, Panel, Pill, Select, SeverityBadge, StatusPill, Table, TextArea } from "@/components/ui";
@@ -67,21 +66,19 @@ function Lifecycle({ status }: { status: string }) {
   );
 }
 
-function CrewWork({ report, a }: { report: Report; a: CrewAnalysis }) {
-  const { can } = useSession();
-  const { busy, run } = useAction();
+function CrewWork({ a }: { a: CrewAnalysis }) {
   const fills = a.plan?.fills ?? [];
   const unfilled = a.plan?.unfilled ?? [];
   const fillFor = (trip: string, replacing: string) => fills.find((f) => f.trip_id === trip && f.replacing === replacing);
   const whyFor = (trip: string, replacing: string) => unfilled.find((u) => u.trip_id === trip && u.replacing === replacing);
-  const working = Boolean(report.can.plan);
   return (
     <>
       <Panel title="Who is out" icon={<Users size={15} />} action={plural(a.crew?.length ?? 0, "person", "people")}>
         <div className="flex flex-wrap gap-2">
           {(a.crew ?? []).map((c) => (
-            <span key={c.crew_id} className="inline-flex items-center gap-2 rounded-md border border-line bg-sunken px-2.5 py-1.5 text-sm">
-              <b className="font-medium">{c.name}</b> <Mono className="text-faint">{c.crew_id}</Mono> <span className="text-xs text-muted">{c.rank}</span>
+            <span key={c.crew_id} className={cx("inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm", c.back_on_duty ? "border-[#b9e6c9] bg-ok-soft" : "border-line bg-sunken")}>
+              <b className={cx("font-medium", c.back_on_duty && "line-through decoration-ok/60")}>{c.name}</b> <Mono className="text-faint">{c.crew_id}</Mono> <span className="text-xs text-muted">{c.rank}</span>
+              {c.back_on_duty && <Pill tone="ok">back on duty</Pill>}
             </span>
           ))}
         </div>
@@ -103,7 +100,6 @@ function CrewWork({ report, a }: { report: Report; a: CrewAnalysis }) {
                 <th>Cover</th>
                 <th>Risk</th>
                 <th className="text-right">Cost</th>
-                {working && <th />}
               </tr>
             </thead>
             <tbody>
@@ -144,30 +140,6 @@ function CrewWork({ report, a }: { report: Report; a: CrewAnalysis }) {
                     </td>
                     <td>{f?.risk ? <RiskBadge risk={f.risk} compact /> : <span className="text-faint">–</span>}</td>
                     <td className="text-right font-mono">{f ? inr(f.cost) : "–"}</td>
-                    {working && (
-                      <td className="text-right">
-                        <span className="inline-flex flex-wrap justify-end gap-1.5">
-                          <Link href={`/cover/?trip=${s.trip_id}&crew=${s.replacing}&report=${encodeURIComponent(report.report_id)}`}>
-                            <Button size="sm" tone="secondary">
-                              <UserPlus size={13} /> Choices
-                            </Button>
-                          </Link>
-                          {can("start_callout") && (
-                            <Button
-                              size="sm"
-                              tone="secondary"
-                              disabled={busy !== null || Boolean(f?.in_hand)}
-                              title={f?.in_hand ? `Already in hand: ${f.in_hand}` : undefined}
-                              onClick={() =>
-                                run(`${s.trip_id}${s.replacing}`, () => tool("start_callout", { trip_id: s.trip_id, replace_crew_id: s.replacing, report_id: report.report_id }), () => `Callout started for ${s.trip_id}.`)
-                              }
-                            >
-                              <Radio size={13} /> Callout
-                            </Button>
-                          )}
-                        </span>
-                      </td>
-                    )}
                   </tr>
                 );
               })}
@@ -185,7 +157,7 @@ function Analysis({ report }: { report: Report }) {
   if (!a) return <Panel title="Analysis" icon={<Cpu size={15} />}><Empty>Not worked out yet.</Empty></Panel>;
   if (typeof a.error === "string") return <Panel title="Analysis" icon={<Cpu size={15} />}><Notice tone="error">{a.error}</Notice></Panel>;
   const k = report.kind;
-  if (["crew_unavailable", "planned_leave", "certification_lapse"].includes(k) && Array.isArray(a.seats)) return <CrewWork report={report} a={a as unknown as CrewAnalysis} />;
+  if (["crew_unavailable", "planned_leave", "certification_lapse"].includes(k) && Array.isArray(a.seats)) return <CrewWork a={a as unknown as CrewAnalysis} />;
   let body: ReactNode;
   if (k === "flight_delay" && Array.isArray(a.crew_over_a_limit)) {
     body = (
@@ -254,7 +226,7 @@ function Actions({ report }: { report: Report }) {
     }
     return true;
   };
-  const any = Object.values(can).some(Boolean);
+  const any = Boolean(can.confirm || can.return || can.revoke || can.reassign);
   if (!any)
     return (
       <p className="text-sm text-muted">
@@ -265,31 +237,6 @@ function Actions({ report }: { report: Report }) {
   return (
     <div className="flex flex-col gap-3">
       <TextArea label="Note" value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="A note for the plan, the resolution, a return or a reassignment" />
-      {can.plan && (
-        <Button
-          disabled={busy !== null}
-          onClick={() =>
-            run(
-              "plan",
-              () => tool<{ plans: unknown[]; skipped?: { seat: string; why: string }[] }>("submit_report_plan", { report_id: id, ...(note.trim() ? { note: note.trim() } : {}) }),
-              (r) =>
-                `${plural(r.plans?.length ?? 0, "plan")} submitted for approval.` +
-                (r.skipped?.length ? ` Skipped ${r.skipped.map((x) => `${x.seat} (${x.why})`).join("; ")}.` : ""),
-            )
-          }
-        >
-          <Send size={14} /> Submit the joint plan
-        </Button>
-      )}
-      {can.close && (
-        <Button
-          tone="secondary"
-          disabled={busy !== null}
-          onClick={() => needNote("Say how it was resolved.") && run("close", () => tool("close_disruption", { report_id: id, note: note.trim() }), () => "Marked resolved. An approver confirms it.")}
-        >
-          <CheckCheck size={14} /> Mark resolved
-        </Button>
-      )}
       {can.confirm && (
         <Button disabled={busy !== null} onClick={() => run("confirm", () => tool("confirm_resolution", { report_id: id }), () => `${id} closed.`)}>
           <CheckCheck size={14} /> Confirm and close
@@ -397,7 +344,7 @@ export default function DisruptionView() {
         {r.desk && (
           <Notice tone={yours ? "info" : "pending"} icon={<Building2 size={15} />}>
             {yours ? (
-              <>On your desk. You plan it; an approver approves each change and confirms the resolution.</>
+              <>On your desk. You work it below; an approver approves each change and confirms the resolution.</>
             ) : (
               <>
                 With <b>{r.desk.name}</b> ({r.desk.controller}).{me.role === "controller" ? " You can read it; planning it is theirs." : ""}
@@ -419,6 +366,12 @@ export default function DisruptionView() {
       </div>
 
       <Figures report={r} />
+
+      {(yours || r.status === "resolved") && (
+        <Panel title="Work it" icon={<ClipboardList size={15} />} className="mb-5">
+          <DeskSolution report={r} header={false} />
+        </Panel>
+      )}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex min-w-0 flex-col gap-5">

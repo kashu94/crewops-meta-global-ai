@@ -358,7 +358,9 @@ def test_a_checked_photo_is_kept_with_the_report_it_backs(client, services):
     assert report["details"]["evidence"][0]["message"].startswith("Draft defect report")
     assert client.get(f"/api/evidence/{kept['evidence_id']}", headers=CONTROLLER).content == SHARP
     assert client.get(f"/api/evidence/{kept['evidence_id']}", headers=ANJALI).status_code == 403
-    bare = client.post("/api/tools/report_disruption", json=fault, headers=STATION).json()
+    bare = client.post(
+        "/api/tools/report_disruption", json={**fault, "tail": "VT-SYB"}, headers=STATION
+    ).json()
     assert bare["evidence"]["label"] == "No photo"
     assert "maintenance confirms" in bare["details"]["evidence_note"]
 
@@ -391,5 +393,15 @@ def test_a_note_that_does_not_match_the_report_is_flagged(client, services):
     same = sick(crew_id, first, last)
     assert same["check"] == "The photo matches the person and the dates reported."
     assert "Confirm to record" not in same["message"]
-    other = sick("C-1157", first, last)
-    assert other["check"].startswith(f"The photo names {crew_id}")
+    other = client.post(
+        "/api/tools/report_disruption",
+        json={
+            "kind": "crew_unavailable",
+            "crew_ids": ["C-1157"],
+            "first_day": first,
+            "last_day": last,
+            "evidence_ids": [kept["evidence_id"]],
+        },
+        headers=STATION,
+    ).json()
+    assert other["error"].startswith(f"The photo names {crew_id}")

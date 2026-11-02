@@ -365,6 +365,17 @@ class PlanDesk:
             )
             return plan
 
+    def stand_down(self, trip_id: str, replacing: str, by: str, why: str) -> list[Plan]:
+        """Withdraw every plan still waiting for this seat: the person in it is back."""
+        with self._lock:
+            self._sync()
+            waiting = [
+                p
+                for p in self._plans.values()
+                if (p.trip_id, p.replacing) == (trip_id, replacing) and p.status in OPEN
+            ]
+            return [self._decide(p, PlanStatus.WITHDRAWN, by, why) for p in waiting]
+
     def withdraw(self, plan_id: str, by: str) -> Plan:
         with self._lock:
             self._sync()

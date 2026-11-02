@@ -228,7 +228,10 @@ def main() -> None:
     print("                 imran.sheikh, lakshmi.hegde (station reporters),")
     print("                 nikhil.agarwal (auditor), priya.desai (admin),")
     print("                 vikram.saxena (super admin), ops.speaker (speaker),")
-    print("                 c1111.nair, c1157.reddy, c1167.iyer, c1191.nair, c1460.krishnan (crew)")
+    print("                 c1111.nair, c1157.reddy, c1167.iyer, c1191.nair, c1460.krishnan,")
+    print("                 c1123.verma, c1177.rao, c1211.bose, c1242.iyer, c1184.chandra,")
+    print("                 c1247.reddy, c1341.chandra, c1357.gupta, c1530.malhotra,")
+    print("                 c1542.krishnan (crew)")
     print(f"  Password: {env['CREWOPS_DEMO_PASSWORD']}")
     if values.get("CREWOPS_ALERT_EMAIL"):
         print(f"  Confirm the alert subscription email sent to {values['CREWOPS_ALERT_EMAIL']}.")

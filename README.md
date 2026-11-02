@@ -155,6 +155,21 @@ least busy desk. A seat is offered only to its own rank first: a right-seat qual
 for a first officer's seat, or a command-qualified first officer for a captain's, is offered
 only when fewer than three of the seat's own rank are legal, and after them.
 
+The same thing is never filed twice: someone already reported out for those days, or a trip,
+aircraft, station or gate with an open report, is refused with the report to follow instead.
+A sick note or certificate photo must name a person on the report. When crew withdraw their
+own report, any callout for their seat stands down, a waiting plan for it is withdrawn, the
+desk and the ops-room speaker hear "Back on duty", and a disruption with nobody left out is
+closed.
+
+Each seat shows its ranked choices, each one a plan to submit for approval after a
+confirmation; while a callout or a plan is in hand for a seat, nothing else can be started for
+it, and a rejected plan frees it again. An aircraft fault (`crewops.engine.aircraft`) offers,
+in order: another aircraft of the same type that is free for the whole run of flights, out and
+back to where it started; one of the spares kept at Hyderabad (an A320 and an ATR); holding
+the flights, for short outages only; and cancelling them. A gate closure offers a free gate for
+each flight it moves. The chosen option goes to an approver as the resolution.
+
     OPEN --plan or callout--> IN_PROGRESS --controller closes--> RESOLVED --approver--> CLOSED
                                     ^                                |
                                     '-------- approver returns ------'
@@ -479,7 +494,10 @@ Cognito with a group per role and the demo accounts: `ananya.iyer`, `rohit.malho
 `divya.rao` (controllers, desks 1 to 3), `meera.bhatt`, `karan.mehta` and `farah.qureshi`
 (approvers), `imran.sheikh` and `lakshmi.hegde` (station reporters), `nikhil.agarwal`
 (auditor), `priya.desai` (admin), `vikram.saxena` (super admin), `ops.speaker` (speaker), and
-`c1111.nair`, `c1157.reddy`, `c1167.iyer`, `c1191.nair` and `c1460.krishnan`
+`c1111.nair`, `c1157.reddy`, `c1167.iyer`, `c1191.nair` and `c1460.krishnan`, and the crew the
+seats on T-1018 are offered to (`c1123.verma`, `c1177.rao`, `c1211.bose`, `c1242.iyer`,
+`c1184.chandra`, `c1247.reddy`, `c1341.chandra`, `c1357.gupta`, `c1530.malhotra`,
+`c1542.krishnan`)
 (crew). A store seeded from older demo data is reseeded when the data version changes, and on
 the wall clock it is moved to start today, and again a week later. Photos kept with reports go
 to the same S3 bucket and are served only to the desk roles and whoever took them. It is

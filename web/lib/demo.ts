@@ -19,6 +19,16 @@ const FALLBACK: DemoAccount[] = [
   { user: "c1167.iyer", role: "crew", crew_id: "C-1167", label: "R. Iyer, captain" },
   { user: "c1191.nair", role: "crew", crew_id: "C-1191", label: "S. Nair, first officer" },
   { user: "c1460.krishnan", role: "crew", crew_id: "C-1460", label: "S. Krishnan, cabin crew" },
+  { user: "c1123.verma", role: "crew", crew_id: "C-1123", label: "A. Verma, captain" },
+  { user: "c1177.rao", role: "crew", crew_id: "C-1177", label: "S. Rao, captain" },
+  { user: "c1211.bose", role: "crew", crew_id: "C-1211", label: "L. Bose, first officer" },
+  { user: "c1242.iyer", role: "crew", crew_id: "C-1242", label: "D. Iyer, first officer" },
+  { user: "c1184.chandra", role: "crew", crew_id: "C-1184", label: "K. Chandra, first officer" },
+  { user: "c1247.reddy", role: "crew", crew_id: "C-1247", label: "I. Reddy, first officer" },
+  { user: "c1341.chandra", role: "crew", crew_id: "C-1341", label: "H. Chandra, purser" },
+  { user: "c1357.gupta", role: "crew", crew_id: "C-1357", label: "A. Gupta, purser" },
+  { user: "c1530.malhotra", role: "crew", crew_id: "C-1530", label: "K. Malhotra, cabin crew" },
+  { user: "c1542.krishnan", role: "crew", crew_id: "C-1542", label: "A. Krishnan, cabin crew" },
 ];
 
 let cached: Promise<DemoAccount[]> | null = null;

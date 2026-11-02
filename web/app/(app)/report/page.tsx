@@ -93,7 +93,9 @@ export default function ReportPage() {
   const [severity, setSeverity] = useState("");
   const [description, setDescription] = useState("");
   const evidence = photo.evidenceId;
-  const photoBlocks = photo.status === "checking" || photo.status === "refused" || (PHOTO[kind]?.required === true && !evidence);
+  const named = photo.status === "kept" ? (photo.result?.crew ?? []) : [];
+  const wrongPerson = named.length > 0 && crew.length > 0 && !named.some((n) => crew.some((c) => c.crew_id === n.crew_id));
+  const photoBlocks = photo.status === "checking" || photo.status === "refused" || wrongPerson || (PHOTO[kind]?.required === true && !evidence);
 
   const [error, setError] = useState<string | null>(null);
   const today = workDay(me.clock);
@@ -368,10 +370,19 @@ export default function ReportPage() {
                     const s = p.result?.suggestion;
                     if (p.status === "kept" && s) {
                       setSeverity(s.severity);
-                      if (s.description) setDescription(s.description);
+                      setDescription(s.description ?? "");
+                    } else {
+                      // No photo, or one not accepted: back to what the form starts with.
+                      setSeverity("");
+                      setDescription("");
                     }
                   }}
                 />
+              )}
+              {wrongPerson && (
+                <Notice tone="error">
+                  The photo is for {named.map((n) => `${n.name} (${n.crew_id})`).join(", ")}, not {crew.map((c) => c.name).join(", ")}. Add their own note or certificate, or remove the photo.
+                </Notice>
               )}
               <div className="grid gap-4 sm:grid-cols-[12rem_1fr]">
                 <Select label="Severity" value={severity} onChange={(e) => setSeverity(e.target.value)} hint="Raises the worked-out severity, never lowers it">

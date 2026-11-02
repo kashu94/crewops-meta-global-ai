@@ -56,3 +56,9 @@ export const KIND_LABEL: Record<string, string> = {
 };
 
 export const kindLabel = (k: string) => KIND_LABEL[k] ?? cap(words(k));
+
+/** 4.58 -> "4h35m": how a controller reads a delay. */
+export function hm(hours: number): string {
+  const minutes = Math.round(hours * 60);
+  return `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}m`;
+}

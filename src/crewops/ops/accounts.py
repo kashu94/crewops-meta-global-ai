@@ -51,6 +51,17 @@ DEMO_ACCOUNTS: tuple[DemoAccount, ...] = (
     DemoAccount("c1167.iyer", Role.CREW, "C-1167", "R. Iyer, captain"),
     DemoAccount("c1191.nair", Role.CREW, "C-1191", "S. Nair, first officer"),
     DemoAccount("c1460.krishnan", Role.CREW, "C-1460", "S. Krishnan, cabin crew"),
+    # Who the seats on T-1018 are offered to, so every callout can be answered by its crew.
+    DemoAccount("c1123.verma", Role.CREW, "C-1123", "A. Verma, captain"),
+    DemoAccount("c1177.rao", Role.CREW, "C-1177", "S. Rao, captain"),
+    DemoAccount("c1211.bose", Role.CREW, "C-1211", "L. Bose, first officer"),
+    DemoAccount("c1242.iyer", Role.CREW, "C-1242", "D. Iyer, first officer"),
+    DemoAccount("c1184.chandra", Role.CREW, "C-1184", "K. Chandra, first officer"),
+    DemoAccount("c1247.reddy", Role.CREW, "C-1247", "I. Reddy, first officer"),
+    DemoAccount("c1341.chandra", Role.CREW, "C-1341", "H. Chandra, purser"),
+    DemoAccount("c1357.gupta", Role.CREW, "C-1357", "A. Gupta, purser"),
+    DemoAccount("c1530.malhotra", Role.CREW, "C-1530", "K. Malhotra, cabin crew"),
+    DemoAccount("c1542.krishnan", Role.CREW, "C-1542", "A. Krishnan, cabin crew"),
 )
 
 

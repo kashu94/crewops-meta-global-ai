@@ -29,3 +29,44 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
     </dialog>
   );
 }
+
+/** Asks before something that goes to an approver or changes what others see: a slip of the
+ * mouse should never submit a plan. */
+export function Confirm({
+  open,
+  title,
+  children,
+  action,
+  busy,
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: ReactNode;
+  children: ReactNode;
+  action: ReactNode;
+  busy?: boolean;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <Modal open={open} onClose={onClose} title={title}>
+      <div className="flex flex-col gap-4 text-sm">
+        <div className="leading-relaxed">{children}</div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={onClose} className="min-h-9 rounded-md border border-control px-3.5 text-sm font-medium hover:bg-sunken">
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onConfirm}
+            className="min-h-9 rounded-md bg-accent px-3.5 text-sm font-medium text-white hover:bg-[#184d7d] disabled:opacity-55"
+          >
+            {action}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}

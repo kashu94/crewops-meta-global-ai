@@ -21,7 +21,7 @@ export type Issue = {
   suggested_cost_inr?: number;
 };
 
-export type Offer = { crew_id: string; name: string; cost_inr: number; answer: string };
+export type Offer = { crew_id: string; name: string; cost_inr: number; answer: string; remark?: string };
 
 export type Callout = {
   callout_id: string;
@@ -252,7 +252,7 @@ export type ReportSummary = {
 
 export type EvidenceItem = { evidence_id: string; kind: string; message: string; confidence?: string | null; at: string; check?: string };
 
-export type Seat = { trip_id: string; day: string; rank: string; replacing: string; name: string; reports_at: string };
+export type Seat = { trip_id: string; day: string; rank: string; replacing: string; name: string; reports_at: string; started?: boolean; choices?: Choice[] };
 export type Fill = {
   trip_id: string;
   rank: string;
@@ -267,7 +267,7 @@ export type Fill = {
 };
 
 export type CrewAnalysis = {
-  crew: { crew_id: string; name: string; rank: string }[];
+  crew: { crew_id: string; name: string; rank: string; back_on_duty?: boolean }[];
   seats: Seat[];
   plan: { fills: Fill[]; unfilled: { trip_id: string; rank: string; replacing: string; why: string }[]; total_cost: number };
   seats_open: number;

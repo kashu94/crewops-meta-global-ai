@@ -15,6 +15,7 @@ export type Intake = {
   box?: Box | null;
   evidence_id?: string;
   suggestion?: { severity: "low" | "medium" | "high"; description: string } | null;
+  crew?: { crew_id: string; name: string }[];
 };
 
 /** Where the photo stands, for the form around it: nothing chosen, being checked, kept, or

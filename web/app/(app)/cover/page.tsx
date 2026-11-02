@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { Confirm } from "@/components/modal";
 import { RiskBadge } from "@/components/ops";
 import { useSession } from "@/components/session";
 import { Button, control, cx, Input, Label, Loading, Mono, Notice, PageHeader, Panel, Pill, Spinner } from "@/components/ui";
 import { message, tool } from "@/lib/api";
-import { hhmm, inr, plural, short } from "@/lib/format";
+import { hhmm, hm, inr, plural, short } from "@/lib/format";
 import type { Callout, Choice, CoverResult, Plan, TripDetails } from "@/lib/types";
 import { useAction, useLoad } from "@/lib/use-load";
 
@@ -92,7 +93,7 @@ function ChoiceCard({ c, top, tags, saving, action }: { c: Choice; top: boolean;
         <Stat label="Risk">{c.risk ? <RiskBadge risk={c.risk} /> : "–"}</Stat>
         <Stat label="To the airport">{c.minutes_to_airport ? `${c.minutes_to_airport} min` : "–"}</Stat>
         <Stat label="Departure" tone={late ? "pending" : "ok"}>
-          {late ? `${Math.floor(late)}h${String(Math.round((late % 1) * 60)).padStart(2, "0")}m late` : "on time"}
+          {late ? `${hm(late)} late` : "on time"}
         </Stat>
         {top && saving ? <Stat label="Saves vs cancelling">{inr(saving)}</Stat> : <Stat label="Cost made of">{<span className="block truncate font-sans text-xs font-normal text-muted" title={breakdown}>{breakdown || "–"}</span>}</Stat>}
       </dl>
@@ -183,6 +184,7 @@ export default function CoverPage() {
   const router = useRouter();
   const { can } = useSession();
   const { busy, run } = useAction();
+  const [ask, setAsk] = useState<{ title: string; body: React.ReactNode; action: string; run: () => void } | null>(null);
   const trip = (params.get("trip") || "T-1018").toUpperCase();
   const crewParam = params.get("crew") || "";
   const report = params.get("report") || "";
@@ -302,6 +304,16 @@ export default function CoverPage() {
                             tone={i === 0 ? "accent" : "secondary"}
                             disabled={busy !== null}
                             onClick={() =>
+                              setAsk({
+                                title: "Submit this plan?",
+                                body: (
+                                  <>
+                                    <b>{c.name}</b> ({c.crew_id}) for {seat.name}&apos;s seat on <Mono>{trip}</Mono>, {c.way.toLowerCase()}, {inr(c.cost_inr)}. It goes to an approver; nothing
+                                    on the roster changes until they approve it.
+                                  </>
+                                ),
+                                action: "Submit to an approver",
+                                run: () =>
                               run(
                                 c.crew_id!,
                                 () =>
@@ -314,7 +326,8 @@ export default function CoverPage() {
                                     ...(report ? { report_id: report } : {}),
                                   }),
                                 (p) => `${p.plan_id} submitted. An approver decides it.`,
-                              )
+                              ),
+                              })
                             }
                           >
                             {busy === c.crew_id ? <Spinner /> : <Send size={14} />} Submit plan
@@ -348,6 +361,9 @@ export default function CoverPage() {
               </>
             )}
           </Panel>
+          <Confirm open={ask !== null} title={ask?.title ?? ""} action={ask?.action ?? "Confirm"} onClose={() => setAsk(null)} onConfirm={() => { ask?.run(); setAsk(null); }}>
+            {ask?.body}
+          </Confirm>
           <div className="flex min-w-0 flex-col gap-5">
             {t && (
               <Panel title={<>Trip <Mono>{t.trip_id}</Mono></>} icon={<Plane size={15} />} action={`version ${t.version}`}>
@@ -382,7 +398,12 @@ export default function CoverPage() {
                 <Button
                   disabled={busy !== null || data.running !== null}
                   onClick={() =>
-                    run("callout", () => tool("start_callout", { trip_id: trip, replace_crew_id: seat.crew_id, ...(report ? { report_id: report } : {}) }), () => "Callout started.")
+                    setAsk({
+                      title: "Start a callout?",
+                      body: <>The seat is offered to the cheapest legal crew member, then the next, until someone accepts. Each has 20 minutes to answer.</>,
+                      action: "Start the callout",
+                      run: () => run("callout", () => tool("start_callout", { trip_id: trip, replace_crew_id: seat.crew_id, ...(report ? { report_id: report } : {}) }), () => "Callout started."),
+                    })
                   }
                 >
                   Start callout for <Mono>{seat.crew_id}</Mono>

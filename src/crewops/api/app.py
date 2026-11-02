@@ -218,6 +218,7 @@ TONES = (
     ("Sent back", "pending"),
     ("Stale", "pending"),
     ("Offer withdrawn", "pending"),
+    ("Back on duty", "ok"),
     ("Declined", "pending"),
     ("Approved", "ok"),
     ("Filled", "ok"),

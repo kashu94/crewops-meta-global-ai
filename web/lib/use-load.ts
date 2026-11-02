@@ -55,18 +55,22 @@ export function useLoad<T>(fn: () => Promise<T>, key: string = ""): Loaded<T> {
   return { data, error, loading, reload };
 }
 
+/** What an action says when it is done, with its tone when it is not plain good news. */
+export type Said = { text: string; tone: "ok" | "pending" | "critical" };
+
 /** Runs one action from a button: a busy flag meanwhile, the error shown as a toast, and a
  * refresh of everything after. */
 export function useAction() {
   const { flash, bump } = useSession();
   const [busy, setBusy] = useState<string | null>(null);
   const run = useCallback(
-    async <T,>(id: string, fn: () => Promise<T>, done?: (r: T) => string | void): Promise<T | null> => {
+    async <T,>(id: string, fn: () => Promise<T>, done?: (r: T) => string | Said | void): Promise<T | null> => {
       setBusy(id);
       try {
         const r = await fn();
         const said = done?.(r);
-        if (said) flash(said);
+        if (typeof said === "string") flash(said);
+        else if (said) flash(said.text, said.tone);
         bump();
         return r;
       } catch (err) {
