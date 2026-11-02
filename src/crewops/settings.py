@@ -42,6 +42,10 @@ class Settings:
     open_model_api_key: str
     open_model_base_url: str
     open_model: str
+    fireworks_api_key: str
+    """Muse Spark Open on Fireworks: the router's backup when the main endpoint fails."""
+    fireworks_base_url: str
+    fireworks_model: str
     stage: str
     store: str
     aws_profile: str
@@ -103,6 +107,11 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
             "/"
         ),
         open_model=get("CREWOPS_OPEN_MODEL", "meta-models/muse-spark-open-1026"),
+        fireworks_api_key=get("FIREWORKS_API_KEY"),
+        fireworks_base_url=get(
+            "FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1"
+        ).rstrip("/"),
+        fireworks_model=get("CREWOPS_FIREWORKS_MODEL", "accounts/fireworks/models/muse-spark-open"),
         stage=stage,
         store=store,
         aws_profile=get("AWS_PROFILE"),

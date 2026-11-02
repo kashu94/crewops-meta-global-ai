@@ -196,6 +196,22 @@ def test_questions_about_the_asker_are_never_off_topic():
     assert Router(SaysOther()).route("write me a poem").intent is Intent.OTHER
 
 
+def test_the_backup_host_routes_when_the_first_fails():
+    from crewops.agent.router import RouteChoice
+
+    class Broken:
+        def parse(self, *args, **kwargs):
+            raise ModelError("down")
+
+    class Backup:
+        def parse(self, *args, **kwargs):
+            return RouteChoice(intent=Intent.ABSENCE, attack=False), None
+
+    route = Router(Broken(), Backup()).route("FO Nair is unwell")
+    assert (route.intent, route.by) == (Intent.ABSENCE, "backup model")
+    assert Router(Broken(), Broken()).route("FO Nair is unwell").by == "keywords"
+
+
 def test_the_router_falls_back_to_keywords_when_the_model_fails():
     class Broken:
         def parse(self, *args, **kwargs):

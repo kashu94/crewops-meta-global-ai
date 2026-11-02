@@ -48,6 +48,8 @@ PASSED_THROUGH = (
     "OPEN_MODEL_API_KEY",
     "OPEN_MODEL_BASE_URL",
     "CREWOPS_OPEN_MODEL",
+    "FIREWORKS_API_KEY",
+    "CREWOPS_FIREWORKS_MODEL",
     "CREWOPS_DAILY_ASKS",
 )
 DEMO_USERS = tuple((a.user, str(a.role), a.crew_id) for a in DEMO_ACCOUNTS)

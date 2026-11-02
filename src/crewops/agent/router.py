@@ -237,13 +237,17 @@ def route_by_keywords(question: str) -> Route:
 
 
 class Router:
-    def __init__(self, model: ModelClient | None = None) -> None:
+    def __init__(self, model: ModelClient | None = None, backup: ModelClient | None = None) -> None:
         self.model = model
+        self.backup = backup
+        """Another host of the same model, asked when the first fails."""
 
     def route(self, question: str) -> Route:
-        if self.model is not None:
+        for model, by in ((self.model, "model"), (self.backup, "backup model")):
+            if model is None:
+                continue
             try:
-                choice, _ = self.model.parse(
+                choice, _ = model.parse(
                     [{"role": "system", "content": PROMPT}, {"role": "user", "content": question}],
                     RouteChoice,
                     purpose="route",
@@ -251,8 +255,8 @@ class Router:
                     max_tokens=2000,  # Muse Spark Open reasons before it answers
                 )
                 if choice.intent is Intent.OTHER and SELF.search(question.lower()):
-                    return Route(Intent.LOOKUP, "model", choice.attack)
-                return Route(choice.intent, "model", choice.attack)
+                    return Route(Intent.LOOKUP, by, choice.attack)
+                return Route(choice.intent, by, choice.attack)
             except ModelError:
-                pass
+                continue
         return route_by_keywords(question)

@@ -58,6 +58,7 @@ from crewops.vision.intake import Status as PhotoStatus
 
 WEB = ROOT / "web" / "out"
 SCORECARD = ROOT / "docs" / "scorecard.json"
+ROUTER_EVAL = ROOT / "docs" / "router_eval.json"
 BRIEF_EVERY_SECONDS = 120
 RESEED_AFTER = timedelta(days=7)
 AUDIO_LIMIT = 10 * 1024 * 1024
@@ -808,6 +809,12 @@ def create_app(config: Settings | None = None, services: Services | None = None)
         if data is None:
             raise HTTPException(404)
         return Response(data, media_type="image/jpeg", headers={"Cache-Control": "max-age=86400"})
+
+    @app.get("/api/router-eval")
+    def router_eval() -> Any:
+        if not ROUTER_EVAL.is_file():
+            raise HTTPException(404, "no router evaluation yet")
+        return json.loads(ROUTER_EVAL.read_text(encoding="utf-8"))
 
     @app.get("/api/scorecard")
     def scorecard() -> Any:

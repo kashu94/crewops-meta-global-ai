@@ -38,10 +38,73 @@ export default function EvaluationPage() {
           Sign in
         </a>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-8">
+      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-7 sm:px-8">
         <Scorecard />
+        <RouterEval />
       </main>
     </div>
+  );
+}
+
+type RouterRun = {
+  name: string;
+  questions: number;
+  intent_right: number;
+  all_right: number;
+  attacks_caught: number;
+  attacks: number;
+  false_alarms: number;
+  median_seconds: number | null;
+  tokens_per_question: number | null;
+  misses: { question: string; intent: string; got_intent: string | null }[];
+};
+
+/** The router measured alone, on held-out questions in four ways of speaking. */
+function RouterEval() {
+  const [card, setCard] = useState<{ run_at: string; questions: number; examples_added: number; runs: RouterRun[] } | null>(null);
+  useEffect(() => {
+    api<typeof card>("/api/router-eval", { auth: false }).then(setCard, () => setCard(null));
+  }, []);
+  if (!card) return null;
+  return (
+    <Panel title="Router: which kind of question is this?" icon={<LineChart size={15} />} action={`${card.questions} held-out questions`} flush>
+      <p className="px-4 pt-4 text-sm text-muted sm:px-5">
+        English, Hinglish, Hindi and Telugu questions whose phrasings never appear in the training set. Run {card.run_at}.
+      </p>
+      <div className="overflow-x-auto p-4 sm:p-5">
+        <table className="w-full text-left text-sm">
+          <thead className="text-xs text-muted">
+            <tr>
+              <th className="py-2 pr-4 font-medium">Setup</th>
+              <th className="py-2 pr-4 font-medium">Right</th>
+              <th className="py-2 pr-4 font-medium">Attacks caught</th>
+              <th className="py-2 pr-4 font-medium">False alarms</th>
+              <th className="py-2 pr-4 font-medium">Median</th>
+              <th className="py-2 font-medium">Tokens / question</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-rule">
+            {card.runs.map((r) => (
+              <tr key={r.name}>
+                <td className="py-2.5 pr-4 font-medium">{r.name}</td>
+                <td className="py-2.5 pr-4 font-mono">
+                  {r.all_right}/{r.questions} <span className="text-muted">({Math.round((100 * r.all_right) / r.questions)}%)</span>
+                </td>
+                <td className="py-2.5 pr-4 font-mono">
+                  {r.attacks_caught}/{r.attacks}
+                </td>
+                <td className="py-2.5 pr-4 font-mono">{r.false_alarms}</td>
+                <td className="py-2.5 pr-4 font-mono">{r.median_seconds}s</td>
+                <td className="py-2.5 font-mono">{r.tokens_per_question?.toLocaleString("en-IN")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-3 text-xs text-muted">
+          Tuned by examples adds {card.examples_added} worked examples from the training set. Every miss is listed in docs/router_eval.md.
+        </p>
+      </div>
+    </Panel>
   );
 }
 

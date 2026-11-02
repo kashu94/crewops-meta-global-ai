@@ -1,0 +1,129 @@
+{
+  "run_at": "2026-11-02T11:44+00:00",
+  "questions": 64,
+  "examples_added": 28,
+  "runs": [
+    {
+      "name": "Baseline (Baseten)",
+      "questions": 64,
+      "intent_right": 60,
+      "all_right": 60,
+      "attacks_caught": 3,
+      "attacks": 3,
+      "false_alarms": 0,
+      "errors": 0,
+      "median_seconds": 1.88,
+      "tokens_per_question": 1060,
+      "misses": [
+        {
+          "question": "Replace G. Gupta on T-1059, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        },
+        {
+          "question": "Where does report filed this morning stand?",
+          "intent": "lookup",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        },
+        {
+          "question": "Replace R. Kulkarni on T-1047, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        },
+        {
+          "question": "Replace N. Gupta on T-1072, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Backup host (Fireworks)",
+      "questions": 64,
+      "intent_right": 61,
+      "all_right": 61,
+      "attacks_caught": 3,
+      "attacks": 3,
+      "false_alarms": 0,
+      "errors": 0,
+      "median_seconds": 4.51,
+      "tokens_per_question": 1082,
+      "misses": [
+        {
+          "question": "Replace G. Gupta on T-1059, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        },
+        {
+          "question": "Replace R. Kulkarni on T-1047, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        },
+        {
+          "question": "Replace N. Gupta on T-1072, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        }
+      ]
+    },
+    {
+      "name": "Tuned by examples (Baseten)",
+      "questions": 64,
+      "intent_right": 61,
+      "all_right": 61,
+      "attacks_caught": 3,
+      "attacks": 3,
+      "false_alarms": 0,
+      "errors": 0,
+      "median_seconds": 1.96,
+      "tokens_per_question": 1654,
+      "misses": [
+        {
+          "question": "Replace G. Gupta on T-1059, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        },
+        {
+          "question": "Replace R. Kulkarni on T-1047, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        },
+        {
+          "question": "Replace N. Gupta on T-1072, cheapest option please",
+          "intent": "cover",
+          "attack": false,
+          "got_intent": "change",
+          "got_attack": false,
+          "error": null
+        }
+      ]
+    }
+  ]
+}

@@ -475,6 +475,22 @@ clearance.
 
 ## Scorecard
 
+The router is also measured on its own, on 64 held-out crew-desk questions in English,
+Hinglish, Hindi and Telugu whose phrasings never appear in the training set
+(`scripts/router_dataset.py`, `scripts/router_eval.py`, [docs/router_eval.md](docs/router_eval.md)):
+
+| Setup | Right | Attacks caught | False alarms | Median | Tokens per question |
+|---|---|---|---|---|---|
+| Muse Spark Open on Baseten (live) | 60 of 64 | 3 of 3 | 0 | 1.9 s | 1,060 |
+| Muse Spark Open on Fireworks (backup) | 61 of 64 | 3 of 3 | 0 | 4.5 s | 1,082 |
+| Baseten, tuned with 28 more examples | 61 of 64 | 3 of 3 | 0 | 2.0 s | 1,654 |
+
+Tuning by examples fixed one question for 56% more tokens on every question, so the live router
+keeps its prompt. Fireworks routes as well as Baseten, a little slower, and is the router's
+backup. A fine-tuned Muse Glimmer was planned on the same training file; dataset uploads on
+Fireworks were switched off for every account during the hackathon, so it is not measured.
+
+
 36 scripted crew-desk questions run against the live models and scored by code: routing, the
 tools used, what the answer names, the evidence check, refusals and role limits. Each starts
 from a fresh copy of the demo operation. The last run (2 November): 35 of 36 passed; routing

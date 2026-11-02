@@ -68,10 +68,10 @@ def main() -> None:
     )
     shutil.copytree(ROOT / "src" / "crewops", OUT / "crewops")
     shutil.copytree(ROOT / "data" / "seed", OUT / "data" / "seed")
-    scorecard = ROOT / "docs" / "scorecard.json"
-    if scorecard.is_file():
-        (OUT / "docs").mkdir()
-        shutil.copy(scorecard, OUT / "docs" / "scorecard.json")
+    (OUT / "docs").mkdir()
+    for name in ("scorecard.json", "router_eval.json"):
+        if (ROOT / "docs" / name).is_file():
+            shutil.copy(ROOT / "docs" / name, OUT / "docs" / name)
     for cache in OUT.rglob("__pycache__"):
         shutil.rmtree(cache, ignore_errors=True)
     size = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file()) / 1e6

@@ -56,6 +56,12 @@ class Endpoint:
         )
 
     @classmethod
+    def fireworks(cls, config: Settings) -> Endpoint:
+        return cls(
+            "fireworks", config.fireworks_base_url, config.fireworks_api_key, config.fireworks_model
+        )
+
+    @classmethod
     def open_weights(cls, config: Settings) -> Endpoint:
         return cls("open", config.open_model_base_url, config.open_model_api_key, config.open_model)
 
