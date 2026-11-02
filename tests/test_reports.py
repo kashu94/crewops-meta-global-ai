@@ -216,7 +216,7 @@ def test_the_queue_says_what_waits_for_each_role(box, ctx):
     box.call("submit_report_plan", {"report_id": report["report_id"]}, ctx(IYER))
     waiting = box.call("my_queue", {}, ctx(NAIR))["items"]
     assert waiting and all(i["kind"] == "plan" for i in waiting)
-    assert box.call("my_queue", {}, ctx(STATION))["items"][0]["ref"] == report["report_id"]
+    assert box.call("my_queue", {}, ctx(STATION))["items"] == [], "nothing waits on the station"
 
 
 def test_station_and_aircraft_reports_are_graded_from_the_engine(box, ctx):

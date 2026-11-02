@@ -74,7 +74,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const feed = await fetch(apiUrl("/api/speaker"), { cache: "no-store" })
         .then((r) => (r.ok ? (r.json() as Promise<SpeakerFeed>) : null))
         .catch(() => null);
-      if (feed) next.approvals = feed.waiting.plans + feed.waiting.decisions;
+      // What controllers sent for a second person: plans, cancellations proposed, resolutions.
+      if (feed) next.approvals = feed.waiting.plans + (feed.waiting.proposals ?? 0) + (feed.waiting.resolutions ?? 0);
     }
     const q = await tool<{ items: QueueItem[] }>("my_queue").catch(() => null);
     if (q) {

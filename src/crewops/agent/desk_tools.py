@@ -1150,10 +1150,7 @@ def my_queue(ctx: Context, args: MyQueue) -> dict[str, Any]:
                         view + r.report_id,
                         "critical",
                     )
-    if role is Role.REPORTER:
-        for r in reports:
-            if r.filed_by == user and r.status in ACTIVE:
-                add("disruption", r.report_id, r.title, str(r.status), view + r.report_id, "info")
+    # A reporter's own reports wait on crew control, not on them: they follow them on My reports.
     order = {"critical": 0, "pending": 1, "info": 2}
     items.sort(key=lambda i: order[i["tone"]])
     return {"items": items[: args.limit], "count": len(items)}

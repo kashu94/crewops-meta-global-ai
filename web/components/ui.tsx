@@ -69,7 +69,7 @@ export function Panel({
       {backdrop && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.07] [mask-image:linear-gradient(160deg,transparent_15%,black_70%)]"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.12] [mask-image:linear-gradient(160deg,transparent_5%,black_60%)]"
           style={{ backgroundImage: `url(${backdrop})` }}
         />
       )}

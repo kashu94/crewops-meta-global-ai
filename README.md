@@ -31,7 +31,7 @@ November 4, 2026). This README grows with the code.
 | Finding the damage in a defect photo, and the flood, fog or closed gate in a photo of the conditions | **SAM 3.1** | Streamed segmentation; its box and confidence are one of the signals behind the confidence level |
 | Spoken questions, and crew saying they cannot fly, in English, Hindi, Telugu or mixed speech | **Muse Voice Transcribe** | Push-to-talk WAV recorded in the browser; the absence is then read into the report form by Muse Spark (structured output) for the crew member to check |
 | The shift brief on the ops board, the message to passengers on a delayed, held or re-gated flight (English, Hindi, Telugu), and the shift handover | **Muse Wonder** | Structured output, then the same evidence check as every answer; a text that fails it is replaced by a template built from the same facts |
-| The faint fog-at-dawn picture behind the report form and the disruption lists | **Muse Image** | Drawn once and kept as a static file (`web/public/art`), shown at 7% opacity, never behind body text at full strength |
+| The faint fog-at-dawn picture behind the report form and the disruption lists | **Muse Image** | Drawn once and kept as a static file (`web/public/art`), shown at 12% opacity, fading out towards the top |
 | Optional artwork for the brief (`CREWOPS_BOARD_ART`) | **Muse Image** | One picture per mood per day, no text in it |
 
 No model ever does the arithmetic: every crew id, hour, cost and verdict comes from the rules

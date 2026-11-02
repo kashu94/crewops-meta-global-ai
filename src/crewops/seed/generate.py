@@ -211,7 +211,7 @@ NAMED: dict[str, str] = {
     "C-1460": "S. Krishnan",
 }
 HUB = "HYD"
-DATA_VERSION = 5
+DATA_VERSION = 6
 """Raised whenever the generated data changes shape, so a deployed store reloads it."""
 
 HUB_GATES = (("21", "22", "23", "24", "25"), ("R1", "R2"), ("E1",))

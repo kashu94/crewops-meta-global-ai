@@ -333,7 +333,7 @@ export type Board = {
 
 export type SpeakerFeed = {
   clock: string;
-  waiting: { plans: number; decisions: number };
+  waiting: { plans: number; decisions: number; proposals?: number; resolutions?: number; disruptions?: number };
   summary?: string[];
   items: { id: string; at: string; to: string; tone: "critical" | "pending" | "ok" | "info"; subject: string; body: string }[];
 };

@@ -39,7 +39,7 @@ from crewops.ops.accounts import DEMO_ACCOUNTS, CognitoAccounts, StoreAccounts
 from crewops.ops.alerts import AlertAddresses
 from crewops.ops.brief import BucketImages, Images, MemoryImages, draw_card, write_brief
 from crewops.ops.desks import DESKS, desk_of
-from crewops.ops.governance import entries
+from crewops.ops.governance import entries, log
 from crewops.ops.messages import (
     handover_facts,
     passenger_facts,
@@ -118,11 +118,12 @@ class Services:
         self._advisor: Advisor | None = None
         self._lock = threading.Lock()
 
-    def _seed(self) -> None:
+    def _seed(self, force: bool = False) -> None:
         """Load the demo operation when the store has none, an older shape of it, or (on the
-        wall clock) one that started over a week ago, so there is always a week to work in."""
+        wall clock) one that started over a week ago, so there is always a week to work in.
+        ``force`` starts it again from nothing: every report, plan, callout and message goes."""
         meta = read_meta(self.config.seed_dir)
-        stale = self.store.is_empty()
+        stale = force or self.store.is_empty()
         if not stale:
             held = self.store.meta()
             stale = held.get("data_version") != meta.get("data_version")
@@ -692,6 +693,16 @@ def create_app(config: Settings | None = None, services: Services | None = None)
     @app.get("/api/push/key")
     def push_key(_who: Caller = Depends(caller)) -> dict[str, str]:
         return {"public_key": svc().push.public_key()}
+
+    @app.post("/api/admin/reset")
+    def reset_demo(who: Caller = Depends(caller)) -> dict[str, Any]:
+        """A clean slate: the demo operation as it starts, today. Accounts are not touched."""
+        if who.role is not Role.SUPER_ADMIN:
+            raise HTTPException(403, "only a super admin can reset the demo")
+        s = svc()
+        s._seed(force=True)
+        log(s.store, "activity", by=who.user, role=str(who.role), action="reset the demo")
+        return {"reset": True, "days": s.store.meta().get("first_day")}
 
     @app.post("/api/push/subscribe")
     def push_subscribe(

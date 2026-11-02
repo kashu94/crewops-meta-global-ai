@@ -1,10 +1,11 @@
 "use client";
 
-import { BellRing, CalendarOff, Copy, FileUp, Gauge, KeyRound, ListChecks, Mail, Plus, Trash2, UserCog, Users, XCircle } from "lucide-react";
+import { BellRing, CalendarOff, RotateCcw, Copy, FileUp, Gauge, KeyRound, ListChecks, Mail, Plus, Trash2, UserCog, Users, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { LimitsTable } from "@/components/limits";
+import { Confirm } from "@/components/modal";
 import { useSession } from "@/components/session";
 import { Button, control, cx, Empty, Input, Kpi, Kpis, Loading, Mono, Notice, PageHeader, Panel, Pill, Segmented, Select, SeverityBadge, Spinner, StatusPill, Table } from "@/components/ui";
 import { api, message, tool } from "@/lib/api";
@@ -479,6 +480,33 @@ function Revoke() {
   );
 }
 
+/** A clean slate for the demo: every report, plan, callout and message goes, and the roster
+ * starts again from today. Accounts and passwords are kept. */
+function ResetDemo() {
+  const { busy, run } = useAction();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button tone="danger-quiet" disabled={busy !== null} onClick={() => setOpen(true)}>
+        <RotateCcw size={15} /> Reset the demo
+      </Button>
+      <Confirm
+        open={open}
+        title="Reset the demo to a clean slate?"
+        action="Reset everything"
+        onClose={() => setOpen(false)}
+        onConfirm={() => {
+          setOpen(false);
+          run("reset", () => api("/api/admin/reset", { method: "POST" }), () => "The demo starts again from today: no reports, plans, callouts or messages.");
+        }}
+      >
+        Every disruption report, plan, callout, message and photo record is removed, and the roster starts again from today with its one known problem. Accounts and passwords are not
+        touched. This cannot be undone.
+      </Confirm>
+    </>
+  );
+}
+
 export default function AdminPage() {
   const { me } = useSession();
   const [tab, setTab] = useState<Tab>("accounts");
@@ -500,11 +528,14 @@ export default function AdminPage() {
             : "Team accounts, alert addresses, the roster file, revoking reports, and making duty limits stricter."
         }
         actions={
-          <Link href="/report/?kind=planned_leave">
-            <Button tone="secondary">
-              <CalendarOff size={15} /> Book planned leave
-            </Button>
-          </Link>
+          <>
+            <Link href="/report/?kind=planned_leave">
+              <Button tone="secondary">
+                <CalendarOff size={15} /> Book planned leave
+              </Button>
+            </Link>
+            {me.role === "super_admin" && <ResetDemo />}
+          </>
         }
       />
       <Kpis>

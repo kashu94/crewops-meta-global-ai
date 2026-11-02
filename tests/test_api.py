@@ -466,3 +466,20 @@ def test_an_absence_said_aloud_becomes_fields_to_confirm(client, services):
         "sick",
     )
     assert got["heard"] == "kal se do din bukhar hai" and "since" not in got
+
+
+def test_a_super_admin_resets_the_demo_to_a_clean_slate(client, services):
+    client.post(
+        "/api/tools/report_disruption",
+        json={"kind": "flight_delay", "trip_id": "T-1018", "hours": 2},
+        headers=STATION,
+    )
+    assert services.reports.all()
+    admin = {"X-Demo-User": "priya.desai", "X-Demo-Role": "admin"}
+    assert client.post("/api/admin/reset", headers=admin).status_code == 403
+    root = {"X-Demo-User": "vikram.saxena", "X-Demo-Role": "super_admin"}
+    assert client.post("/api/admin/reset", headers=root).json()["reset"] is True
+    assert services.reports.all() == [] and services.desk.all() == []
+    assert [
+        e["action"] for e in client.get("/api/log/activity", headers=CONTROLLER).json()["entries"]
+    ] == ["reset the demo"]
