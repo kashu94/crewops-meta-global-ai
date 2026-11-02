@@ -225,8 +225,33 @@ class CrewOpsStack(cdk.Stack):
         cdk.CfnOutput(self, "TableName", value=table.table_name)
 
     def demo_users(self, pool: cognito.UserPool, groups: dict, password: str) -> None:
-        """The demo accounts, with a known password so judges can sign in."""
-        policy = cr.AwsCustomResourcePolicy.from_sdk_calls(resources=[pool.user_pool_arn])
+        """The demo accounts, with a known password so judges can sign in.
+
+        Every call runs as one role with one statement. Left to itself, each custom resource adds
+        its own statement to the provider's role, and a few dozen of them pass IAM's 10 KB limit
+        on a role's inline policies.
+        """
+        runner = iam.Role(
+            self,
+            "DemoUsersRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "service-role/AWSLambdaBasicExecutionRole"
+                )
+            ],
+        )
+        runner.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "cognito-idp:AdminCreateUser",
+                    "cognito-idp:AdminDeleteUser",
+                    "cognito-idp:AdminSetUserPassword",
+                    "cognito-idp:AdminAddUserToGroup",
+                ],
+                resources=[pool.user_pool_arn],
+            )
+        )
         for username, role, crew_id in DEMO_USERS:
             attributes = [{"Name": "custom:crew_id", "Value": crew_id}] if crew_id else []
             key = username.replace(".", "")
@@ -250,7 +275,7 @@ class CrewOpsStack(cdk.Stack):
                     parameters={"UserPoolId": pool.user_pool_id, "Username": username},
                     ignore_error_codes_matching="UserNotFoundException",
                 ),
-                policy=policy,
+                role=runner,
                 install_latest_aws_sdk=False,
             )
             set_password = cr.AwsSdkCall(
@@ -269,7 +294,7 @@ class CrewOpsStack(cdk.Stack):
                 f"Password{key}",
                 on_create=set_password,
                 on_update=set_password,
-                policy=policy,
+                role=runner,
                 install_latest_aws_sdk=False,
             )
             secret.node.add_dependency(create)
@@ -286,7 +311,7 @@ class CrewOpsStack(cdk.Stack):
                     },
                     physical_resource_id=cr.PhysicalResourceId.of(f"group-{username}"),
                 ),
-                policy=policy,
+                role=runner,
                 install_latest_aws_sdk=False,
             )
             member.node.add_dependency(create, groups[role])
