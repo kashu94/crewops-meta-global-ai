@@ -6,6 +6,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { Modal } from "@/components/modal";
 import { NoticeList, ReportRows, RiskDetail } from "@/components/ops";
 import { Part } from "@/components/part";
+import { FromUntil } from "@/components/range";
 import { useSession } from "@/components/session";
 import { Button, Chips, cx, Empty, Input, Loading, Meter, Mono, Notice, PageHeader, Panel, Pill, Spinner, StatusPill, Table } from "@/components/ui";
 import { api, message, missing, tool } from "@/lib/api";
@@ -216,8 +217,7 @@ function Unavailable({ crewId, today, onDone }: { crewId: string; today: string;
         }}
       />
       <div className="grid grid-cols-2 gap-3">
-        <Input label="From" type="date" name="first_day" defaultValue={heard?.first_day ?? today} required />
-        <Input label="Until" type="date" name="last_day" defaultValue={heard?.last_day ?? addDays(today, 1)} required />
+        <FromUntil fromLabel="From" untilLabel="Until" from={heard?.first_day ?? today} until={heard?.last_day ?? addDays(today, 1)} />
       </div>
       <Chips
         label="Reason"

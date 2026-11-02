@@ -23,7 +23,7 @@ The files are written by `uv run python -m crewops.seed.generate`, which is dete
 | `histories.json` | Duty and block hours for the 28 days before the roster starts |
 | `standby.json` | Who is on standby each day, and their callout window (UTC) |
 | `legs.json` | Every flight, UTC times, with its departure gate |
-| `gates.json` | The gates and stands the operation holds at each station: at Hyderabad five contact gates (21-25), two remote stands and an emergency gate; two gates, a stand and an emergency gate elsewhere |
+| `gates.json` | The gates and stands the operation holds at each station: at Hyderabad five contact gates (G1-G5), two remote stands (R1, R2) and an emergency gate (E_G1); two gates (G1, G2), a stand and an emergency gate (E_G1) elsewhere |
 | `contacts.json` | Who is on duty in each operational team: gate and stand control and the station duty manager at each station, and flight information, operations monitoring, maintenance control, crew records and customer care at the operations centre. Made-up names and numbers |
 | `trips.json` | Crew trips: duty days, legs, and who is rostered |
 | `rules.json` | The nine duty rules and their limits |

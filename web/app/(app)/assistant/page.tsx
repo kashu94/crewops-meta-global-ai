@@ -24,7 +24,7 @@ function onDay(first: string, n: number) {
 const deskSuggestions = (first: string) => [
   `A. Nair is unwell from ${onDay(first, 6)} to ${onDay(first, 9)}. How should we cover it?`,
   "Anything I should worry about in the next few days?",
-  `Gates 21 and 22 at Hyderabad are closed 6 to 9 am on ${onDay(first, 3)}. What happens?`,
+  `Gates G1 and G2 at Hyderabad are closed 6 to 9 am on ${onDay(first, 3)}. What happens?`,
   `VT-SYB is out of service until 11 am on ${onDay(first, 6)}.`,
 ];
 

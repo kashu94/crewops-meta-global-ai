@@ -211,13 +211,13 @@ NAMED: dict[str, str] = {
     "C-1460": "S. Krishnan",
 }
 HUB = "HYD"
-DATA_VERSION = 6
+DATA_VERSION = 7
 """Raised whenever the generated data changes shape, so a deployed store reloads it."""
 
-HUB_GATES = (("21", "22", "23", "24", "25"), ("R1", "R2"), ("E1",))
+HUB_GATES = (("G1", "G2", "G3", "G4", "G5"), ("R1", "R2"), ("E_G1",))
 """Contact gates, remote stands and the emergency gate the operation holds at the hub. The
 morning wave sends five departures out within an hour, so losing one gate is felt."""
-OUTSTATION_GATES = (("1", "2"), ("R1",), ("E1",))
+OUTSTATION_GATES = (("G1", "G2"), ("R1",), ("E_G1",))
 
 AIRLINES = (
     Airline(

@@ -17,6 +17,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { Combo } from "@/components/combo";
+import { FromUntil } from "@/components/range";
 import { CrewPicker, type CrewPick } from "@/components/crew-picker";
 import { EvidenceField, PHOTO, type PhotoState } from "@/components/photo-intake";
 import { useSession } from "@/components/session";
@@ -212,8 +213,7 @@ export default function ReportPage() {
               {kind === "crew_unavailable" && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Input label="From" type="date" name="first_day" defaultValue={from ?? today} required />
-                    <Input label="Until" type="date" name="last_day" defaultValue={addDays(from ?? today, 1)} required />
+                    <FromUntil fromLabel="From" untilLabel="Until" from={from ?? today} until={addDays(from ?? today, 1)} />
                   </div>
                   <Chips
                     label="Reason"
@@ -232,8 +232,7 @@ export default function ReportPage() {
               {kind === "planned_leave" && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-3">
-                    <Input label="From" type="date" name="first_day" defaultValue={addDays(today, 2)} required />
-                    <Input label="Until" type="date" name="last_day" defaultValue={addDays(today, 4)} required />
+                    <FromUntil fromLabel="From" untilLabel="Until" from={addDays(today, 2)} until={addDays(today, 4)} />
                     <Select label="Leave" name="leave" defaultValue="annual_leave">
                       <option value="annual_leave">Annual leave</option>
                       <option value="medical">Medical</option>
@@ -252,8 +251,7 @@ export default function ReportPage() {
                       </option>
                     ))}
                   </Select>
-                  <Input label="Not valid from" type="date" name="first_day" defaultValue={today} required />
-                  <Input label="Renewed by (optional)" type="date" name="last_day" />
+                  <FromUntil fromLabel="Not valid from" untilLabel="Renewed by (optional)" from={today} untilRequired={false} />
                 </div>
               )}
               {kind === "flight_delay" && (
@@ -280,8 +278,13 @@ export default function ReportPage() {
                     placeholder="Registration or airline"
                     options={(cat?.tails ?? []).map((t) => ({ value: t.tail, label: t.tail, hint: `${t.airline} · ${t.type}` }))}
                   />
-                  <Input label="Out of service from (IST)" type="datetime-local" name="start" defaultValue={`${params.get("day") ?? today}T06:00`} required />
-                  <Input label="Back (IST)" type="datetime-local" name="end" defaultValue={`${params.get("day") ?? today}T11:00`} required />
+                  <FromUntil
+                    type="datetime-local"
+                    fromLabel="Out of service from (IST)"
+                    untilLabel="Back (IST)"
+                    from={`${params.get("day") ?? today}T06:00`}
+                    until={`${params.get("day") ?? today}T11:00`}
+                  />
                 </div>
               )}
               {kind === "station_disruption" && (
@@ -291,8 +294,7 @@ export default function ReportPage() {
                       <option key={s}>{s}</option>
                     ))}
                   </Select>
-                  <Input label="Closes (IST)" type="datetime-local" name="start" defaultValue={`${today}T06:30`} required />
-                  <Input label="Reopens (IST)" type="datetime-local" name="end" defaultValue={`${today}T09:30`} required />
+                  <FromUntil type="datetime-local" fromLabel="Closes (IST)" untilLabel="Reopens (IST)" from={`${today}T06:30`} until={`${today}T09:30`} />
                 </div>
               )}
               {kind === "gate_closure" && (
@@ -331,8 +333,7 @@ export default function ReportPage() {
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Input label="Closes (IST)" type="datetime-local" name="start" defaultValue={`${today}T06:00`} required />
-                    <Input label="Reopens (IST)" type="datetime-local" name="end" defaultValue={`${today}T09:00`} required />
+                    <FromUntil type="datetime-local" fromLabel="Closes (IST)" untilLabel="Reopens (IST)" from={`${today}T06:00`} until={`${today}T09:00`} />
                   </div>
                 </>
               )}

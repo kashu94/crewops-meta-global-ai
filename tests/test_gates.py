@@ -30,31 +30,31 @@ def test_every_departure_has_a_gate_and_no_two_board_at_one_gate_at_once(op):
 
 def test_a_closed_gate_sends_its_departure_to_the_emergency_gate_in_the_wave(op):
     # 07:00-07:30 IST: all five contact gates at Hyderabad are boarding.
-    plan = gate_closure(op, "HYD", "21", ist(5, 6, 0), ist(5, 9, 0))
+    plan = gate_closure(op, "HYD", "G1", ist(5, 6, 0), ist(5, 9, 0))
     [move] = plan.moves
-    assert (move.flight_no, move.to_gate, move.to_kind) == ("SY201", "E1", GateKind.EMERGENCY)
+    assert (move.flight_no, move.to_gate, move.to_kind) == ("SY201", "E_G1", GateKind.EMERGENCY)
     assert move.delay_minutes == 0 and not plan.crew
 
 
 def test_with_two_gates_shut_the_second_flight_boards_by_bus_and_crew_are_judged(op):
-    plan = gate_closure(op, "HYD", ["21", "22"], ist(5, 6, 0), ist(5, 9, 0))
+    plan = gate_closure(op, "HYD", ["G1", "G2"], ist(5, 6, 0), ist(5, 9, 0))
     first, second = plan.moves
-    assert (first.flight_no, first.to_gate) == ("SY201", "E1")
+    assert (first.flight_no, first.to_gate) == ("SY201", "E_G1")
     assert second.flight_no == "GL701" and second.to_kind is GateKind.REMOTE
     assert second.delay_minutes == BUS_EXTRA.total_seconds() // 60
     assert [i.trip_id for i in plan.crew] == [second.trip_id]
 
 
 def test_a_gate_change_onto_a_held_gate_names_the_clash(op):
-    check = check_gate(op, "SY201-2026-11-05", "22")
+    check = check_gate(op, "SY201-2026-11-05", "G2")
     assert not check.free and check.clashes == ("GL701",)
-    assert check_gate(op, "SY243-2026-11-05", "23").free
+    assert check_gate(op, "SY243-2026-11-05", "G3").free
 
 
 def test_a_late_flight_moves_whoever_boards_next_at_its_gate(op):
     plan = late_departure(op, "SY201-2026-11-05", 200)
     assert [m.flight_no for m in plan.moves] == ["SY243"]
-    assert plan.moves[0].from_gate == "21" and plan.moves[0].to_gate != "21"
+    assert plan.moves[0].from_gate == "G1" and plan.moves[0].to_gate != "G1"
 
 
 def test_unknown_gates_and_stations_are_named(op):

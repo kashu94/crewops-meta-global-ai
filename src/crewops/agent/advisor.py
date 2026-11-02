@@ -143,6 +143,24 @@ Caller: {who}.
 Operation clock: {now.astimezone(IST):%A %d %B %Y, %H:%M} IST."""
 
 
+def refusal(reason: str) -> str:
+    """What the person sees when a question is refused. Someone who may harm themselves is
+    answered with care and pointed to help, never just turned away."""
+    if reason.startswith("self-harm"):
+        return (
+            "I'm sorry you're feeling this way. You don't have to go through it alone: please "
+            "talk to someone you trust, or call Tele-MANAS on 14416 (free, 24 hours, in Hindi, "
+            "Telugu and English). If you are in danger now, call 112. Crew control can take you "
+            "off duty: just say you can't fly, no reason needed."
+        )
+    if reason.startswith("harmful"):
+        return (
+            "I can't help with that. Questions about hurting people or endangering a flight are "
+            "recorded and sent to the administrators."
+        )
+    return "I can't help with that request."
+
+
 class Advisor:
     def __init__(
         self,
@@ -199,13 +217,18 @@ class Advisor:
         if self.guard is not None:
             screening = self.guard.screen(question)
             if not screening.allowed:
-                answer.text = "I can't help with that request."
+                answer.text = refusal(screening.reason)
                 answer.blocked = screening.reason or "blocked"
                 self._refused(question, caller, answer.blocked, screening.by)
                 return answer
 
         route = self.router.route(question)
         answer.route = route
+        if route.harm:
+            answer.blocked = f"{route.harm} (flagged by the router, {route.by})"
+            answer.text = refusal(route.harm)
+            self._refused(question, caller, answer.blocked, f"router ({route.by})")
+            return answer
         if route.attack:
             answer.text = "I can't help with that request."
             answer.blocked = f"prompt injection (flagged by the router, {route.by})"

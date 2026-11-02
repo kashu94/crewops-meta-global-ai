@@ -26,7 +26,7 @@ November 4, 2026). This README grows with the code.
 | Job | Model | How |
 |---|---|---|
 | Planning each answer: which engine tools to call, then the reply | **Muse Spark 1.3** | Tool calling, reasoning effort set per kind of question, prompt caching of the rule book |
-| Sorting each question (absence, delay, cover, legality, change, lookup) and flagging attacks on the assistant | **Muse Spark Open** (open weights, on Baseten) | Strict JSON-schema structured output; 8 of 8 unseen phrasings routed right where keyword rules got 3 |
+| Sorting each question (absence, delay, cover, legality, change, lookup) and flagging attacks on the assistant and harmful questions | **Muse Spark Open** (open weights, on Baseten) | Strict JSON-schema structured output; 8 of 8 unseen phrasings routed right where keyword rules got 3 |
 | Reading photos: sick notes, roster swaps, certificates, departures boards, aircraft defects | **Muse Spark 1.3 vision** | Each photo fills a fixed form (structured output); code decides what happens |
 | Finding the damage in a defect photo, and the flood, fog or closed gate in a photo of the conditions | **SAM 3.1** | Streamed segmentation; its box and confidence are one of the signals behind the confidence level |
 | Spoken questions, and crew saying they cannot fly, in English, Hindi, Telugu or mixed speech | **Muse Voice Transcribe** | Push-to-talk WAV recorded in the browser; the absence is then read into the report form by Muse Spark (structured output) for the crew member to check |
@@ -253,7 +253,8 @@ and signed with the server's VAPID key (`crewops.ops.push`).
 ## Gates, stations and aircraft
 
 Each departure holds a gate from 45 minutes before off-block (`crewops.engine.gates`); the demo
-data holds five contact gates, two remote stands and an emergency gate at Hyderabad, where the
+data holds five contact gates (G1 to G5), two remote stands (R1, R2) and an emergency gate
+(E_G1) at Hyderabad, where the
 morning wave sends five departures out within an hour. When gates close, or a late flight is
 still at its gate, each displaced departure goes to the first free gate, then the emergency
 gate, then a remote stand by bus, which adds 15 minutes, and that delay is judged against
@@ -267,7 +268,11 @@ even on time is shown apart.
 ## Governance
 
 Every change made through a tool is logged with who, their role and when; every refused
-question is logged for the admins and auditors (`crewops.ops.governance`). An admin may make a
+question is logged for the admins and auditors (`crewops.ops.governance`). A question about
+hurting someone or endangering a flight, in English, Hinglish, Hindi or Telugu, is refused
+and flagged as harmful on the admins' activity page, caught by word patterns first and by
+the router's own harm label for paraphrases; a sign of self-harm gets a caring reply with the
+Tele-MANAS helpline (14416) instead of a refusal alone. An admin may make a
 duty limit stricter than the regulator's (a shorter duty, longer rest); relaxing it again, back
 towards the regulator's figure and never past it, needs a super admin. Each change needs a
 reason, and the engine applies it at once.

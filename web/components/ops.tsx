@@ -522,6 +522,15 @@ export function GatePlanView({ r }: { r: GatePlan }) {
   );
 }
 
+/** 95 -> "1h 35m", 8100 -> "5d 15h". */
+function lateBy(minutes: number) {
+  if (minutes < 60) return `${minutes}m`;
+  const d = Math.floor(minutes / 1440);
+  const h = Math.floor((minutes % 1440) / 60);
+  const m = minutes % 60;
+  return d ? `${d}d ${h}h` : m ? `${h}h ${m}m` : `${h}h`;
+}
+
 export function HoldView({ r }: { r: HoldResult }) {
   const flights = r.flights_held ?? [];
   return (
@@ -550,8 +559,11 @@ export function HoldView({ r }: { r: HoldResult }) {
                   <td><Mono>{f.flight}</Mono></td>
                   <td>{f.route}</td>
                   <td className="text-right font-mono">{hhmm(f.planned)}</td>
-                  <td className="text-right font-mono">{hhmm(f.leaves)}</td>
-                  <td className="text-right font-mono">{f.late_minutes}m</td>
+                  <td className="text-right font-mono">
+                    {f.leaves.slice(0, 10) !== f.planned.slice(0, 10) && <span className="text-muted">{short(f.leaves.slice(0, 10))} </span>}
+                    {hhmm(f.leaves)}
+                  </td>
+                  <td className="text-right font-mono">{lateBy(f.late_minutes)}</td>
                 </tr>
               ))}
             </tbody>

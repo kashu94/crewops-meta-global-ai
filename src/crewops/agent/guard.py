@@ -32,12 +32,40 @@ INJECTION = re.compile(
 )
 
 
+SELF_HARM = re.compile(
+    r"\b(kill|hurt|harm)\s+my\s?self\b|\bsuicid\w*|\bend\s+(my|it)\s+(life|all)\b"
+    r"|\bwant\s+to\s+die\b|\bkhud\s?ko\s+(maar|khatam)|\baatma\s?hatya\b|\bmar\s+jaana?\b"
+    r"|आत्महत्या|खुद\s?को\s+(मार|खत्म)|मर\s+जाना|ఆత్మహత్య|చనిపోవాలని",
+    re.IGNORECASE,
+)
+"""Someone saying they may harm themselves: answered with care, and an admin is told."""
+
+VIOLENCE = re.compile(
+    r"\b(murder\w*|homicide|assassinat\w*|massacre)\b"
+    r"|\b(kill|stab|shoot|strangle|poison|beat\s+up)\s+(some\s?one|somebody|him|her|them|"
+    r"people|a\s+person|my\s+(wife|husband|boss|colleague|captain|neighbou?r)|the\s+(captain|"
+    r"pilot|crew|passengers?|controller))\b"
+    r"|\bhow\s+(do\s+i|to|can\s+i|would\s+i)\s+(kill|murder|hurt|poison|stab)\b"
+    r"|\b(bomb|explosives?|ied|grenade)\b"
+    r"|\b(bring|carry|smuggle|sneak|hide|take)\b.{0,30}\b(gun|firearm|pistol|knife|weapon)s?\b"
+    r"|\b(hijack\w*|terror\s+attack|terroris\w*)\b|\bcrash\s+(the|a)\s+(plane|aircraft|flight)\b"
+    r"|\b(maar\s+daal\w*|jaan\s+se\s+maar\w*|khoon\s+kar\w*|qatl)\b|\busko\s+maar\w*"
+    r"|मार\s+(डाल|दूं|दूँ|देना)|हत्या|खून\s+कर|बम|చంపు\w*|హత్య|బాంబు",
+    re.IGNORECASE | re.DOTALL,
+)
+"""Violence against people, weapons or threats to a flight: refused, and an admin is told."""
+
+
 class PatternGuard:
     def screen(self, text: str) -> Screening:
         if len(text) > MAX_CHARS:
             return Screening(False, f"longer than {MAX_CHARS} characters", "patterns")
         if INJECTION.search(text):
             return Screening(False, "prompt injection", "patterns")
+        if SELF_HARM.search(text):
+            return Screening(False, "self-harm concern", "patterns")
+        if VIOLENCE.search(text):
+            return Screening(False, "harmful: violence or a threat", "patterns")
         return Screening(True, by="patterns")
 
 

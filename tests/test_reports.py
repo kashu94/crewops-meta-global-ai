@@ -172,12 +172,12 @@ def test_operational_reports_carry_the_engines_analysis(box, ctx):
     gates = {
         "kind": "gate_closure",
         "station": "HYD",
-        "gates": ["21", "22"],
+        "gates": ["G1", "G2"],
         "start": "2026-10-30T05:00",
         "end": "2026-10-30T10:00",
     }
     closed = box.call("report_disruption", gates, ctx(STATION))
-    assert closed["analysis"]["moves"] and closed["title"] == "HYD gates 21, 22 closed"
+    assert closed["analysis"]["moves"] and closed["title"] == "HYD gates G1, G2 closed"
     assert {t["team"] for t in closed["teams"]} == {"gate_control", "station_ops", "flight_info"}
 
     bad = box.call("report_disruption", {"kind": "flight_delay", "hours": 3}, ctx(STATION))
@@ -316,12 +316,12 @@ def test_the_same_thing_is_not_reported_twice(box, ctx):
     gates = {
         "kind": "gate_closure",
         "station": "HYD",
-        "gates": ["21"],
+        "gates": ["G1"],
         "start": "2026-11-05T06:00",
         "end": "2026-11-05T09:00",
     }
     filed = box.call("report_disruption", gates, ctx(STATION))
-    twice = box.call("report_disruption", {**gates, "gates": ["21", "22"]}, ctx(STATION))
+    twice = box.call("report_disruption", {**gates, "gates": ["G1", "G2"]}, ctx(STATION))
     assert filed["report_id"] in twice["error"]
 
 
@@ -389,7 +389,7 @@ def test_the_station_sees_a_week_of_flights_and_who_is_out(box, ctx):
     assert out["days"] == ["2026-11-05", "2026-11-06"] and "reason" not in out
     listed = box.call("catalog", {}, ctx(STATION))
     assert TRIP in {t["trip_id"] for t in listed["trips"]}
-    assert "21" in listed["gates"]["HYD"]
+    assert "G1" in listed["gates"]["HYD"]
     assert "cannot use" in box.call("operations", {}, ctx(ANJALI))["error"]
 
 

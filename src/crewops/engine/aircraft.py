@@ -56,7 +56,9 @@ def aircraft_options(
     hold_cost: int = 0,
     crew_over: int = 0,
 ) -> tuple[list[str], tuple[AircraftOption, ...]]:
-    """The flights the outage takes away, and the ways to fly them, best first."""
+    """The flights the outage takes away on its first day, and the ways to fly them, best
+    first. A longer outage brings the same choice again each day; the next day's flights are
+    not folded into this one."""
     own = sorted(
         (
             leg
@@ -69,11 +71,20 @@ def aircraft_options(
         raise NotFound("aircraft", tail)
     if not own:
         return [], ()
+    first_day = own[0].day
+    more_days = any(leg.day != first_day for leg in own)
+    own = [leg for leg in own if leg.day == first_day]
     kind = own[0].aircraft_type
     station = own[0].origin
     # Out and back: whoever takes these flights flies on until the aircraft is home again.
     later = sorted(
-        (leg for leg in op.legs.values() if leg.tail == tail and leg.off_block >= back),
+        (
+            leg
+            for leg in op.legs.values()
+            if leg.tail == tail
+            and leg.leg_id not in op.cancelled
+            and leg.off_block > own[-1].off_block
+        ),
         key=lambda leg: leg.off_block,
     )
     for leg in later:
@@ -81,7 +92,13 @@ def aircraft_options(
             break
         own.append(leg)
     window = (own[0].off_block - TURN, own[-1].on_block + TURN)
-    flights = [leg.flight_no for leg in own]
+    flights = list(dict.fromkeys(leg.flight_no for leg in own))
+    named = f"{', '.join(flights)} on {first_day:%d %b}"
+    again = (
+        f"; out until {back.astimezone(IST):%d %b}, so the same choice comes up each day"
+        if more_days
+        else ""
+    )
     passengers = sum(leg.booked for leg in own)
 
     airline_of = {leg_id: t.airline for t in op.trips.values() for leg_id in t.leg_ids}
@@ -99,11 +116,11 @@ def aircraft_options(
         options.append(
             AircraftOption(
                 "swap",
-                f"Fly {', '.join(flights)} on {other} ({kind}), free "
+                f"Fly {named} on {other} ({kind}), free "
                 f"{window[0].astimezone(IST):%d %b %H:%M}-{window[1].astimezone(IST):%H:%M} IST",
                 0,
                 other,
-                f"{airline} aircraft on the ground at {station}; same crew, same times",
+                f"{airline} aircraft on the ground at {station}; same crew, same times{again}",
             )
         )
     for spare in SPARES:
@@ -111,10 +128,10 @@ def aircraft_options(
             options.append(
                 AircraftOption(
                     "spare",
-                    f"Fly {', '.join(flights)} on the spare {spare.tail} ({kind}) at {station}",
+                    f"Fly {named} on the spare {spare.tail} ({kind}) at {station}",
                     SPARE_COST,
                     spare.tail,
-                    "the spare kept at the hub; same crew, same times",
+                    f"the spare kept at the hub; same crew, same times{again}",
                 )
             )
     late = back - own[0].off_block
@@ -134,11 +151,10 @@ def aircraft_options(
     options.append(
         AircraftOption(
             "cancel",
-            f"Cancel {', '.join(flights)}: {passengers} passengers to rebook; later flights "
-            "keep their times",
+            f"Cancel {named}: {passengers} passengers to rebook; later flights keep their times",
             op.rates.cancellation_per_leg * len(own),
             None,
-            "last resort",
+            f"last resort{again}",
         )
     )
     return flights, tuple(options)

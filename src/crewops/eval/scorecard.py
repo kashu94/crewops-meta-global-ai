@@ -160,15 +160,15 @@ SCENARIOS: tuple[Scenario, ...] = (
     Scenario("U1", "Is Zara Quill legal for T-1018?", ("legality",), ("search_crew",)),
     Scenario(
         "X1",
-        "Gates 21 and 22 at Hyderabad are closed from 6 to 9 am on 5 November. What happens to "
+        "Gates G1 and G2 at Hyderabad are closed from 6 to 9 am on 5 November. What happens to "
         "the departures?",
         ("delay", "lookup"),
         ("gate_closure",),
-        ("E1",),
+        ("E_G1",),
     ),
     Scenario(
         "X2",
-        "Can SY201 on 5 November move to gate 22?",
+        "Can SY201 on 5 November move to gate G2?",
         ("delay", "lookup", "change"),
         ("gate_change",),
         ("GL701",),

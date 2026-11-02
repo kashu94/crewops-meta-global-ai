@@ -1,12 +1,12 @@
 [
  {
   "station": "BLR",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "BLR",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -16,17 +16,17 @@
  },
  {
   "station": "BLR",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "BOM",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "BOM",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -36,17 +36,17 @@
  },
  {
   "station": "BOM",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "DEL",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "DEL",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -56,17 +56,17 @@
  },
  {
   "station": "DEL",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "GOI",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "GOI",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -76,32 +76,32 @@
  },
  {
   "station": "GOI",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "HYD",
-  "gate": "21",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "HYD",
-  "gate": "22",
+  "gate": "G2",
   "kind": "contact"
  },
  {
   "station": "HYD",
-  "gate": "23",
+  "gate": "G3",
   "kind": "contact"
  },
  {
   "station": "HYD",
-  "gate": "24",
+  "gate": "G4",
   "kind": "contact"
  },
  {
   "station": "HYD",
-  "gate": "25",
+  "gate": "G5",
   "kind": "contact"
  },
  {
@@ -116,17 +116,17 @@
  },
  {
   "station": "HYD",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "MAA",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "MAA",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -136,17 +136,17 @@
  },
  {
   "station": "MAA",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "RJA",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "RJA",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -156,17 +156,17 @@
  },
  {
   "station": "RJA",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "TIR",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "TIR",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -176,17 +176,17 @@
  },
  {
   "station": "TIR",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "VGA",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "VGA",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -196,17 +196,17 @@
  },
  {
   "station": "VGA",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  },
  {
   "station": "VTZ",
-  "gate": "1",
+  "gate": "G1",
   "kind": "contact"
  },
  {
   "station": "VTZ",
-  "gate": "2",
+  "gate": "G2",
   "kind": "contact"
  },
  {
@@ -216,7 +216,7 @@
  },
  {
   "station": "VTZ",
-  "gate": "E1",
+  "gate": "E_G1",
   "kind": "emergency"
  }
 ]
