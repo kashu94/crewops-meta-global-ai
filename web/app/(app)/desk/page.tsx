@@ -4,12 +4,14 @@ import { ClipboardList, Eye, ListChecks, Radio, TriangleAlert, Users } from "luc
 import { useState } from "react";
 
 import { DeskSolution } from "@/components/desk-solution";
+import { Handover } from "@/components/handover";
 import { useSession } from "@/components/session";
 import { cx, Empty, Kpi, Kpis, Loading, Mono, Notice, PageHeader, Panel, Pill, SeverityBadge, StatusPill } from "@/components/ui";
 import { tool } from "@/lib/api";
 import { inr, short } from "@/lib/format";
 import { settle } from "@/lib/settle";
 import type { Callout, Issue, Report, ReportSummary } from "@/lib/types";
+import { BACKDROP } from "@/lib/art";
 import { useLoad } from "@/lib/use-load";
 
 const RUNNING = ["offered", "accepted", "needs_decision", "awaiting_approval"];
@@ -78,6 +80,7 @@ export default function DeskPage() {
         eyebrow={me.desk ? `${me.desk.name} · ${me.name || me.user}` : "Crew control"}
         title={me.role === "controller" ? "Your desk" : "The desks"}
         lede="New disruptions come to the desk with the fewest open. Pick one to work it: cover each seat by callout or plan, and an approver decides every change."
+        actions={<Handover />}
       />
       <Kpis>
         <Kpi icon={<ClipboardList size={13} />} label="Open on your desk" value={mine.length} tone={mine.length ? "pending" : undefined} />
@@ -88,7 +91,7 @@ export default function DeskPage() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-5">
-          <Panel flush title={me.desk ? `Disruptions on ${me.desk.name}` : "Active disruptions"} icon={<ClipboardList size={15} />}>
+          <Panel flush title={me.desk ? `Disruptions on ${me.desk.name}` : "Active disruptions"} icon={<ClipboardList size={15} />} backdrop={BACKDROP}>
             {mine.length === 0 ? <Empty>Nothing on this desk. New reports arrive here.</Empty> : <ul className="divide-y divide-rule">{mine.map((r) => <Row key={r.report_id} r={r} />)}</ul>}
           </Panel>
           {others.length > 0 && (

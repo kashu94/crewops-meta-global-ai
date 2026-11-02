@@ -28,9 +28,10 @@ November 4, 2026). This README grows with the code.
 | Planning each answer: which engine tools to call, then the reply | **Muse Spark 1.3** | Tool calling, reasoning effort set per kind of question, prompt caching of the rule book |
 | Sorting each question (absence, delay, cover, legality, change, lookup) and flagging attacks on the assistant | **Muse Spark Open** (open weights, on Baseten) | Strict JSON-schema structured output; 8 of 8 unseen phrasings routed right where keyword rules got 3 |
 | Reading photos: sick notes, roster swaps, certificates, departures boards, aircraft defects | **Muse Spark 1.3 vision** | Each photo fills a fixed form (structured output); code decides what happens |
-| Finding the damage in a defect photo | **SAM 3.1** | Streamed segmentation; its box and confidence are one of the signals behind the confidence level |
-| Spoken questions, including Hindi, Telugu and mixed speech | **Muse Voice Transcribe** | Push-to-talk WAV recorded in the browser, with a language hint |
-| The shift brief on the ops board | **Muse Wonder** | Structured output, then the same evidence check as every answer |
+| Finding the damage in a defect photo, and the flood, fog or closed gate in a photo of the conditions | **SAM 3.1** | Streamed segmentation; its box and confidence are one of the signals behind the confidence level |
+| Spoken questions, and crew saying they cannot fly, in English, Hindi, Telugu or mixed speech | **Muse Voice Transcribe** | Push-to-talk WAV recorded in the browser; the absence is then read into the report form by Muse Spark (structured output) for the crew member to check |
+| The shift brief on the ops board, the message to passengers on a delayed, held or re-gated flight (English, Hindi, Telugu), and the shift handover | **Muse Wonder** | Structured output, then the same evidence check as every answer; a text that fails it is replaced by a template built from the same facts |
+| The faint fog-at-dawn picture behind the report form and the disruption lists | **Muse Image** | Drawn once and kept as a static file (`web/public/art`), shown at 7% opacity, never behind body text at full strength |
 | Optional artwork for the brief (`CREWOPS_BOARD_ART`) | **Muse Image** | One picture per mood per day, no text in it |
 
 No model ever does the arithmetic: every crew id, hour, cost and verdict comes from the rules
@@ -476,9 +477,12 @@ clearance.
 
 36 scripted crew-desk questions run against the live models and scored by code: routing, the
 tools used, what the answer names, the evidence check, refusals and role limits. Each starts
-from a fresh copy of the demo operation. The last run: 36 of 36 passed; routing 33 of 33;
-every figure checked in 33 of 33 answers; 3 of 3 attacks refused; 13,706 tokens and 10.0 s per
-question on average. It covers several crew sick in one report, the risk score and desk load.
+from a fresh copy of the demo operation. The last run (2 November): 35 of 36 passed; routing
+33 of 33; every figure checked in 33 of 33 answers; 3 of 3 attacks refused; 12,984 tokens and
+12.2 s per question on average. The one miss, D3, asked about an aircraft not ready before 11
+and expected the delay tool; the assistant used the aircraft-out-of-service tool instead and
+gave the right new times, which the scorecard still counts as a miss. It covers several crew
+sick in one report, the risk score and desk load.
 See
 [docs/scorecard.md](docs/scorecard.md), or the Evaluation page in the console (median and p95
 seconds per answer, crew privacy); rerun it with `uv run python -m crewops.eval.scorecard`.

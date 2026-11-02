@@ -10,6 +10,7 @@ import type { Callout, Choice, CrewAnalysis, Plan, Report } from "@/lib/types";
 import { useAction } from "@/lib/use-load";
 
 import { Confirm } from "./modal";
+import { PassengerMessage } from "./passenger-message";
 import { RiskBadge } from "./ops";
 import { useSession } from "./session";
 import { Button, control, cx, Mono, Notice, SeverityBadge, StatusPill, TextArea } from "./ui";
@@ -431,6 +432,12 @@ export function DeskSolution({ report, header = true }: { report: Report; header
         </Notice>
       )}
       {report.status === "resolved" && crew && <Notice tone="pending">Waiting for an approver to sign off: {report.resolution_note}</Notice>}
+      {!crew && header && me.role !== "crew" && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-sunken px-3 py-2 text-xs text-muted">
+          <span className="flex-1">Passengers on these flights need to hear about it.</span>
+          <PassengerMessage reportId={report.report_id} />
+        </div>
+      )}
       {crew ? <Absence report={report} mine={mine} /> : <Operational report={report} mine={mine} />}
       {crew && mine && report.can?.close && (report.seats_open ?? 1) === 0 && <ResolveCrew report={report} />}
       {header && (

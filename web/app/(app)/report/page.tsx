@@ -25,6 +25,7 @@ import { message, tool } from "@/lib/api";
 import { addDays, workDay } from "@/lib/clock";
 import { short } from "@/lib/format";
 import type { Report } from "@/lib/types";
+import { BACKDROP } from "@/lib/art";
 import { useLoad } from "@/lib/use-load";
 
 type Catalog = {
@@ -205,7 +206,7 @@ export default function ReportPage() {
 
       {
         <div className="grid gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <Panel title={def.label} icon={<def.icon size={15} />}>
+          <Panel title={def.label} icon={<def.icon size={15} />} backdrop={BACKDROP}>
             <form key={kind} onSubmit={submit} className="flex flex-col gap-4">
               {crewKind && <CrewPicker value={crew} onChange={setCrew} label={kind === "crew_unavailable" ? "Who cannot fly" : "Crew"} />}
               {kind === "crew_unavailable" && (

@@ -11,6 +11,7 @@ import { Button, Loading, Notice, PageHeader, Panel, Segmented } from "@/compone
 import { tool } from "@/lib/api";
 import { settle } from "@/lib/settle";
 import type { DeskLoad, ReportStatus, ReportSummary } from "@/lib/types";
+import { BACKDROP } from "@/lib/art";
 import { useLoad } from "@/lib/use-load";
 
 type StatusFilter = "active" | ReportStatus | "all";
@@ -93,7 +94,7 @@ export default function DisruptionsPage() {
         </div>
       )}
       <div className={wide && data?.load ? "grid gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]" : ""}>
-        <Panel flush title={wide ? "Reports" : "Filed by you"} icon={<ListChecks size={15} />} className={loading && data ? "opacity-70" : ""}>
+        <Panel flush title={wide ? "Reports" : "Filed by you"} icon={<ListChecks size={15} />} className={loading && data ? "opacity-70" : ""} backdrop={BACKDROP}>
           {!data ? <Loading /> : <Part of={data.list}>{(v) => <ReportRows reports={v.disruptions ?? []} empty="Nothing here with these filters." />}</Part>}
         </Panel>
         {wide && data?.load && (

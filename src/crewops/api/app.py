@@ -40,6 +40,13 @@ from crewops.ops.alerts import AlertAddresses
 from crewops.ops.brief import BucketImages, Images, MemoryImages, draw_card, write_brief
 from crewops.ops.desks import DESKS, desk_of
 from crewops.ops.governance import entries
+from crewops.ops.messages import (
+    handover_facts,
+    passenger_facts,
+    read_absence,
+    write_handover,
+    write_passenger_message,
+)
 from crewops.ops.push import Push, PushingOutbox
 from crewops.ops.reports import ReportDesk, ReportStatus
 from crewops.ops.roster_upload import MAX_BYTES as ROSTER_LIMIT
@@ -100,6 +107,8 @@ class Services:
         self.media = MediaClient(config)
         self.reader = ModelReader(ModelClient(Endpoint.meta(config, config.vision_model)))
         self.writer = ModelClient(Endpoint.meta(config, config.wonder_model))
+        self.reasoner = ModelClient(Endpoint.meta(config))
+        """Muse Spark for short structured readings, such as an absence said aloud."""
         self.images: Images = MemoryImages()
         if config.bucket:
             import boto3
@@ -599,6 +608,69 @@ def create_app(config: Settings | None = None, services: Services | None = None)
         if data is None:
             raise HTTPException(404)
         return Response(data, media_type=doc.get("mime", "image/jpeg"))
+
+    # -- words for people outside the desk ----------------------------------------------
+
+    def _tool(s: Services, who: Caller, name: str, args: dict[str, Any]) -> dict[str, Any]:
+        out = s.toolbox.call(name, args, s.context(who))
+        if "error" in out:
+            raise HTTPException(403 if "cannot use" in out["error"] else 400, out["error"])
+        return out
+
+    @app.post("/api/reports/{report_id}/passenger-message")
+    def passenger_message(
+        report_id: str,
+        language: str = Body("English", embed=True),
+        who: Caller = Depends(caller),
+    ) -> dict[str, Any]:
+        """The SMS and app notice customer care sends about a report, drafted by Muse Wonder
+        and checked against the engine's facts. Nothing is sent; a person copies it."""
+        if who.role in (Role.CREW, Role.SPEAKER):
+            raise HTTPException(403, f"the {who.role} role cannot draft passenger messages")
+        s = svc()
+        report = _tool(s, who, "show_disruption", {"report_id": report_id})
+        try:
+            f = passenger_facts(s.store.operation(), report)
+            if not f["flights"]:
+                raise ValueError("this report changes no passenger's flight")
+        except (ValueError, KeyError) as err:
+            raise HTTPException(400, str(err)) from err
+        s.spend("message")
+        return {**write_passenger_message(f, s.writer, language), "facts": f}
+
+    @app.get("/api/handover")
+    def handover(who: Caller = Depends(caller)) -> dict[str, Any]:
+        """The shift handover: what each desk closed and still holds, and what the next shift
+        must do first, written by Muse Wonder from the reports, plans and callouts."""
+        if who.role not in (
+            Role.CONTROLLER,
+            Role.APPROVER,
+            Role.AUDITOR,
+            Role.ADMIN,
+            Role.SUPER_ADMIN,
+        ):
+            raise HTTPException(403, f"the {who.role} role cannot read the handover")
+        s = svc()
+        reports = _tool(s, who, "disruptions", {"status": "all", "limit": 100})["disruptions"]
+        plans = _tool(s, who, "plan_status", {}).get("plans", [])
+        callouts = _tool(s, who, "callout_status", {}).get("callouts", [])
+        f = handover_facts(reports, plans, callouts)
+        s.spend("handover")
+        return {**write_handover(f, s.writer), "facts": f}
+
+    @app.post("/api/absence/understand")
+    def understand_absence(
+        text: str = Body(..., embed=True, min_length=3, max_length=600),
+        who: Caller = Depends(caller),
+    ) -> dict[str, Any]:
+        """Turn "kal se do din bukhar hai" into the fields of a report the person confirms."""
+        s = svc()
+        s.spend("voice")
+        today = s.store.operation().now.astimezone(IST).date()
+        try:
+            return read_absence(text, today, s.reasoner)
+        except ModelError as err:
+            raise HTTPException(503, f"could not read that just now: {err}") from err
 
     @app.get("/api/log/{kind}")
     def activity_log(kind: str, limit: int = 50, who: Caller = Depends(caller)) -> dict:

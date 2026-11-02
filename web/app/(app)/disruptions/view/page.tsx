@@ -23,6 +23,7 @@ import { useState, type ReactNode } from "react";
 
 import { CalloutList, DelayView, EvidenceBadge, GateChangeView, GatePlanView, HoldView, PlanList, RiskBadge } from "@/components/ops";
 import { DeskSolution } from "@/components/desk-solution";
+import { PassengerMessage } from "@/components/passenger-message";
 import { EvidencePhoto } from "@/components/photo-intake";
 import { useSession } from "@/components/session";
 import { Button, cx, Dl, Empty, Kpi, Kpis, Loading, Mono, Notice, PageHeader, Panel, Pill, Select, SeverityBadge, StatusPill, Table, TextArea } from "@/components/ui";
@@ -339,6 +340,7 @@ export default function DisruptionView() {
           </span>
         }
         lede={r.summary}
+        actions={!["crew_unavailable", "planned_leave", "certification_lapse"].includes(r.kind) && me.role !== "crew" ? <PassengerMessage reportId={r.report_id} /> : undefined}
       />
       <div className="mb-5 flex flex-col gap-3">
         {r.desk && (

@@ -99,7 +99,7 @@ def aircraft_options(
         options.append(
             AircraftOption(
                 "swap",
-                f"Fly them on {other} ({kind}), free "
+                f"Fly {', '.join(flights)} on {other} ({kind}), free "
                 f"{window[0].astimezone(IST):%d %b %H:%M}-{window[1].astimezone(IST):%H:%M} IST",
                 0,
                 other,
@@ -111,7 +111,7 @@ def aircraft_options(
             options.append(
                 AircraftOption(
                     "spare",
-                    f"Bring out the spare {spare.tail} ({kind}) at {station}",
+                    f"Fly {', '.join(flights)} on the spare {spare.tail} ({kind}) at {station}",
                     SPARE_COST,
                     spare.tail,
                     "the spare kept at the hub; same crew, same times",
@@ -122,7 +122,8 @@ def aircraft_options(
         options.append(
             AircraftOption(
                 "hold",
-                f"Hold the flights until {tail} is back ({int(late.total_seconds() // 60)} min)",
+                f"Hold {tail}'s flights until it is back ({int(late.total_seconds() // 60)} min "
+                "late, and the later ones with it)",
                 hold_cost,
                 tail,
                 f"{crew_over} crew pushed over a limit need cover"
@@ -133,8 +134,8 @@ def aircraft_options(
     options.append(
         AircraftOption(
             "cancel",
-            f"Cancel {len(own)} flight{'s' if len(own) != 1 else ''}: {passengers} passengers "
-            "to rebook",
+            f"Cancel {', '.join(flights)}: {passengers} passengers to rebook; later flights "
+            "keep their times",
             op.rates.cancellation_per_leg * len(own),
             None,
             "last resort",

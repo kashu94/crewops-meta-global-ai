@@ -1,7 +1,7 @@
 "use client";
 
-import { BadgeCheck, CalendarDays, Check, Gauge, Inbox, ListChecks, Plane, Radio, Timer, UserX, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { BadgeCheck, CalendarDays, Check, Gauge, Inbox, ListChecks, Mic, Plane, Radio, Square, Timer, UserX, X } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
 
 import { Modal } from "@/components/modal";
 import { NoticeList, ReportRows, RiskDetail } from "@/components/ops";
@@ -12,6 +12,7 @@ import { api, message, missing, tool } from "@/lib/api";
 import { addDays, opDay, workDay } from "@/lib/clock";
 import { plural, short, words } from "@/lib/format";
 import { settle } from "@/lib/settle";
+import { ANY_LANGUAGE, Recorder, transcribe } from "@/lib/voice";
 import type { Callout, Notice as NoticeT, Profile, Report, ReportSummary, Trip } from "@/lib/types";
 import { useAction, useLoad } from "@/lib/use-load";
 
@@ -124,10 +125,61 @@ function OfferCard({ c, busy, answer }: { c: Callout; busy: boolean; answer: (ac
   );
 }
 
+type Heard = { heard: string; understood: boolean; first_day?: string; last_day?: string; reason_kind?: string; since?: string; note?: string };
+
+/** "I can't fly", said aloud in English, Hindi or Telugu: Muse Voice Transcribe hears it, Muse
+ * Spark reads it into the form, and the crew member checks it before anything is sent. */
+function SayIt({ onHeard }: { onHeard: (h: Heard) => void }) {
+  const recorder = useRef(new Recorder());
+  const [state, setState] = useState<"idle" | "listening" | "working">("idle");
+  const [note, setNote] = useState("");
+  async function toggle() {
+    if (state === "idle") {
+      try {
+        await recorder.current.start();
+        setState("listening");
+        setNote("Listening… say when you can't fly and why, then press Stop.");
+      } catch (err) {
+        setNote(`Microphone not available: ${message(err)}`);
+      }
+      return;
+    }
+    if (state !== "listening") return;
+    setState("working");
+    setNote("Hearing it…");
+    try {
+      const t = await transcribe(await recorder.current.stop(), ANY_LANGUAGE);
+      if (!t.text) {
+        setNote("Nothing was heard. Try again a little closer.");
+        return;
+      }
+      const h = await api<Heard>("/api/absence/understand", { method: "POST", json: { text: t.text } });
+      setNote(h.understood ? `Heard: “${h.heard}”. Check the form below and send it.` : `Heard: “${h.heard}”, but it does not say you can't fly. Fill the form instead.`);
+      if (h.understood) onHeard(h);
+    } catch (err) {
+      setNote(message(err));
+    } finally {
+      setState("idle");
+    }
+  }
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-control bg-sunken px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" size="sm" tone={state === "listening" ? "danger" : "secondary"} onClick={toggle} disabled={state === "working"}>
+          {state === "working" ? <Spinner /> : state === "listening" ? <Square size={13} /> : <Mic size={13} />} {state === "listening" ? "Stop" : "Say it"}
+        </Button>
+        <span className="text-xs text-muted">In English, Hindi or Telugu: “kal se do din bukhar hai”.</span>
+      </div>
+      {note && <p className="text-xs text-foreground">{note}</p>}
+    </div>
+  );
+}
+
 function Unavailable({ crewId, today, onDone }: { crewId: string; today: string; onDone: (text: string) => void }) {
   const [kind, setKind] = useState("sick");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [heard, setHeard] = useState<Heard | null>(null);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.currentTarget)) as Record<string, string>;
@@ -156,10 +208,16 @@ function Unavailable({ crewId, today, onDone }: { crewId: string; today: string;
     }
   }
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
+    <form key={heard?.heard ?? "typed"} onSubmit={submit} className="flex flex-col gap-4">
+      <SayIt
+        onHeard={(h) => {
+          setHeard(h);
+          if (h.reason_kind) setKind(h.reason_kind);
+        }}
+      />
       <div className="grid grid-cols-2 gap-3">
-        <Input label="From" type="date" name="first_day" defaultValue={today} required />
-        <Input label="Until" type="date" name="last_day" defaultValue={addDays(today, 1)} required />
+        <Input label="From" type="date" name="first_day" defaultValue={heard?.first_day ?? today} required />
+        <Input label="Until" type="date" name="last_day" defaultValue={heard?.last_day ?? addDays(today, 1)} required />
       </div>
       <Chips
         label="Reason"
@@ -172,8 +230,8 @@ function Unavailable({ crewId, today, onDone }: { crewId: string; today: string;
           { value: "other", label: "Other" },
         ]}
       />
-      <Input label="Taken ill at (optional, India time)" type="time" name="since" />
-      <Input label="Anything crew control should know" name="note" defaultValue="unwell" maxLength={200} />
+      <Input label="Taken ill at (optional, India time)" type="time" name="since" defaultValue={heard?.since} />
+      <Input label="Anything crew control should know" name="note" defaultValue={heard?.note ?? "unwell"} maxLength={200} />
       <p className="text-xs text-faint">Any callout offer to you for those dates moves to the next person at once.</p>
       {error && <Notice tone="error">{error}</Notice>}
       <div className="flex gap-2">

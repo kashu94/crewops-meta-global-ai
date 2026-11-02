@@ -52,6 +52,7 @@ export function Panel({
   className,
   flush,
   id,
+  backdrop,
 }: {
   title?: ReactNode;
   icon?: ReactNode;
@@ -60,11 +61,20 @@ export function Panel({
   className?: string;
   flush?: boolean;
   id?: string;
+  /** A picture behind the panel's content, very faint, for a little atmosphere. */
+  backdrop?: string;
 }) {
   return (
-    <section id={id} className={cx("flex min-w-0 flex-col rounded-lg border border-line bg-surface", className)}>
+    <section id={id} className={cx("relative flex min-w-0 flex-col rounded-lg border border-line bg-surface", backdrop && "overflow-hidden", className)}>
+      {backdrop && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.07] [mask-image:linear-gradient(160deg,transparent_15%,black_70%)]"
+          style={{ backgroundImage: `url(${backdrop})` }}
+        />
+      )}
       {title && (
-        <header className="flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-rule px-4 py-2.5 sm:px-5">
+        <header className="relative flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-rule px-4 py-2.5 sm:px-5">
           <h2 className="flex items-center gap-2 text-[15px] font-semibold text-foreground [&_svg]:text-accent">
             {icon}
             {title}
@@ -72,7 +82,7 @@ export function Panel({
           {action && <div className="text-[13px] text-muted">{action}</div>}
         </header>
       )}
-      <div className={cx("min-w-0 flex-1", flush ? "" : "p-4 sm:p-5")}>{children}</div>
+      <div className={cx("relative min-w-0 flex-1", flush ? "" : "p-4 sm:p-5")}>{children}</div>
     </section>
   );
 }

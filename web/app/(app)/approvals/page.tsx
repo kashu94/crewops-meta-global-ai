@@ -7,6 +7,7 @@ import { useState } from "react";
 import { CalloutList, PlanList } from "@/components/ops";
 import { Part } from "@/components/part";
 import { useSession } from "@/components/session";
+import { Handover } from "@/components/handover";
 import { Button, control, cx, Empty, Loading, Mono, Notice, PageHeader, Panel, SeverityBadge } from "@/components/ui";
 import { tool } from "@/lib/api";
 import { plural } from "@/lib/format";
@@ -79,6 +80,7 @@ export default function ApprovalsPage() {
       <PageHeader
         title="Approvals"
         lede="Every roster change needs two people: a controller submits it, an approver decides it. The rules are checked again at approval; a plan made against an older roster goes stale and changes nothing. A disruption is closed only when an approver confirms the desk's resolution."
+        actions={<Handover />}
       />
       {!approver && (
         <Notice className="mb-5" icon={<ShieldCheck size={15} />}>

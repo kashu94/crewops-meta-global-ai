@@ -405,3 +405,64 @@ def test_a_note_that_does_not_match_the_report_is_flagged(client, services):
         headers=STATION,
     ).json()
     assert other["error"].startswith(f"The photo names {crew_id}")
+
+
+def test_a_passenger_message_names_the_flights_and_new_times(client):
+    delay = {"kind": "flight_delay", "trip_id": "T-1018", "hours": 2}
+    report = client.post("/api/tools/report_disruption", json=delay, headers=STATION).json()
+    msg = client.post(
+        f"/api/reports/{report['report_id']}/passenger-message",
+        json={"language": "Hindi"},
+        headers=CONTROLLER,
+    ).json()
+    first = msg["facts"]["flights"][0]
+    assert first["flight"] in msg["sms"] and first["now"] in msg["sms"]
+    assert msg["written_by"] == "template" and msg["verified"] is True
+    assert len(msg["sms"]) <= 300
+    assert (
+        client.post(
+            f"/api/reports/{report['report_id']}/passenger-message", json={}, headers=ANJALI
+        ).status_code
+        == 403
+    )
+
+
+def test_the_handover_says_what_each_desk_still_holds(client):
+    client.post(
+        "/api/tools/report_disruption",
+        json={"kind": "flight_delay", "trip_id": "T-1018", "hours": 2},
+        headers=STATION,
+    )
+    note = client.get("/api/handover", headers=CONTROLLER).json()
+    assert note["headline"] == "1 disruption carried over"
+    assert any(line.startswith("Desk 1") for line in note["desks"])
+    assert client.get("/api/handover", headers=STATION).status_code == 403
+
+
+def test_an_absence_said_aloud_becomes_fields_to_confirm(client, services):
+    from crewops.ops.messages import AbsenceReading
+
+    class Reads:
+        def parse(self, *args, **kwargs):
+            return (
+                AbsenceReading(
+                    understood=True,
+                    first_day="2026-10-30",
+                    last_day="2026-10-31",
+                    reason_kind="sick",
+                    since="",
+                    note="fever since last night",
+                ),
+                None,
+            )
+
+    services.reasoner = Reads()
+    got = client.post(
+        "/api/absence/understand", json={"text": "kal se do din bukhar hai"}, headers=ANJALI
+    ).json()
+    assert (got["first_day"], got["last_day"], got["reason_kind"]) == (
+        "2026-10-30",
+        "2026-10-31",
+        "sick",
+    )
+    assert got["heard"] == "kal se do din bukhar hai" and "since" not in got

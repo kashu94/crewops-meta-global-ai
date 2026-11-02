@@ -375,9 +375,13 @@ def test_a_photo_of_the_conditions_backs_a_closure(op):
         }
         return SceneForm(**{**base, **changes})
 
-    flooded = read_photo(op, Kind.SCENE, SHARP, "image/jpeg", Reader(scene()))
+    unmarked = read_photo(op, Kind.SCENE, SHARP, "image/jpeg", Reader(scene()))
+    assert (unmarked.status, unmarked.confidence) == (Status.DRAFT, "medium")
+    sam = Locator(Box(100, 300, 800, 580, 900, 600, 0.82))
+    flooded = read_photo(op, Kind.SCENE, SHARP, "image/jpeg", Reader(scene()), sam)
     assert (flooded.status, flooded.confidence) == (Status.DRAFT, "high")
-    assert flooded.message.startswith("Shows flooding: apron under standing water.")
+    assert sam.phrases == ["flood water"] and flooded.box is not None
+    assert flooded.message.startswith("Shows flooding: apron under standing water. Marked")
     cat = read_photo(
         op, Kind.SCENE, SHARP, "image/jpeg", Reader(scene(shows_airport=False, subject="a cat"))
     )

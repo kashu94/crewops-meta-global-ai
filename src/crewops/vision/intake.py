@@ -390,7 +390,7 @@ def read_photo(
         case Kind.DISRUPTION:
             return _disruption(op, form, result)
         case Kind.SCENE:
-            return _scene(form, result)
+            return _scene(form, result, image, mime, locator)
         case _:
             return _defect(op, form, result, image, mime, locator, tail)
 
@@ -577,7 +577,29 @@ def _defect(
     return result
 
 
-def _scene(form: SceneForm, result: Intake) -> Intake:
+SCENE_PHRASES = {
+    "fog": "fog",
+    "heavy_rain": "standing water",
+    "flooding": "flood water",
+    "snow": "snow",
+    "storm": "storm clouds",
+    "closed_gate": "closed gate",
+    "barrier": "barrier",
+    "closed_terminal": "closed door",
+    "other": "obstruction",
+}
+"""What SAM is asked to outline for each condition."""
+MAX_SCENE_SHARE = 0.95
+"""Weather can fill most of a photo; only a box that is the whole frame says nothing."""
+
+
+def _scene(
+    form: SceneForm,
+    result: Intake,
+    image: bytes = b"",
+    mime: str = "image/jpeg",
+    locator: Locator | None = None,
+) -> Intake:
     if not form.shows_airport:
         result.status = Status.REJECTED
         result.message = (
@@ -597,10 +619,28 @@ def _scene(form: SceneForm, result: Intake) -> Intake:
             "the desk will confirm the closure another way."
         )
         return result
-    result.confidence = "high" if form.view == "clear" else "medium"
+    box = None
+    if locator is not None and image:
+        boxes = locator.segment(image, mime, SCENE_PHRASES[form.condition])
+        usable = [
+            b for b in boxes if b.confidence >= MIN_SAM_CONFIDENCE and b.share <= MAX_SCENE_SHARE
+        ]
+        box = max(usable, key=lambda b: b.confidence, default=None)
+    result.box = box
+    result.signals["located"] = box is not None
+    if box is not None:
+        result.signals["located_confidence"] = round(box.confidence, 2)
+        result.signals["label"] = SCENE_PHRASES[form.condition]
+    if form.view == "clear" and box is not None:
+        result.confidence = "high"
+    elif form.view == "clear" or box is not None:
+        result.confidence = "medium"
+    else:
+        result.confidence = "low"
     result.message = (
         f"Shows {SCENE_WORDS[form.condition]}: {form.detail.rstrip('.')}. "
-        f"Confidence {result.confidence}."
+        + ("Marked in the photo. " if box is not None else "")
+        + f"Confidence {result.confidence}."
     )
     return result
 

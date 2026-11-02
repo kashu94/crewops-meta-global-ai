@@ -16,6 +16,7 @@ export type Intake = {
   evidence_id?: string;
   suggestion?: { severity: "low" | "medium" | "high"; description: string } | null;
   crew?: { crew_id: string; name: string }[];
+  signals?: { label?: string };
 };
 
 /** Where the photo stands, for the form around it: nothing chosen, being checked, kept, or
@@ -36,7 +37,7 @@ export const PHOTO: Record<string, { kind: string; label: string; hint: string; 
 const TONE = { rejected: "critical", reshoot: "pending", confirm: "pending", draft: "ok" } as const;
 const WORD = { rejected: "Not accepted", reshoot: "Take it again", confirm: "Check this", draft: "Checked" } as const;
 
-function Marked({ file, box }: { file: File; box?: Box | null }) {
+function Marked({ file, box, label = "damage" }: { file: File; box?: Box | null; label?: string }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const c = canvas.current;
@@ -57,7 +58,7 @@ function Marked({ file, box }: { file: File; box?: Box | null }) {
         g.strokeRect(box.x1 * sx, box.y1 * sy, (box.x2 - box.x1) * sx, (box.y2 - box.y1) * sy);
         g.font = `${Math.max(18, c.width / 45)}px system-ui`;
         g.fillStyle = "#ff3b30";
-        g.fillText(`damage ${Math.round(box.confidence * 100)}%`, box.x1 * sx, Math.max(24, box.y1 * sy - 10));
+        g.fillText(`${label} ${Math.round(box.confidence * 100)}%`, box.x1 * sx, Math.max(24, box.y1 * sy - 10));
       }
     };
     img.src = url;
@@ -152,7 +153,7 @@ export function EvidenceField({
         </label>
       ) : (
         <div className="grid gap-3 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[auto_1fr]">
-          <Marked file={file} box={result?.box} />
+          <Marked file={file} box={result?.box} label={result?.signals?.label} />
           <div className="flex min-w-0 flex-col gap-2">
             {busy && (
               <p className="flex items-center gap-2 text-sm text-muted">
