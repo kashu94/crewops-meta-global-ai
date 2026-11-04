@@ -305,21 +305,44 @@ function Operational({ report, mine }: { report: Report; mine: boolean }) {
   const [gates, setGates] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const working = ["open", "in_progress"].includes(report.status);
-  const resolve = (text: string, title: string) =>
+  const resolve = (text: string, title: string, choice: Record<string, unknown> = {}, changes: string[] = []) =>
     setAsk({
       title,
       body: (
         <>
           <p>{text}</p>
-          <p className="mt-2 text-muted">It goes to an approver, who confirms it and closes the report, or sends it back.</p>
+          {changes.length > 0 && (
+            <>
+              <p className="mt-2 font-medium">When an approver approves it:</p>
+              <ul className="mt-1 list-disc pl-5">
+                {changes.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          <p className="mt-2 text-muted">
+            It goes to an approver, who confirms it and closes the report, or sends it back.{changes.length > 0 && " Nothing changes on the flights until then."}
+          </p>
         </>
       ),
       action: "Send to an approver",
-      run: () => run("resolve", () => tool("close_disruption", { report_id: report.report_id, note: text }), () => "Sent to an approver for sign-off."),
+      run: () => run("resolve", () => tool("close_disruption", { report_id: report.report_id, note: text, ...choice }), () => "Sent to an approver for sign-off."),
     });
+  const aircraftChanges = (o: AircraftOption) =>
+    o.way === "swap" || o.way === "spare"
+      ? (a.flights_taken ?? []).map((f) => `${f} flies on ${o.tail}`)
+      : o.way === "cancel"
+        ? (a.flights_taken ?? []).map((f) => `${f} cancelled`)
+        : [];
 
   if (report.status === "resolved")
-    return <Notice tone="pending">Waiting for an approver to sign off: {report.resolution_note}</Notice>;
+    return (
+      <Notice tone="pending">
+        Waiting for an approver to sign off: {report.resolution_note}
+        {(report.changes ?? []).length > 0 && <span className="mt-1 block">On approval: {(report.changes ?? []).join("; ")}.</span>}
+      </Notice>
+    );
 
   return (
     <div className="flex flex-col gap-3">
@@ -340,7 +363,7 @@ function Operational({ report, mine }: { report: Report; mine: boolean }) {
                 </span>
                 <span className={cx("w-24 text-right font-mono font-semibold", o.way === "cancel" && "text-critical")}>{inr(o.cost_inr)}</span>
                 {mine && working && (
-                  <Button size="sm" tone={i === 0 ? "accent" : "secondary"} disabled={busy !== null} onClick={() => resolve(`Plan: ${o.summary}.`, "Submit this plan?")}>
+                  <Button size="sm" tone={i === 0 ? "accent" : "secondary"} disabled={busy !== null} onClick={() => resolve(`Plan: ${o.summary}.`, "Submit this plan?", { option: i }, aircraftChanges(o))}>
                     <Send size={12} /> Submit plan
                   </Button>
                 )}
@@ -381,7 +404,10 @@ function Operational({ report, mine }: { report: Report; mine: boolean }) {
             <Button
               className="self-start"
               disabled={busy !== null}
-              onClick={() => resolve(`Plan: ${(a.moves ?? []).map((m) => `${m.flight} boards at gate ${gates[m.leg_id] ?? m.to_gate}`).join("; ")}.`, "Submit these gates?")}
+              onClick={() => {
+                const moved = (a.moves ?? []).map((m) => `${m.flight} boards at gate ${gates[m.leg_id] ?? m.to_gate}`);
+                resolve(`Plan: ${moved.join("; ")}.`, "Submit these gates?", { gates: Object.fromEntries((a.moves ?? []).map((m) => [m.leg_id, gates[m.leg_id] ?? m.to_gate])) }, moved);
+              }}
             >
               <Send size={14} /> Submit the gates
             </Button>

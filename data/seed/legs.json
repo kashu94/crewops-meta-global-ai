@@ -11,7 +11,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 130,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-10-30",
@@ -25,7 +26,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 120,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-10-30",
@@ -39,7 +41,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 147,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-10-30",
@@ -53,7 +56,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 144,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-10-31",
@@ -67,7 +71,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 142,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-10-31",
@@ -81,7 +86,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 146,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-10-31",
@@ -95,7 +101,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 140,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-10-31",
@@ -109,7 +116,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 170,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-01",
@@ -123,7 +131,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 167,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-01",
@@ -137,7 +146,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 172,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-01",
@@ -151,7 +161,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 166,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-01",
@@ -165,7 +176,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 131,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-02",
@@ -179,7 +191,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 169,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-02",
@@ -193,7 +206,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 173,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-02",
@@ -207,7 +221,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 171,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-02",
@@ -221,7 +236,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 135,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-03",
@@ -235,7 +251,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 130,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-03",
@@ -249,7 +266,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 117,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-03",
@@ -263,7 +281,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 171,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-03",
@@ -277,7 +296,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 145,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-04",
@@ -291,7 +311,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 153,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-04",
@@ -305,7 +326,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 168,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-04",
@@ -319,7 +341,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 136,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-04",
@@ -333,7 +356,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 141,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-05",
@@ -347,7 +371,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 101,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-05",
@@ -361,7 +386,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 119,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-05",
@@ -375,7 +401,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 117,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-05",
@@ -389,7 +416,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 158,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-06",
@@ -403,7 +431,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 165,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-06",
@@ -417,7 +446,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 143,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-06",
@@ -431,7 +461,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 123,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-06",
@@ -445,7 +476,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 101,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-07",
@@ -459,7 +491,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 106,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-07",
@@ -473,7 +506,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 104,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-07",
@@ -487,7 +521,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 174,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-07",
@@ -501,7 +536,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 152,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-08",
@@ -515,7 +551,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 159,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-08",
@@ -529,7 +566,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 128,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-08",
@@ -543,7 +581,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 134,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-08",
@@ -557,7 +596,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 152,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-09",
@@ -571,7 +611,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 171,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-09",
@@ -585,7 +626,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 165,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-09",
@@ -599,7 +641,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 138,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-09",
@@ -613,7 +656,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 114,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-10",
@@ -627,7 +671,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 129,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-10",
@@ -641,7 +686,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 144,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-10",
@@ -655,7 +701,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 161,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-10",
@@ -669,7 +716,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 175,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-11",
@@ -683,7 +731,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 145,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-11",
@@ -697,7 +746,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 135,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-11",
@@ -711,7 +761,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 174,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-11",
@@ -725,7 +776,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 171,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY201-2026-11-12",
@@ -739,7 +791,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 169,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY202-2026-11-12",
@@ -753,7 +806,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 128,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY203-2026-11-12",
@@ -767,7 +821,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 145,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY204-2026-11-12",
@@ -781,7 +836,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 173,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY221-2026-10-30",
@@ -795,7 +851,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 116,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY222-2026-10-30",
@@ -809,7 +866,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 106,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY223-2026-10-30",
@@ -823,7 +881,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 106,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY224-2026-10-31",
@@ -837,7 +896,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 118,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY225-2026-10-31",
@@ -851,7 +911,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 106,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "SY226-2026-10-31",
@@ -865,7 +926,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 128,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY221-2026-11-01",
@@ -879,7 +941,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 123,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY222-2026-11-01",
@@ -893,7 +956,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 127,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY223-2026-11-01",
@@ -907,7 +971,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 155,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY224-2026-11-02",
@@ -921,7 +986,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 145,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY225-2026-11-02",
@@ -935,7 +1001,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 153,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "SY226-2026-11-02",
@@ -949,7 +1016,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 135,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY221-2026-11-03",
@@ -963,7 +1031,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 100,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY222-2026-11-03",
@@ -977,7 +1046,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 171,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY223-2026-11-03",
@@ -991,7 +1061,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 144,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY224-2026-11-04",
@@ -1005,7 +1076,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 166,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY225-2026-11-04",
@@ -1019,7 +1091,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 120,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "SY226-2026-11-04",
@@ -1033,7 +1106,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 159,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY221-2026-11-05",
@@ -1047,7 +1121,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 116,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY222-2026-11-05",
@@ -1061,7 +1136,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 169,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY223-2026-11-05",
@@ -1075,7 +1151,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 112,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY224-2026-11-06",
@@ -1089,7 +1166,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 108,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY225-2026-11-06",
@@ -1103,7 +1181,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 130,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "SY226-2026-11-06",
@@ -1117,7 +1196,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 113,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY221-2026-11-07",
@@ -1131,7 +1211,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 125,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY222-2026-11-07",
@@ -1145,7 +1226,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 107,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY223-2026-11-07",
@@ -1159,7 +1241,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 107,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY224-2026-11-08",
@@ -1173,7 +1256,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 122,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY225-2026-11-08",
@@ -1187,7 +1271,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 108,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "SY226-2026-11-08",
@@ -1201,7 +1286,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 103,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY221-2026-11-09",
@@ -1215,7 +1301,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 149,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY222-2026-11-09",
@@ -1229,7 +1316,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 120,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY223-2026-11-09",
@@ -1243,7 +1331,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 114,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY224-2026-11-10",
@@ -1257,7 +1346,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 99,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY225-2026-11-10",
@@ -1271,7 +1361,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 109,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "SY226-2026-11-10",
@@ -1285,7 +1376,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 162,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY221-2026-11-11",
@@ -1299,7 +1391,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 162,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY222-2026-11-11",
@@ -1313,7 +1406,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 127,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY223-2026-11-11",
@@ -1327,7 +1421,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 103,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY224-2026-11-12",
@@ -1341,7 +1436,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 101,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY225-2026-11-12",
@@ -1355,7 +1451,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 165,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "SY226-2026-11-12",
@@ -1369,7 +1466,8 @@
   "aircraft_type": "A320",
   "seats": 180,
   "booked": 127,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-10-30",
@@ -1383,7 +1481,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 60,
-  "gate": "G5"
+  "gate": "G5",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-10-30",
@@ -1397,7 +1496,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 56,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-10-30",
@@ -1411,7 +1511,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 46,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-10-30",
@@ -1425,7 +1526,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 53,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-10-31",
@@ -1439,7 +1541,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 47,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-10-31",
@@ -1453,7 +1556,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 40,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-10-31",
@@ -1467,7 +1571,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 41,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-10-31",
@@ -1481,7 +1586,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 43,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-01",
@@ -1495,7 +1601,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 48,
-  "gate": "G5"
+  "gate": "G5",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-01",
@@ -1509,7 +1616,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 68,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-01",
@@ -1523,7 +1631,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-01",
@@ -1537,7 +1646,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 52,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-02",
@@ -1551,7 +1661,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 53,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-02",
@@ -1565,7 +1676,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 63,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-02",
@@ -1579,7 +1691,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 61,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-02",
@@ -1593,7 +1706,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 40,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-03",
@@ -1607,7 +1721,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 45,
-  "gate": "G5"
+  "gate": "G5",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-03",
@@ -1621,7 +1736,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-03",
@@ -1635,7 +1751,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-03",
@@ -1649,7 +1766,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 51,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-04",
@@ -1663,7 +1781,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 49,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-04",
@@ -1677,7 +1796,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 54,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-04",
@@ -1691,7 +1811,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 65,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-04",
@@ -1705,7 +1826,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 48,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-05",
@@ -1719,7 +1841,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 58,
-  "gate": "G5"
+  "gate": "G5",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-05",
@@ -1733,7 +1856,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 63,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-05",
@@ -1747,7 +1871,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 43,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-05",
@@ -1761,7 +1886,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 65,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-06",
@@ -1775,7 +1901,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 60,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-06",
@@ -1789,7 +1916,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-06",
@@ -1803,7 +1931,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 61,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-06",
@@ -1817,7 +1946,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 63,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-07",
@@ -1831,7 +1961,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 68,
-  "gate": "G5"
+  "gate": "G5",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-07",
@@ -1845,7 +1976,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-07",
@@ -1859,7 +1991,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 53,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-07",
@@ -1873,7 +2006,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-08",
@@ -1887,7 +2021,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 51,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-08",
@@ -1901,7 +2036,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 62,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-08",
@@ -1915,7 +2051,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 49,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-08",
@@ -1929,7 +2066,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 51,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-09",
@@ -1943,7 +2081,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 66,
-  "gate": "G5"
+  "gate": "G5",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-09",
@@ -1957,7 +2096,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 49,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-09",
@@ -1971,7 +2111,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 54,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-09",
@@ -1985,7 +2126,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 43,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-10",
@@ -1999,7 +2141,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 53,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-10",
@@ -2013,7 +2156,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 66,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-10",
@@ -2027,7 +2171,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-10",
@@ -2041,7 +2186,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 66,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-11",
@@ -2055,7 +2201,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 59,
-  "gate": "G5"
+  "gate": "G5",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-11",
@@ -2069,7 +2216,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 55,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-11",
@@ -2083,7 +2231,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-11",
@@ -2097,7 +2246,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 67,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY241-2026-11-12",
@@ -2111,7 +2261,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 64,
-  "gate": "G4"
+  "gate": "G4",
+  "cancelled": false
  },
  {
   "leg_id": "SY242-2026-11-12",
@@ -2125,7 +2276,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 62,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY243-2026-11-12",
@@ -2139,7 +2291,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 66,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "SY244-2026-11-12",
@@ -2153,7 +2306,8 @@
   "aircraft_type": "ATR72",
   "seats": 72,
   "booked": 69,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-10-30",
@@ -2167,7 +2321,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 152,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-10-30",
@@ -2181,7 +2336,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 163,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-10-30",
@@ -2195,7 +2351,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 175,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-10-30",
@@ -2209,7 +2366,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 113,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-10-31",
@@ -2223,7 +2381,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 169,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-10-31",
@@ -2237,7 +2396,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 154,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-10-31",
@@ -2251,7 +2411,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 106,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-10-31",
@@ -2265,7 +2426,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 171,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-01",
@@ -2279,7 +2441,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 142,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-01",
@@ -2293,7 +2456,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 156,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-01",
@@ -2307,7 +2471,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 141,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-01",
@@ -2321,7 +2486,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 110,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-02",
@@ -2335,7 +2501,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 157,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-02",
@@ -2349,7 +2516,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 112,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-02",
@@ -2363,7 +2531,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 143,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-02",
@@ -2377,7 +2546,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 110,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-03",
@@ -2391,7 +2561,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 112,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-03",
@@ -2405,7 +2576,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 176,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-03",
@@ -2419,7 +2591,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 133,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-03",
@@ -2433,7 +2606,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 172,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-04",
@@ -2447,7 +2621,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 106,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-04",
@@ -2461,7 +2636,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 166,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-04",
@@ -2475,7 +2651,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 141,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-04",
@@ -2489,7 +2666,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 148,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-05",
@@ -2503,7 +2681,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 144,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-05",
@@ -2517,7 +2696,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 176,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-05",
@@ -2531,7 +2711,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 153,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-05",
@@ -2545,7 +2726,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 172,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-06",
@@ -2559,7 +2741,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 108,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-06",
@@ -2573,7 +2756,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 158,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-06",
@@ -2587,7 +2771,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 147,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-06",
@@ -2601,7 +2786,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 180,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-07",
@@ -2615,7 +2801,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 116,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-07",
@@ -2629,7 +2816,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 117,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-07",
@@ -2643,7 +2831,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 180,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-07",
@@ -2657,7 +2846,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 121,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-08",
@@ -2671,7 +2861,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 131,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-08",
@@ -2685,7 +2876,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 163,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-08",
@@ -2699,7 +2891,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 120,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-08",
@@ -2713,7 +2906,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 103,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-09",
@@ -2727,7 +2921,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 180,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-09",
@@ -2741,7 +2936,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 108,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-09",
@@ -2755,7 +2951,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 127,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-09",
@@ -2769,7 +2966,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 166,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-10",
@@ -2783,7 +2981,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 149,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-10",
@@ -2797,7 +2996,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 105,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-10",
@@ -2811,7 +3011,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 141,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-10",
@@ -2825,7 +3026,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 153,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-11",
@@ -2839,7 +3041,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 106,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-11",
@@ -2853,7 +3056,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 128,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-11",
@@ -2867,7 +3071,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 158,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-11",
@@ -2881,7 +3086,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 129,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF501-2026-11-12",
@@ -2895,7 +3101,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 176,
-  "gate": "G3"
+  "gate": "G3",
+  "cancelled": false
  },
  {
   "leg_id": "KF502-2026-11-12",
@@ -2909,7 +3116,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 130,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF503-2026-11-12",
@@ -2923,7 +3131,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 136,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF504-2026-11-12",
@@ -2937,7 +3146,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 154,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-10-30",
@@ -2951,7 +3161,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 151,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-10-30",
@@ -2965,7 +3176,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 166,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-10-31",
@@ -2979,7 +3191,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 170,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-10-31",
@@ -2993,7 +3206,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 175,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-01",
@@ -3007,7 +3221,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 107,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-01",
@@ -3021,7 +3236,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 107,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-02",
@@ -3035,7 +3251,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 126,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-02",
@@ -3049,7 +3266,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 156,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-03",
@@ -3063,7 +3281,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 124,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-03",
@@ -3077,7 +3296,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 150,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-04",
@@ -3091,7 +3311,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 120,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-04",
@@ -3105,7 +3326,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 133,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-05",
@@ -3119,7 +3341,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 180,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-05",
@@ -3133,7 +3356,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 135,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-06",
@@ -3147,7 +3371,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 163,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-06",
@@ -3161,7 +3386,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 158,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-07",
@@ -3175,7 +3401,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 147,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-07",
@@ -3189,7 +3416,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 176,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-08",
@@ -3203,7 +3431,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 174,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-08",
@@ -3217,7 +3446,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 168,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-09",
@@ -3231,7 +3461,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 137,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-09",
@@ -3245,7 +3476,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 134,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-10",
@@ -3259,7 +3491,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 133,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-10",
@@ -3273,7 +3506,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 140,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-11",
@@ -3287,7 +3521,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 104,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-11",
@@ -3301,7 +3536,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 137,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF521-2026-11-12",
@@ -3315,7 +3551,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 161,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "KF522-2026-11-12",
@@ -3329,7 +3566,8 @@
   "aircraft_type": "A320",
   "seats": 186,
   "booked": 141,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-10-30",
@@ -3343,7 +3581,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 61,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-10-30",
@@ -3357,7 +3596,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 54,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-10-30",
@@ -3371,7 +3611,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 54,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-10-30",
@@ -3385,7 +3626,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 56,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-10-31",
@@ -3399,7 +3641,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 42,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-10-31",
@@ -3413,7 +3656,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 51,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-10-31",
@@ -3427,7 +3671,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 55,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-10-31",
@@ -3441,7 +3686,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 64,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-01",
@@ -3455,7 +3701,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-01",
@@ -3469,7 +3716,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 62,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-01",
@@ -3483,7 +3731,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 68,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-01",
@@ -3497,7 +3746,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 58,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-02",
@@ -3511,7 +3761,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 65,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-02",
@@ -3525,7 +3776,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 40,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-02",
@@ -3539,7 +3791,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 66,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-02",
@@ -3553,7 +3806,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 48,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-03",
@@ -3567,7 +3821,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-03",
@@ -3581,7 +3836,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 43,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-03",
@@ -3595,7 +3851,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-03",
@@ -3609,7 +3866,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-04",
@@ -3623,7 +3881,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 46,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-04",
@@ -3637,7 +3896,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 64,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-04",
@@ -3651,7 +3911,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 43,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-04",
@@ -3665,7 +3926,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 39,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-05",
@@ -3679,7 +3941,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 65,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-05",
@@ -3693,7 +3956,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 39,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-05",
@@ -3707,7 +3971,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 50,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-05",
@@ -3721,7 +3986,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 47,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-06",
@@ -3735,7 +4001,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 63,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-06",
@@ -3749,7 +4016,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 62,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-06",
@@ -3763,7 +4031,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 66,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-06",
@@ -3777,7 +4046,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 66,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-07",
@@ -3791,7 +4061,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 60,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-07",
@@ -3805,7 +4076,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 40,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-07",
@@ -3819,7 +4091,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 55,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-07",
@@ -3833,7 +4106,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-08",
@@ -3847,7 +4121,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 50,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-08",
@@ -3861,7 +4136,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 40,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-08",
@@ -3875,7 +4151,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 65,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-08",
@@ -3889,7 +4166,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 55,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-09",
@@ -3903,7 +4181,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 46,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-09",
@@ -3917,7 +4196,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 64,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-09",
@@ -3931,7 +4211,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 65,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-09",
@@ -3945,7 +4226,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 41,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-10",
@@ -3959,7 +4241,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 57,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-10",
@@ -3973,7 +4256,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 67,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-10",
@@ -3987,7 +4271,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 61,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-10",
@@ -4001,7 +4286,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 58,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-11",
@@ -4015,7 +4301,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 66,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-11",
@@ -4029,7 +4316,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 42,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-11",
@@ -4043,7 +4331,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 52,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-11",
@@ -4057,7 +4346,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 55,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL701-2026-11-12",
@@ -4071,7 +4361,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 57,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL702-2026-11-12",
@@ -4085,7 +4376,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL703-2026-11-12",
@@ -4099,7 +4391,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 45,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL704-2026-11-12",
@@ -4113,7 +4406,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-10-30",
@@ -4127,7 +4421,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 55,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-10-30",
@@ -4141,7 +4436,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 43,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-10-30",
@@ -4155,7 +4451,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-10-30",
@@ -4169,7 +4466,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-10-31",
@@ -4183,7 +4481,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 67,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-10-31",
@@ -4197,7 +4496,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-10-31",
@@ -4211,7 +4511,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 47,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-10-31",
@@ -4225,7 +4526,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 45,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-01",
@@ -4239,7 +4541,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 53,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-01",
@@ -4253,7 +4556,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 43,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-01",
@@ -4267,7 +4571,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 66,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-01",
@@ -4281,7 +4586,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-02",
@@ -4295,7 +4601,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 61,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-02",
@@ -4309,7 +4616,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 47,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-02",
@@ -4323,7 +4631,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 45,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-02",
@@ -4337,7 +4646,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 58,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-03",
@@ -4351,7 +4661,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 57,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-03",
@@ -4365,7 +4676,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-03",
@@ -4379,7 +4691,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 52,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-03",
@@ -4393,7 +4706,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 42,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-04",
@@ -4407,7 +4721,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 60,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-04",
@@ -4421,7 +4736,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-04",
@@ -4435,7 +4751,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 61,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-04",
@@ -4449,7 +4766,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 60,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-05",
@@ -4463,7 +4781,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 64,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-05",
@@ -4477,7 +4796,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-05",
@@ -4491,7 +4811,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 64,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-05",
@@ -4505,7 +4826,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 52,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-06",
@@ -4519,7 +4841,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 40,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-06",
@@ -4533,7 +4856,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 54,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-06",
@@ -4547,7 +4871,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 60,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-06",
@@ -4561,7 +4886,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 65,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-07",
@@ -4575,7 +4901,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-07",
@@ -4589,7 +4916,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 63,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-07",
@@ -4603,7 +4931,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 48,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-07",
@@ -4617,7 +4946,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-08",
@@ -4631,7 +4961,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 58,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-08",
@@ -4645,7 +4976,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-08",
@@ -4659,7 +4991,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 41,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-08",
@@ -4673,7 +5006,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 39,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-09",
@@ -4687,7 +5021,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 66,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-09",
@@ -4701,7 +5036,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 41,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-09",
@@ -4715,7 +5051,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 50,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-09",
@@ -4729,7 +5066,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 65,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-10",
@@ -4743,7 +5081,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 58,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-10",
@@ -4757,7 +5096,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 42,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-10",
@@ -4771,7 +5111,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 60,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-10",
@@ -4785,7 +5126,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 53,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-11",
@@ -4799,7 +5141,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 59,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-11",
@@ -4813,7 +5156,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 44,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-11",
@@ -4827,7 +5171,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 62,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-11",
@@ -4841,7 +5186,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 39,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL721-2026-11-12",
@@ -4855,7 +5201,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 41,
-  "gate": "G2"
+  "gate": "G2",
+  "cancelled": false
  },
  {
   "leg_id": "GL722-2026-11-12",
@@ -4869,7 +5216,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 56,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL723-2026-11-12",
@@ -4883,7 +5231,8 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 52,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  },
  {
   "leg_id": "GL724-2026-11-12",
@@ -4897,6 +5246,7 @@
   "aircraft_type": "ATR72",
   "seats": 70,
   "booked": 45,
-  "gate": "G1"
+  "gate": "G1",
+  "cancelled": false
  }
 ]

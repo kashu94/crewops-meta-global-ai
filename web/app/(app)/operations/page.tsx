@@ -15,6 +15,7 @@ type Directory = { teams: { team: string; title: string; job: string; per_statio
 type Person = { crew_id: string; name: string; out: boolean };
 type Flight = {
   leg_id: string;
+  cancelled?: boolean;
   flight_no: string;
   trip_id: string;
   airline: string;
@@ -121,7 +122,7 @@ function WeekChart({ w, onPick }: { w: Week; onPick: (day: string) => void }) {
 function FlightRow({ f, day, colour, future }: { f: Flight; day: string; colour?: string; future: boolean }) {
   const worst = f.disruptions.some((d) => d.severity === "high") ? "high" : f.disruptions.length || f.cabin_out.length || [...f.captain, ...f.first_officer].some((p) => p.out) ? "some" : "";
   const load = f.seats ? f.booked / f.seats : 0;
-  const open = future && !f.departed;
+  const open = future && !f.departed && !f.cancelled;
   return (
     <li className={cx("grid gap-x-4 gap-y-2 border-l-[3px] px-4 py-3 sm:grid-cols-[4.5rem_minmax(0,1.1fr)_minmax(0,1.4fr)_auto] sm:px-5", worst === "high" ? "border-critical" : worst ? "border-pending" : "border-transparent")}>
       <div className="font-mono text-sm">
@@ -130,7 +131,8 @@ function FlightRow({ f, day, colour, future }: { f: Flight; day: string; colour?
       </div>
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-sm font-semibold">
-          <AirlineDot color={colour} /> {f.flight_no} <span className="font-normal text-muted">{f.from} → {f.to}</span>
+          <AirlineDot color={colour} /> <span className={cx(f.cancelled && "line-through")}>{f.flight_no}</span> <span className="font-normal text-muted">{f.from} → {f.to}</span>
+          {f.cancelled && <Pill tone="critical">Cancelled</Pill>}
         </p>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
           {open ? (

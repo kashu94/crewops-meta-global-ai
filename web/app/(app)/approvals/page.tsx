@@ -31,6 +31,17 @@ function Resolution({ r, canDecide }: { r: ReportSummary; canDecide: boolean }) 
       <p className="mt-0.5 text-xs text-muted">
         {r.desk ? `${r.desk.name} (${r.desk.controller})` : "No desk"} says it is resolved. Filed by {r.filed_by}, {r.filed_at}.
       </p>
+      {r.resolution_note && <p className="mt-1.5 text-sm">{r.resolution_note}</p>}
+      {(r.changes ?? []).length > 0 && (
+        <div className="mt-1.5 rounded-md border border-line bg-sunken px-3 py-2 text-[13px]">
+          <b className="block font-medium">Confirming changes these flights for everyone:</b>
+          <ul className="mt-0.5 list-disc pl-5 text-muted">
+            {(r.changes ?? []).map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {canDecide && (
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <Button size="sm" disabled={busy !== null} onClick={() => run("confirm", () => tool("confirm_resolution", { report_id: r.report_id }), () => `${r.report_id} closed.`)}>

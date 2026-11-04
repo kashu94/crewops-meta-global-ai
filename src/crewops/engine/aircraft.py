@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from crewops.domain import AircraftType
+from crewops.domain import AircraftType, Leg
 from crewops.engine.clock import IST
 from crewops.engine.operation import NotFound, Operation
 
@@ -48,17 +48,10 @@ class AircraftOption:
     note: str = ""
 
 
-def aircraft_options(
-    op: Operation,
-    tail: str,
-    start: datetime,
-    back: datetime,
-    hold_cost: int = 0,
-    crew_over: int = 0,
-) -> tuple[list[str], tuple[AircraftOption, ...]]:
-    """The flights the outage takes away on its first day, and the ways to fly them, best
-    first. A longer outage brings the same choice again each day; the next day's flights are
-    not folded into this one."""
+def taken_legs(op: Operation, tail: str, start: datetime, back: datetime) -> list[Leg]:
+    """The flights an outage takes away on its first day, and on to the aircraft's home
+    station (out and back), in order. A longer outage brings the same choice again each day;
+    the next day's flights are not folded into this one."""
     own = sorted(
         (
             leg
@@ -70,11 +63,9 @@ def aircraft_options(
     if not any(leg.tail == tail for leg in op.legs.values()):
         raise NotFound("aircraft", tail)
     if not own:
-        return [], ()
+        return []
     first_day = own[0].day
-    more_days = any(leg.day != first_day for leg in own)
     own = [leg for leg in own if leg.day == first_day]
-    kind = own[0].aircraft_type
     station = own[0].origin
     # Out and back: whoever takes these flights flies on until the aircraft is home again.
     later = sorted(
@@ -91,6 +82,31 @@ def aircraft_options(
         if own[-1].destination == station:
             break
         own.append(leg)
+    return own
+
+
+def aircraft_options(
+    op: Operation,
+    tail: str,
+    start: datetime,
+    back: datetime,
+    hold_cost: int = 0,
+    crew_over: int = 0,
+) -> tuple[list[str], tuple[AircraftOption, ...]]:
+    """The flights the outage takes away on its first day, and the ways to fly them, best
+    first. A longer outage brings the same choice again each day; the next day's flights are
+    not folded into this one."""
+    own = taken_legs(op, tail, start, back)
+    if not own:
+        return [], ()
+    first_day = own[0].day
+    more_days = any(
+        leg.tail == tail and leg.leg_id not in op.cancelled and leg.day != first_day
+        for leg in op.legs.values()
+        if start <= leg.off_block < back
+    )
+    kind = own[0].aircraft_type
+    station = own[0].origin
     window = (own[0].off_block - TURN, own[-1].on_block + TURN)
     flights = list(dict.fromkeys(leg.flight_no for leg in own))
     named = f"{', '.join(flights)} on {first_day:%d %b}"

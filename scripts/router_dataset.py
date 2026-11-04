@@ -4,8 +4,9 @@
 
 Writes, under ``data/eval``:
 
-* ``router_train.jsonl``: chat examples for supervised fine-tuning (system prompt, question,
-  the answer the router must give as JSON), for Muse Glimmer on Fireworks.
+* ``router_train.jsonl``: chat examples (system prompt, question, the answer the router must
+  give as JSON) that ``router_eval.py`` draws its worked examples from, in the format a
+  fine-tuning job takes.
 * ``router_test.jsonl``: held-out questions with their labels. Their phrasings never appear in
   the training file, so a score on them says how well the router generalises, not what it
   memorised.

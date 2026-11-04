@@ -49,10 +49,12 @@ from crewops.engine.cover import TripStarted, Way, find_cover
 from crewops.engine.impact import absence_gaps, joint_cover
 from crewops.engine.risk import crew_risk, risk_json
 from crewops.engine.severity import Level, for_trip
+from crewops.ops import flight_changes
 from crewops.ops.accounts import AccountError, check_may_manage, current_role
 from crewops.ops.alerts import AlertError
 from crewops.ops.callout import Status
 from crewops.ops.desks import DESKS
+from crewops.ops.flight_changes import FlightChange
 from crewops.ops.plans import PlanError, PlanStatus
 from crewops.ops.reports import (
     ABSENCES,
@@ -145,20 +147,6 @@ class FileReport(BaseModel):
         if len(set(self.crew_ids)) != len(self.crew_ids):
             raise ValueError("a crew member is listed twice")
         return self
-
-
-PHOTO_FOR: dict[Kind, str] = {
-    Kind.CREW_UNAVAILABLE: "sick_note",
-    Kind.CERTIFICATION_LAPSE: "certificate",
-    Kind.FLIGHT_DELAY: "disruption",
-    Kind.GATE_CHANGE: "disruption",
-    Kind.AIRCRAFT_TECHNICAL: "defect",
-    Kind.STATION_DISRUPTION: "scene",
-    Kind.GATE_CLOSURE: "scene",
-}
-"""The photo that backs up each kind of report: a sick note, the certificate, the departures
-board, the damage, the conditions. A photo never changes how severe a report is, which comes
-from what it does to the flights; it says how far the report has been checked."""
 
 
 def _evidence(ctx: Context, args: FileReport) -> list[dict[str, Any]]:
@@ -779,6 +767,8 @@ def _report_json(ctx: Context, report: Report) -> dict[str, Any]:
     out["plans_waiting"] = sum(p["status"] == "submitted" for p in plans)
     out["history"] = [{**h, "at": _when(datetime.fromisoformat(h["at"]))} for h in report.history]
     out["resolution_note"] = report.resolution_note
+    if report.changes:
+        out["changes"] = [FlightChange(**c).describe() for c in report.changes]
     out["can"] = _can(ctx, report, out.get("seats_open", 0))
     return out
 
@@ -822,6 +812,10 @@ def _listed(ctx: Context, report: Report) -> dict[str, Any]:
     out = summary(report)
     out["filed_at"] = _when(report.filed_at)
     out["plans_waiting"] = sum(p.status is PlanStatus.SUBMITTED for p in _report_plans(ctx, report))
+    if report.resolution_note:
+        out["resolution_note"] = report.resolution_note
+    if report.changes:
+        out["changes"] = [FlightChange(**c).describe() for c in report.changes]
     return out
 
 
@@ -911,28 +905,64 @@ def submit_report_plan(ctx: Context, args: SubmitReportPlan) -> dict[str, Any]:
     }
 
 
+class ReturnReport(BaseModel):
+    report_id: str = Field(pattern=r"^R-[0-9a-f]{6}$")
+    note: str = Field(min_length=3, max_length=500, description="What is still missing")
+
+
 class CloseReport(BaseModel):
     report_id: str = Field(pattern=r"^R-[0-9a-f]{6}$")
     note: str = Field(min_length=3, max_length=500, description="How it was resolved")
+    option: int | None = Field(
+        None, ge=0, le=9, description="For an aircraft fault: the chosen option, by its place"
+    )
+    gates: dict[str, str] = Field(
+        default_factory=dict, description="For a gate closure: leg id -> the gate it boards at"
+    )
 
 
 def close_disruption(ctx: Context, args: CloseReport) -> dict[str, Any]:
+    """Send a resolution to an approver. Any flight it changes (another aircraft, a gate, a
+    cancellation) changes only when the approver confirms it."""
+    desk = _reports(ctx)
     try:
-        report = _reports(ctx).close(args.report_id, ctx.caller.user, args.note)
-    except ReportError as err:
+        report = desk.check_mine(args.report_id, ctx.caller.user)
+        changes = (
+            flight_changes.for_resolution(
+                ctx.operation(),
+                str(report.kind),
+                report.details,
+                _ops_analysis(ctx, report.kind, report.details),
+                args.option,
+                args.gates,
+            )
+            if str(report.kind) in flight_changes.KINDS
+            else []
+        )
+        report = desk.close(
+            args.report_id, ctx.caller.user, args.note, flight_changes.as_dicts(changes)
+        )
+    except (ReportError, flight_changes.FlightChangeError) as err:
         raise _fail(err) from err
     return _report_json(ctx, report)
 
 
 def confirm_resolution(ctx: Context, args: ReportId) -> dict[str, Any]:
+    """Confirm a resolution and close the report; the flight changes it carries are made now."""
+    desk = _reports(ctx)
     try:
-        report = _reports(ctx).confirm(args.report_id, ctx.caller.user)
+        report = desk.confirm(args.report_id, ctx.caller.user)
     except ReportError as err:
         raise _fail(err) from err
-    return _report_json(ctx, report)
+    out = _report_json(ctx, report)
+    if report.changes:
+        out["flights_changed"] = flight_changes.apply(
+            ctx.store, report.changes, desk.outbox, ctx.caller.user, report.report_id, desk.clock
+        )
+    return out
 
 
-def return_resolution(ctx: Context, args: CloseReport) -> dict[str, Any]:
+def return_resolution(ctx: Context, args: ReturnReport) -> dict[str, Any]:
     try:
         report = _reports(ctx).give_back(args.report_id, ctx.caller.user, args.note)
     except ReportError as err:
@@ -1262,6 +1292,7 @@ def operations_week(ctx: Context, args: OperationsWeek) -> dict[str, Any]:
                 "gate": leg.gate,
                 "booked": leg.booked,
                 "seats": leg.seats,
+                "cancelled": leg.leg_id in op.cancelled,
                 "captain": [person(c, chosen) for c in seats.get(Rank.CAPTAIN, [])],
                 "first_officer": [person(c, chosen) for c in seats.get(Rank.FIRST_OFFICER, [])],
                 "cabin": len(cabin),
@@ -1314,7 +1345,11 @@ def catalog(ctx: Context, args: Catalog) -> dict[str, Any]:
     today = _ist_day(op.now)
     trip_of = {leg_id: t.trip_id for t in op.trips.values() for leg_id in t.leg_ids}
     legs = sorted(
-        (leg for leg in op.legs.values() if _ist_day(leg.off_block) >= today),
+        (
+            leg
+            for leg in op.legs.values()
+            if _ist_day(leg.off_block) >= today and leg.leg_id not in op.cancelled
+        ),
         key=lambda leg: leg.off_block,
     )
     trips = []
@@ -1701,7 +1736,9 @@ MORE_TOOLS = (
     ),
     Tool(
         "close_disruption",
-        "Mark a report resolved, saying how; an approver then confirms it or returns it.",
+        "Mark a report resolved, saying how; an approver then confirms it or returns it. For an "
+        "aircraft fault give the chosen option's place, for a gate closure the gate per flight: "
+        "the flights change only when the approver confirms.",
         CloseReport,
         close_disruption,
         frozenset({Role.CONTROLLER}),
@@ -1709,7 +1746,8 @@ MORE_TOOLS = (
     ),
     Tool(
         "confirm_resolution",
-        "Confirm a controller's resolution and close the report (approvers).",
+        "Confirm a controller's resolution and close the report, making any flight change it "
+        "carries (approvers).",
         ReportId,
         confirm_resolution,
         APPROVE_ROLES,
@@ -1718,7 +1756,7 @@ MORE_TOOLS = (
     Tool(
         "return_resolution",
         "Return a resolved report to its desk with what is still missing (approvers).",
-        CloseReport,
+        ReturnReport,
         return_resolution,
         APPROVE_ROLES,
         writes=True,

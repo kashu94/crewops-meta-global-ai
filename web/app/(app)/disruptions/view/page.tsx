@@ -362,6 +362,11 @@ export default function DisruptionView() {
         {r.resolution_note && (
           <Notice tone={r.status === "closed" ? "ok" : "pending"}>
             <b>Resolution:</b> {r.resolution_note}
+            {(r.changes ?? []).length > 0 && (
+              <span className="mt-1 block">
+                {r.status === "closed" ? "Flights changed" : "Flights change when approved"}: {(r.changes ?? []).join("; ")}.
+              </span>
+            )}
           </Notice>
         )}
         <Lifecycle status={r.status} />

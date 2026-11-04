@@ -99,6 +99,9 @@ class Report:
     plan_ids: list[str] = field(default_factory=list)
     callout_ids: list[str] = field(default_factory=list)
     resolution_note: str = ""
+    changes: list[dict[str, Any]] = field(default_factory=list)
+    """Flight changes the resolution makes (``crewops.ops.flight_changes``), made only when an
+    approver confirms it."""
     history: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -280,7 +283,9 @@ class ReportDesk:
         self._mine(report, by)
         return report
 
-    def close(self, report_id: str, by: str, note: str) -> Report:
+    def close(
+        self, report_id: str, by: str, note: str, changes: list[dict[str, Any]] | None = None
+    ) -> Report:
         if len(note.strip()) < 3:
             raise ReportError("say how it was resolved")
         with self._lock:
@@ -290,6 +295,7 @@ class ReportDesk:
                 raise ReportError(f"{report_id} already waits for an approver to confirm it")
             report.status = ReportStatus.RESOLVED
             report.resolution_note = note.strip()
+            report.changes = list(changes or [])
             self._note(report, "resolved", by, note.strip())
             self._save(report)
         self.outbox.send(
@@ -333,6 +339,7 @@ class ReportDesk:
         with self._lock:
             report = self._resolved(report_id)
             report.status = ReportStatus.IN_PROGRESS
+            report.changes = []
             self._note(report, "returned", by, note.strip())
             self._save(report)
         self.outbox.send(

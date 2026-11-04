@@ -159,10 +159,6 @@ class JointPlan:
     def crew_ids(self) -> tuple[str, ...]:
         return tuple(f.choice.crew_id for f in self.fills if f.choice.crew_id)
 
-    @property
-    def cancels(self) -> tuple[str, ...]:
-        return tuple(f.gap.trip_id for f in self.fills if f.choice.way is Way.CANCEL)
-
 
 def joint_cover(op: Operation, gaps: list[Gap]) -> JointPlan:
     """The cheapest way to fill every gap together, using nobody twice.

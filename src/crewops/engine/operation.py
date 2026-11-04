@@ -209,4 +209,5 @@ def build_operation(data: Dataset, now: datetime | None = None) -> Operation:
             for s in {g.station for g in data.gates}
         },
         right_seat_qualified=frozenset(c.crew_id for c in data.crew if c.right_seat_qualified),
+        cancelled=frozenset(leg.leg_id for leg in data.legs if leg.cancelled),
     )

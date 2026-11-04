@@ -319,12 +319,28 @@ export default function CrewPage() {
                   <ul className="divide-y divide-rule">
                     {trips.map((t) => (
                       <li key={t.trip_id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 sm:px-5">
-                        <Mono className="font-semibold">{t.trip_id}</Mono>
+                        <Mono className={cx("font-semibold", t.cancelled && "line-through")}>{t.trip_id}</Mono>
                         <span className="text-sm">{t.route}</span>
-                        <span className="text-xs text-muted">
-                          <Mono>{t.tail}</Mono> · release {short(t.release)}
-                        </span>
+                        {t.cancelled ? (
+                          <Pill tone="critical">Cancelled</Pill>
+                        ) : (
+                          <span className="text-xs text-muted">
+                            <Mono>{t.tail}</Mono> · release {short(t.release)}
+                          </span>
+                        )}
                         <span className="ml-auto font-mono text-xs text-faint">reports {short(t.report)}</span>
+                        {(t.flights ?? []).length > 0 && (
+                          <span className="flex w-full flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                            {(t.flights ?? []).map((f) => (
+                              <span key={f.leg_id} className={cx(f.cancelled && "text-critical-ink line-through")}>
+                                <Mono>{f.flight_no}</Mono> {f.from}→{f.to} {short(f.departs).slice(-5)}
+                                {f.tail !== t.tail && !f.cancelled && <> · <Mono>{f.tail}</Mono></>}
+                                {f.gate && !f.cancelled && <> · gate {f.gate}</>}
+                                {f.cancelled && " cancelled"}
+                              </span>
+                            ))}
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ul>

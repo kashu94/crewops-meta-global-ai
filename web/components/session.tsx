@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { api, apiUrl, hasSession, loadConfig, message, tool, toSignIn, type Config } from "@/lib/api";
-import { homeFor, isDeskRole, type Me } from "@/lib/roles";
+import { isDeskRole, type Me } from "@/lib/roles";
 import type { QueueItem, SpeakerFeed } from "@/lib/types";
 
 import { Button, cx, Spinner } from "./ui";
@@ -174,6 +174,3 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     </SessionContext>
   );
 }
-
-/** Home for the signed-in role. */
-export const useHome = () => homeFor(useSession().me.role);

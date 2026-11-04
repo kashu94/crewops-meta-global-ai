@@ -12,7 +12,6 @@ they live in the store, seeded with the demo accounts.
 
 from __future__ import annotations
 
-import re
 import secrets
 import string
 from dataclasses import asdict, dataclass
@@ -21,7 +20,6 @@ from typing import Any, Protocol
 
 from crewops.agent.tools import Role
 
-USERNAME = re.compile(r"^[a-z0-9][a-z0-9._-]{2,31}$")
 ADMIN_ROLES = frozenset({Role.ADMIN, Role.SUPER_ADMIN})
 
 

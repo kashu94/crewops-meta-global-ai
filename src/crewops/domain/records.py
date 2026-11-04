@@ -207,6 +207,8 @@ class Leg(Record):
     booked: int = Field(ge=0)
     gate: str | None = None
     """The departure gate or stand at ``origin``."""
+    cancelled: bool = False
+    """Cancelled by an approved plan: nobody flies or positions on it."""
 
     @model_validator(mode="after")
     def _consistent(self) -> Leg:

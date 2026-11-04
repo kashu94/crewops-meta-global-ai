@@ -29,7 +29,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Protocol
+from typing import Any, Protocol
 
 from pydantic import TypeAdapter
 
@@ -37,6 +37,7 @@ from crewops.domain import Rank, Seat, Trip
 from crewops.engine.clock import IST
 from crewops.engine.cover import Choice, TripStarted, arrangements, find_cover
 from crewops.engine.operation import NotFound, Operation
+from crewops.ops import flight_changes
 from crewops.ops.notify import DESK, Notice, Outbox
 from crewops.ops.plans import Plan, PlanDesk, PlanError, PlanStatus
 from crewops.store.roster import StaleTrip
@@ -135,6 +136,7 @@ class Roster(Protocol):
 class Docs(Protocol):
     def put_doc(self, kind: str, key: str, body: dict) -> None: ...
     def docs(self, kind: str) -> list[dict]: ...
+    def put_records(self, kind: str, records: Any) -> None: ...
 
 
 _callout = TypeAdapter(Callout)
@@ -631,6 +633,17 @@ class CalloutDesk:
             proposal.approved_at = self.clock()
             callout.status = Status.CLOSED
             callout.reason = f"{proposal.summary}: approved by {by}"
+            if proposal.way == "cancel":
+                # Approved, so the trip's flights not yet gone are cancelled now.
+                op = self.store.operation(self.operation_clock())
+                flight_changes.apply(
+                    self.store,
+                    flight_changes.cancel_trip(op, callout.trip_id),
+                    self.outbox,
+                    by,
+                    callout.callout_id,
+                    self.clock,
+                )
             self.outbox.send(
                 Notice(
                     to=DESK,

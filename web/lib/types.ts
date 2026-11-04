@@ -112,10 +112,14 @@ export type TripDetails = {
   crew: { crew_id: string; name: string; seat: string }[];
 };
 
+export type TripFlight = { leg_id: string; flight_no: string; from: string; to: string; departs: string; tail: string; gate?: string | null; cancelled?: boolean };
+
 export type Trip = {
   trip_id: string;
   airline: string;
   tail: string;
+  cancelled?: boolean;
+  flights?: TripFlight[];
   days: string[];
   report: string;
   release: string;
@@ -248,6 +252,9 @@ export type ReportSummary = {
   plans_waiting?: number;
   crew_ids?: string[];
   evidence?: { level: "high" | "medium" | "low" | "read" | "none"; label: string; photos?: number };
+  resolution_note?: string;
+  /** Flight changes the resolution makes when an approver confirms it. */
+  changes?: string[];
 };
 
 export type EvidenceItem = { evidence_id: string; kind: string; message: string; confidence?: string | null; at: string; check?: string };
@@ -292,6 +299,7 @@ export type Report = ReportSummary & {
   callouts: Callout[];
   history: { at: string; what: string; by: string; note?: string }[];
   resolution_note?: string | null;
+  changes?: string[];
   can: Partial<Record<"plan" | "close" | "confirm" | "return" | "revoke" | "reassign", boolean>>;
 };
 

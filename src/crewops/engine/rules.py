@@ -40,8 +40,6 @@ RATING = "FDTL-07"
 CERT = "FDTL-08"
 BASE = "FDTL-09"
 
-RULE_IDS = (FDP, NIGHT, DUTY, BLOCK, REST, WEEKLY, RATING, CERT, BASE)
-
 
 class Outcome(StrEnum):
     PASS = "PASS"

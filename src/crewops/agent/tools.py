@@ -310,10 +310,27 @@ def _callout(c: Callout) -> dict[str, Any]:
 
 def _trip_summary(op: Operation, trip: Trip) -> dict[str, Any]:
     days = op.days_of(trip.trip_id)
+    legs = [op.legs[leg_id] for leg_id in trip.leg_ids]
+    # The aircraft its flights fly on now: an approved swap or spare shows here.
+    tails = list(dict.fromkeys(leg.tail for leg in legs if leg.leg_id not in op.cancelled))
     return {
         "trip_id": trip.trip_id,
         "airline": trip.airline,
-        "tail": trip.tail,
+        "tail": ", ".join(tails) or trip.tail,
+        "cancelled": all(leg.leg_id in op.cancelled for leg in legs),
+        "flights": [
+            {
+                "leg_id": leg.leg_id,
+                "flight_no": leg.flight_no,
+                "from": leg.origin,
+                "to": leg.destination,
+                "departs": _when(leg.off_block),
+                "tail": leg.tail,
+                "gate": leg.gate,
+                **({"cancelled": True} if leg.leg_id in op.cancelled else {}),
+            }
+            for leg in legs
+        ],
         "days": [d.day.isoformat() for d in days],
         "report": _when(days[0].report),
         "release": _when(days[-1].release),

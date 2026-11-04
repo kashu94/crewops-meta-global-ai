@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 
 import { tool } from "@/lib/api";
 import { hhmm, inr, plural, short, words } from "@/lib/format";
-import type { Callout, DelayResult, DeskLoad, GateChangeResult, GatePlan, HoldResult, Issue, Notice as NoticeT, Plan, ReportSummary, Risk } from "@/lib/types";
+import type { Callout, DelayResult, DeskLoad, GateChangeResult, GatePlan, HoldResult, Notice as NoticeT, Plan, ReportSummary, Risk } from "@/lib/types";
 import { useAction } from "@/lib/use-load";
 
 import { useSession } from "./session";
@@ -250,58 +250,6 @@ export function PlanList({ plans, empty = "No plans." }: { plans: Plan[]; empty?
 }
 
 // -- the watch's issues ----------------------------------------------------------------------
-
-export function IssueList({ issues, running, limit = 14 }: { issues: Issue[]; running: Set<string>; limit?: number }) {
-  const { can } = useSession();
-  const { busy, run } = useAction();
-  if (!issues.length) return <Empty>The watch found nothing in the next 7 days.</Empty>;
-  return (
-    <ul className="divide-y divide-rule">
-      {issues.slice(0, limit).map((i) => {
-        const key = `${i.trip_id}|${i.crew_id}`;
-        return (
-          <li key={i.issue_id} className="px-4 py-3 sm:px-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <SeverityBadge severity={{ level: i.severity, reasons: i.severity_reasons }} />
-              <Pill tone={i.kind === "illegal" ? "critical" : i.kind === "fatigue" ? "pending" : "neutral"}>{i.kind}</Pill>
-              <b className="font-medium">{i.name}</b>
-              <Mono className="text-faint">{i.crew_id}</Mono>
-              {i.trip_id && <Mono className="text-muted">· {i.trip_id}</Mono>}
-              <span className="ml-auto font-mono text-xs text-faint">{short(i.day)}</span>
-            </div>
-            <p className="mt-1 text-sm">{i.detail}</p>
-            {i.severity_reasons.length > 0 && <p className="text-xs text-faint">{i.severity_reasons.join(" · ")}</p>}
-            {i.suggested_cover && (
-              <p className="mt-0.5 text-xs">
-                Cheapest legal cover: {i.suggested_cover}, <span className="font-mono">{inr(i.suggested_cost_inr)}</span>
-              </p>
-            )}
-            {i.kind === "illegal" && i.trip_id && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {running.has(key) ? (
-                  <Pill tone="accent">callout running</Pill>
-                ) : can("start_callout") ? (
-                  <Button
-                    size="sm"
-                    disabled={busy !== null}
-                    onClick={() => run(key, () => tool("start_callout", { trip_id: i.trip_id, replace_crew_id: i.crew_id }), () => `Callout started for ${i.trip_id}.`)}
-                  >
-                    Start callout
-                  </Button>
-                ) : null}
-                <Link href={`/cover/?trip=${i.trip_id}&crew=${i.crew_id}`}>
-                  <Button size="sm" tone="secondary">
-                    See every choice
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
 
 // -- messages --------------------------------------------------------------------------------
 

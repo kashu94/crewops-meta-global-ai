@@ -111,14 +111,17 @@ def test_cancelling_needs_two_different_controllers(desk, mem):
 
     desk.reject(callout.callout_id, by="rohit.malhotra")
     assert callout.status is Status.NEEDS_DECISION and callout.proposal is None
+    assert not mem.operation().cancelled, "a rejected proposal cancels nothing"
     desk.propose(callout.callout_id, "cancel", by="ananya.iyer")
     desk.approve(callout.callout_id, by="rohit.malhotra")
+    op = mem.operation()
+    assert set(op.trip(TRIP).leg_ids) == op.cancelled, "approved: the trip's flights are cancelled"
     assert callout.status is Status.CLOSED
     assert (callout.proposal.proposed_by, callout.proposal.approved_by) == (
         "ananya.iyer",
         "rohit.malhotra",
     )
-    assert mem.changes() == []  # the roster itself is never changed by a cancellation decision
+    assert mem.changes() == []  # the crew stay rostered; their flights are what is cancelled
 
 
 def test_an_unanswered_offer_moves_on_after_the_deadline(desk, clock):

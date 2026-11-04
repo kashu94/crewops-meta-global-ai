@@ -260,6 +260,14 @@ still at its gate, each displaced departure goes to the first free gate, then th
 gate, then a remote stand by bus, which adds 15 minutes, and that delay is judged against
 crew duty. A gate change is checked for a clash with whoever holds the gate.
 
+A plan that moves flights to another aircraft (a free one of the same type, or a spare), boards
+them at other gates, or cancels them changes nothing when it is submitted: the approver sees
+the exact changes, and they are made only when the approver approves (`crewops.ops.flight_changes`).
+From then on the flights show their new aircraft, gate or cancellation on the crew's own
+flights, the station's operation and the gates, every check skips a cancelled flight, and the
+crew on each changed flight are told. A cancellation approved after a callout found nobody
+cancels the trip's flights not yet gone. Crew changes work the same way, through approved plans.
+
 A station closure holds every departure and arrival inside the window, and an aircraft out of
 service holds its flights that day (`crewops.engine.disruption`). Both are judged like a
 reported delay, and only breaches the delay causes are counted against it: someone illegal

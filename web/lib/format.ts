@@ -26,13 +26,6 @@ export const words = (s: string | null | undefined) => String(s ?? "").replace(/
 
 export const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
-/** The day after an ISO date. */
-export function nextDay(iso: string): string {
-  const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
-
 /** Times as the speaker should say them. */
 export const speakable = (text: string) =>
   text
