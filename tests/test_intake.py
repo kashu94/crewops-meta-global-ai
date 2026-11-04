@@ -13,7 +13,14 @@ from crewops.models.media import Box, MediaClient, parse_boxes
 from crewops.seed import load_dataset
 from crewops.settings import ROOT, load_settings
 from crewops.vision import Kind, Status, measure, read_photo
-from crewops.vision.intake import CertificateForm, Damage, DefectForm, RosterSwap, SickNote
+from crewops.vision.intake import (
+    CertificateForm,
+    Damage,
+    DefectForm,
+    RosterSwap,
+    SceneForm,
+    SickNote,
+)
 
 
 @pytest.fixture(scope="module")
@@ -119,8 +126,41 @@ def test_a_box_covering_the_whole_photo_does_not_count_as_finding_the_damage(op)
 
 def test_no_visible_damage_is_never_a_clearance(op):
     result = read_photo(op, Kind.DEFECT, SHARP, "image/jpeg", Reader(defect(damage=[])), Locator())
-    assert (result.status, result.confidence) == (Status.DRAFT, "low")
+    assert (result.status, result.confidence) == (Status.REJECTED, "low"), "backs nothing up"
     assert "not a clearance" in result.message
+    tail = next(iter(op.legs.values())).tail
+    plate = read_photo(
+        op, Kind.DEFECT, SHARP, "image/jpeg", Reader(defect(damage=[], tail_number=tail))
+    )
+    assert (plate.status, plate.confidence) == (Status.DRAFT, "low"), "names the aircraft"
+    assert plate.signals["tail_seen"] == tail and "not a clearance" in plate.message
+
+
+def test_gate_photos_must_show_a_gate_problem_or_its_sign(op):
+    def gate(**changes):
+        base = {
+            "shows_airport": True,
+            "subject": "gate area",
+            "condition": "spillage",
+            "view": "clear",
+            "detail": "oil spilled across the boarding area",
+            "gate_sign": "Gate E-G1",
+        }
+        return SceneForm(**{**base, **changes})
+
+    spill = read_photo(op, Kind.GATE, SHARP, "image/jpeg", Reader(gate()))
+    assert spill.status is Status.DRAFT and spill.signals["gate_seen"] == "E_G1"
+    assert "a spillage" in spill.message and "Gate E_G1" in spill.message
+    fog = read_photo(op, Kind.GATE, SHARP, "image/jpeg", Reader(gate(condition="fog")))
+    assert fog.status is Status.REJECTED and "station disruption" in fog.message
+    sign = read_photo(op, Kind.GATE, SHARP, "image/jpeg", Reader(gate(condition="none")))
+    assert sign.status is Status.DRAFT and sign.signals["gate_seen"] == "E_G1"
+    empty = read_photo(
+        op, Kind.GATE, SHARP, "image/jpeg", Reader(gate(condition="none", gate_sign=""))
+    )
+    assert empty.status is Status.REJECTED
+    blurry = read_photo(op, Kind.GATE, SHARP, "image/jpeg", Reader(gate(view="unclear")))
+    assert blurry.status is Status.RESHOOT
 
 
 def test_wrong_subject_unclear_view_and_wrong_aircraft_are_caught(op):
@@ -363,7 +403,6 @@ def test_a_notice_that_is_not_one_or_shows_none_of_our_flights(op):
 
 
 def test_a_photo_of_the_conditions_backs_a_closure(op):
-    from crewops.vision.intake import SceneForm
 
     def scene(**changes):
         base = {

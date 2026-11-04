@@ -120,7 +120,7 @@ class FileReport(BaseModel):
     )
     evidence_ids: list[str] = Field(
         default_factory=list,
-        max_length=4,
+        max_length=5,
         description="Photos already checked and kept (POST /api/intake with keep), by id",
     )
 

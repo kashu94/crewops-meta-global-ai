@@ -44,6 +44,7 @@ from crewops.ops.messages import (
     handover_facts,
     passenger_facts,
     read_absence,
+    summarise_photos,
     write_handover,
     write_passenger_message,
 )
@@ -585,6 +586,9 @@ def create_app(config: Settings | None = None, services: Services | None = None)
                     "status": str(result.status),
                     "message": result.message,
                     "confidence": result.confidence,
+                    "description": (result.suggestion or {}).get("description", ""),
+                    "severity": (result.suggestion or {}).get("severity"),
+                    "seen": result.signals.get("tail_seen") or result.signals.get("gate_seen"),
                     "crew_ids": [c["crew_id"] for c in result.crew],
                     "days": [
                         (result.proposal or {}).get("arguments", {}).get(k)
@@ -596,6 +600,31 @@ def create_app(config: Settings | None = None, services: Services | None = None)
             )
             out["evidence_id"] = evidence_id
         return out
+
+    @app.post("/api/intake/summary")
+    def intake_summary(
+        evidence_ids: list[str] = Body(..., embed=True, max_length=5),
+        subject: str = Body("", embed=True, max_length=80),
+        who: Caller = Depends(caller),
+    ) -> dict[str, Any]:
+        """One description, and the highest severity, for a report from its checked photos."""
+        s = svc()
+        docs = []
+        for evidence_id in evidence_ids:
+            doc = s.store.get_doc("evidence", evidence_id) if evidence_id.isalnum() else None
+            if doc is None or doc["by"] != who.user:
+                raise HTTPException(404, f"no photo {evidence_id} of yours")
+            docs.append(doc)
+        if len(docs) > 1:
+            s.spend("photo summary")
+        rank = {"low": 1, "medium": 2, "high": 3}
+        severity = max((d.get("severity") or "low" for d in docs), key=rank.get, default=None)
+        return {
+            "description": summarise_photos(
+                subject, [d.get("description") or d["message"] for d in docs], s.writer
+            ),
+            "severity": severity,
+        }
 
     @app.get("/api/evidence/{evidence_id}")
     def evidence(evidence_id: str, who: Caller = Depends(caller)) -> Response:

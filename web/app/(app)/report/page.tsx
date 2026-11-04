@@ -14,12 +14,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Combo } from "@/components/combo";
 import { FromUntil } from "@/components/range";
 import { CrewPicker, type CrewPick } from "@/components/crew-picker";
-import { EvidenceField, PHOTO, type PhotoState } from "@/components/photo-intake";
+import { EvidenceField, EvidenceSet, PHOTO, type PhotoSetState, type PhotoState } from "@/components/photo-intake";
 import { useSession } from "@/components/session";
 import { Button, Chips, cx, Input, Notice, PageHeader, Panel, Select, Spinner, TextArea } from "@/components/ui";
 import { message, tool } from "@/lib/api";
@@ -94,10 +94,35 @@ export default function ReportPage() {
   const [photo, setPhoto] = useState<PhotoState>({ status: "none", evidenceId: null });
   const [severity, setSeverity] = useState("");
   const [description, setDescription] = useState("");
+  const [written, setWritten] = useState(false);
+  const typing = useRef<number | null>(null);
+  /** Type text into the description quickly, so it is plain that it was just written for
+   * them: under a second whatever its length. Typing in the box stops it. */
+  function writeOut(text: string) {
+    if (typing.current) cancelAnimationFrame(typing.current);
+    typing.current = null;
+    setWritten(Boolean(text));
+    if (!text) return setDescription("");
+    const start = performance.now();
+    const total = Math.min(900, 250 + text.length * 3);
+    const step = (now: number) => {
+      const shown = Math.ceil((text.length * Math.min(1, (now - start) / total)));
+      setDescription(text.slice(0, shown));
+      typing.current = shown < text.length ? requestAnimationFrame(step) : null;
+    };
+    typing.current = requestAnimationFrame(step);
+  }
+  useEffect(() => () => {
+    if (typing.current) cancelAnimationFrame(typing.current);
+  }, []);
   const evidence = photo.evidenceId;
   const named = photo.status === "kept" ? (photo.result?.crew ?? []) : [];
   const wrongPerson = named.length > 0 && crew.length > 0 && !named.some((n) => crew.some((c) => c.crew_id === n.crew_id));
-  const photoBlocks = photo.status === "checking" || photo.status === "refused" || wrongPerson || (PHOTO[kind]?.required === true && !evidence);
+  const many = (PHOTO[kind]?.max ?? 1) > 1;
+  const [photos, setPhotos] = useState<PhotoSetState>({ evidenceIds: [], problems: [], checking: false });
+  const photoBlocks = many
+    ? photos.checking || photos.problems.length > 0
+    : photo.status === "checking" || photo.status === "refused" || wrongPerson || (PHOTO[kind]?.required === true && !evidence);
 
   const [error, setError] = useState<string | null>(null);
   const today = workDay(me.clock);
@@ -134,8 +159,11 @@ export default function ReportPage() {
       args.leg_id = leg;
       args.gate = newGate;
     }
-    if (photo.status === "refused") return setError("The photo was not accepted. Add the right photo, or remove it.");
-    if (evidence) args.evidence_ids = [evidence];
+    if (many) {
+      if (photos.problems.length) return setError(photos.problems[0]);
+      if (photos.evidenceIds.length) args.evidence_ids = photos.evidenceIds;
+    } else if (photo.status === "refused") return setError("The photo was not accepted. Add the right photo, or remove it.");
+    else if (evidence) args.evidence_ids = [evidence];
     else if (PHOTO[kind]?.required) return setError("Add a photo of the fault: an aircraft fault is filed with one.");
     if (severity) args.severity = severity;
     if (description.trim()) args.note = description.trim();
@@ -184,8 +212,9 @@ export default function ReportPage() {
                   setKind(k.id);
                   setError(null);
                   setPhoto({ status: "none", evidenceId: null });
+                  setPhotos({ evidenceIds: [], problems: [], checking: false });
                   setSeverity("");
-                  setDescription("");
+                  writeOut("");
                 }}
                 className={cx(
                   "flex items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
@@ -362,7 +391,19 @@ export default function ReportPage() {
                   />
                 </div>
               )}
-              {PHOTO[kind] && (
+              {PHOTO[kind] && many && (
+                <EvidenceSet
+                  key={`photos-${kind}`}
+                  reportKind={kind}
+                  expected={kind === "aircraft_technical" ? (tail ? [tail] : []) : gates}
+                  onChange={setPhotos}
+                  onSummary={(sum) => {
+                    setSeverity(sum?.severity ?? "");
+                    writeOut(sum?.description ?? "");
+                  }}
+                />
+              )}
+              {PHOTO[kind] && !many && (
                 <EvidenceField
                   key={`photo-${kind}`}
                   reportKind={kind}
@@ -372,11 +413,11 @@ export default function ReportPage() {
                     const s = p.result?.suggestion;
                     if (p.status === "kept" && s) {
                       setSeverity(s.severity);
-                      setDescription(s.description ?? "");
+                      writeOut(s.description ?? "");
                     } else {
                       // No photo, or one not accepted: back to what the form starts with.
                       setSeverity("");
-                      setDescription("");
+                      writeOut("");
                     }
                   }}
                 />
@@ -394,14 +435,34 @@ export default function ReportPage() {
                   <option value="low">Low</option>
                 </Select>
                 <TextArea
-                  label="Description"
-                  rows={3}
+                  label={
+                    <span className="flex items-center gap-2">
+                      Description
+                      {written && <span className="text-xs font-normal text-accent">Written from the {many ? "photos" : "photo"}: check it</span>}
+                    </span>
+                  }
+                  rows={many ? 4 : 3}
                   maxLength={500}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What happened, in a sentence or two. Filled from the photo when you add one."
+                  onChange={(e) => {
+                    if (typing.current) cancelAnimationFrame(typing.current);
+                    typing.current = null;
+                    setWritten(false);
+                    setDescription(e.target.value);
+                  }}
+                  placeholder={many ? "What happened. Written from the photos, in three sentences at most, once they all pass." : "What happened, in a sentence or two. Filled from the photo when you add one."}
                 />
               </div>
+              {many && photos.problems.length > 0 && (
+                <Notice tone="pending">
+                  <b className="block">Not ready to file yet:</b>
+                  <ul className="mt-1 list-disc pl-5">
+                    {photos.problems.map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                </Notice>
+              )}
               {error && <Notice tone="error">{error}</Notice>}
               <div>
                 <Button type="submit" disabled={busy || !can("report_disruption") || photoBlocks}>

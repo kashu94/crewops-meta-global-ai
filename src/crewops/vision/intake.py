@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import base64
 import io
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
@@ -57,6 +58,8 @@ class Kind(StrEnum):
     DEFECT = "defect"
     DISRUPTION = "disruption"
     SCENE = "scene"
+    GATE = "gate"
+    """A gate closed or blocked: a barrier, tape, a spillage, a broken jet bridge."""
 
 
 class Status(StrEnum):
@@ -162,12 +165,15 @@ class SceneForm(Draft):
         "closed_gate",
         "barrier",
         "closed_terminal",
+        "spillage",
         "none",
         "other",
     ]
     view: Clarity
     detail: str
     """One short sentence on what is visible, such as "apron under standing water"."""
+    gate_sign: str = ""
+    """The gate name on a sign in the photo, such as G3 or E_G1, if readable; otherwise empty."""
 
 
 SCENE_WORDS = {
@@ -179,8 +185,14 @@ SCENE_WORDS = {
     "closed_gate": "a closed gate",
     "barrier": "a barrier across the way",
     "closed_terminal": "a closed terminal",
+    "spillage": "a spillage",
     "other": "a disruption",
 }
+
+GATE_CONDITIONS = frozenset(
+    {"closed_gate", "barrier", "closed_terminal", "spillage", "flooding", "other"}
+)
+"""What closes a gate. Fog, rain, snow or a storm hold the whole station, not one gate."""
 
 
 PROMPTS: dict[Kind, tuple[type[BaseModel], str]] = {
@@ -202,8 +214,10 @@ PROMPTS: dict[Kind, tuple[type[BaseModel], str]] = {
     Kind.DEFECT: (
         DefectForm,
         "This should be a photo of possible damage on an aircraft, inside or out. Describe only "
-        "what is visible. If you cannot see damage, leave damage empty: do not guess. Name the "
-        "tail registration only if it is readable in the photo.",
+        "what is visible. If you cannot see damage, leave damage empty: do not guess. "
+        "tail_number: copy any aircraft registration written in the photo exactly, such as "
+        "VT-KFB, whether painted on the fuselage or tail or on a placard; leave it empty only "
+        "when no registration can be read.",
     ),
     Kind.DISRUPTION: (
         DisruptionNotice,
@@ -218,6 +232,16 @@ PROMPTS: dict[Kind, tuple[type[BaseModel], str]] = {
         "A no-entry or closed sign, tape, a chain or a barrier across a gate counts as closed "
         "or blocked. view is about the photo, not the weather: a sharp photo of thick fog is "
         "clear. Describe only what is visible. If nothing is wrong in the photo, say none.",
+    ),
+    Kind.GATE: (
+        SceneForm,
+        "This should show a gate at an airport that is closed or cannot be used: a no-entry or "
+        "closed sign, tape, a chain or a barrier across it, a jet bridge out of use, or a "
+        "spillage (fuel, oil, water or anything else on the floor or apron). shows_airport is "
+        "true for any terminal, gate, jet bridge or apron. gate_sign: copy the gate name on a "
+        "sign exactly, such as G3 or E_G1, only if it is readable; otherwise leave it empty. "
+        "view is about the photo: is it sharp and well lit enough to see what is wrong. "
+        "Describe only what is visible. If nothing is wrong in the photo, say none.",
     ),
 }
 
@@ -389,8 +413,8 @@ def read_photo(
             return _certificate(op, form, result)
         case Kind.DISRUPTION:
             return _disruption(op, form, result)
-        case Kind.SCENE:
-            return _scene(form, result, image, mime, locator)
+        case Kind.SCENE | Kind.GATE:
+            return _scene(form, result, image, mime, locator, gate=kind is Kind.GATE)
         case _:
             return _defect(op, form, result, image, mime, locator, tail)
 
@@ -523,6 +547,7 @@ def _defect(
 
     seen = form.tail_number.strip().upper()
     fleet = _fleet(op)
+    result.signals = {"tail_seen": seen or None}
     tail_ok: bool | None = None
     if seen:
         tail_ok = seen == (tail or "").upper()
@@ -544,6 +569,7 @@ def _defect(
     result.box = box
 
     result.signals = {
+        **result.signals,
         "picture_quality": "good",
         "model_view": form.view,
         "damage_described": bool(form.damage),
@@ -553,8 +579,16 @@ def _defect(
     }
     if not form.damage:
         result.confidence = "low"
+        if not seen:
+            result.status = Status.REJECTED
+            result.message = (
+                "Neither damage nor the aircraft's registration can be seen in this photo, so it "
+                "does not back up a fault report. That is not a clearance: inspect in person."
+            )
+            return result
         result.message = (
-            "No damage identified in this photo. That is not a clearance: inspect in person."
+            f"Shows the registration {seen}; no damage in this photo. That is not a clearance: "
+            "inspect in person."
         )
         return result
     if form.view == "clear" and box is not None and tail_ok is not False:
@@ -586,6 +620,7 @@ SCENE_PHRASES = {
     "closed_gate": "closed gate",
     "barrier": "barrier",
     "closed_terminal": "closed door",
+    "spillage": "spill on the floor",
     "other": "obstruction",
 }
 """What SAM is asked to outline for each condition."""
@@ -599,6 +634,7 @@ def _scene(
     image: bytes = b"",
     mime: str = "image/jpeg",
     locator: Locator | None = None,
+    gate: bool = False,
 ) -> Intake:
     if not form.shows_airport:
         result.status = Status.REJECTED
@@ -611,7 +647,28 @@ def _scene(
         result.status = Status.RESHOOT
         result.message = "The photo does not show the conditions clearly. Please take another."
         return result
+    sign = gate_name(form.gate_sign) if gate else ""
     result.signals = {"picture_quality": "good", "model_view": form.view}
+    if gate:
+        result.signals["gate_seen"] = sign or None
+        if form.condition not in GATE_CONDITIONS and form.condition != "none":
+            result.status = Status.REJECTED
+            result.message = (
+                f"This shows {SCENE_WORDS[form.condition]}, which holds the whole station, not "
+                "one gate. Report it as a station disruption, or add a photo of the gate."
+            )
+            return result
+        if form.condition == "none":
+            result.confidence = "low"
+            if not sign:
+                result.status = Status.REJECTED
+                result.message = (
+                    "Nothing wrong with a gate and no gate sign can be seen in this photo, so it "
+                    "does not back up a gate closure."
+                )
+            else:
+                result.message = f"Shows the sign for gate {sign}; nothing visibly wrong in it."
+            return result
     if form.condition == "none":
         result.confidence = "low"
         result.message = (
@@ -639,10 +696,19 @@ def _scene(
         result.confidence = "low"
     result.message = (
         f"Shows {SCENE_WORDS[form.condition]}: {form.detail.rstrip('.')}. "
+        + (f"Gate {sign} on the sign. " if sign else "")
         + ("Marked in the photo. " if box is not None else "")
         + f"Confidence {result.confidence}."
     )
     return result
+
+
+def gate_name(text: str) -> str:
+    """A gate as written on a sign, in the form the operation uses: "Gate g-3" -> "G3",
+    "E-G1" or "E G1" -> "E_G1"."""
+    t = re.sub(r"^GATE\s*", "", text.strip().upper())
+    t = re.sub(r"[^A-Z0-9]+", "_", t).strip("_")
+    return re.sub(r"(?<=[A-Z])_(?=\d)", "", t)
 
 
 def _next_leg(op: Operation, flight_no: str):

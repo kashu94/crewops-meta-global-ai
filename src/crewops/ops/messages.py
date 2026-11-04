@@ -323,3 +323,72 @@ def read_absence(text: str, today: date, reader: ModelClient) -> dict[str, Any]:
         "reason_kind": form.reason_kind,
         **({"since": since} if since else {}),
     }
+
+
+# -- several photos, one description ------------------------------------------------------------
+
+
+class PhotoSummary(BaseModel):
+    description: str
+    """At most three short sentences."""
+
+
+def _sentences(text: str) -> list[str]:
+    return [p.strip(" .") + "." for p in text.replace("\n", " ").split(". ") if p.strip(" .")]
+
+
+def _fit(text: str, limit: int = 500) -> str:
+    """Whole sentences up to the description box's limit, never one cut off part way."""
+    out = ""
+    for sentence in _sentences(text):
+        if len(out) + len(sentence) + 1 > limit:
+            break
+        out = f"{out} {sentence}".strip()
+    return out or text[:limit]
+
+
+def summarise_photos(subject: str, photos: list[str], writer: ModelClient | None) -> str:
+    """One description for a report from what each of its photos shows, in at most three
+    sentences. The model writes only from the photos' own descriptions, and the evidence check
+    makes sure every registration, gate and figure in it came from them."""
+    seen = [p.strip() for p in photos if p.strip()]
+    if not seen:
+        return ""
+    if len(seen) == 1:
+        return _fit(" ".join(_sentences(seen[0])[:3]))
+    facts = {"report_about": subject, "photos": seen}
+    if writer is not None:
+        try:
+            text, _ = writer.parse(
+                [
+                    {
+                        "role": "system",
+                        "content": "A station duty manager is filing one disruption report with "
+                        "several photos. Write its description: at most three short, plain "
+                        "sentences and 60 words in all, that together say what is wrong, "
+                        "without repeating yourself or describing the background. Use only "
+                        "what the photo descriptions say; copy registrations "
+                        "and gate names exactly; never guess a cause or a time.",
+                    },
+                    {"role": "user", "content": str(facts)},
+                ],
+                PhotoSummary,
+                purpose="photo summary",
+                effort="low",
+                max_tokens=1500,
+            )
+            said = text.description.strip()
+            if (
+                said
+                and len(_sentences(said)) <= 3
+                and not EvidenceVerifier().problems(said, "", [Step("facts", {}, facts)])
+            ):
+                return _fit(said)
+        except ModelError:
+            pass
+    out: list[str] = []
+    for p in seen:
+        first = _sentences(p)[:1]
+        if first and first[0] not in out:
+            out.append(first[0])
+    return _fit(" ".join(out[:3]))

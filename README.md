@@ -459,8 +459,9 @@ and how far it was checked:
 | Crew can't fly | Sick note or medical report | optional; checked against the person and the dates reported |
 | Certificate lapse | The certificate | optional; checked against the holder and the date on file |
 | Delay, gate change | Departures board or gate screen | optional |
-| Aircraft fault | The fault | required in the console; the agent can file without one, marked for maintenance to confirm |
-| Station closure, gate closure | The conditions: fog, flooding, snow, a closed gate | optional |
+| Aircraft fault | 1 to 5 photos of the fault | required in the console; the agent can file without one, marked for maintenance to confirm |
+| Gate closure | 1 to 3 photos: a barrier, tape, a spillage, the jet bridge | optional |
+| Station closure | The conditions: fog, flooding, snow | optional |
 
 A photo never changes how severe a report is: severity comes from what the disruption does to
 the flights and crew. A photo says how far the report is confirmed, shown as a badge on every
@@ -474,9 +475,16 @@ list (photo, with its confidence, or no photo).
 | Aircraft defect | A draft defect report needing engineer confirmation, with SAM 3.1's box on the damage and a high, medium or low confidence built from picture quality, the model's view, whether SAM found the damage and whether the tail matches |
 | Roster swap, certificate | Checked against the roster and the certificates on file |
 
-The aircraft is chosen by the reporter; a tail number in the photo is only a cross-check. A
-clear photo of no damage is reported as "no damage identified, inspect in person", never as a
-clearance.
+An aircraft fault or a gate closure takes several photos, and is filed only when every one
+of them is clear and about this disruption (a blurred one is named: "Photo 2 is unclear"), none
+shows another aircraft or gate, and at least one shows the registration or the gate's sign
+(`E-G1` on a sign is read as `E_G1`). A spillage counts as a gate closure; fog or snow holds
+the whole station and is refused for a gate. When all pass, Muse Wonder writes one description
+from what each photo shows, in at most three sentences, checked like every other text so a
+registration or gate it names must come from the photos; it is typed into the form for the
+reporter to check. A clear photo with neither damage nor a registration backs nothing up and
+is refused; one of the registration alone is kept, as "no damage in this photo, inspect in
+person", never as a clearance.
 
 ## Scorecard
 
